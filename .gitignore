@@ -1,0 +1,17 @@
+# Claude Code — local, machine-specific config
+.claude/settings.local.json
+.claude/agent-memory-local/
+
+# Secrets / env (never commit)
+.env
+.env.local
+.env.*.local
+
+# OS noise
+.DS_Store
+
+# Logs
+*.log
+
+# TODO: add stack-specific ignores once the stack is chosen
+# (e.g. node_modules/, dist/, __pycache__/, target/, .venv/)

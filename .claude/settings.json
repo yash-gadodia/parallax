@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=$(jq -r '.tool_input.file_path // empty' 2>/dev/null); case \"$f\" in *.env.example|*.env.sample|*.env.template|*.env.dist) exit 0;; *.env|*.env.*|*.pem|*.key|*.cert|*.crt|*.p12|*.pfx|*/credentials|*/credentials.json|*/.netrc) echo \"🚫 Blocked write to secret/credential file: $f\" >&2; exit 2;; esac; exit 0"
+          }
+        ]
+      }
+    ]
+  }
+}

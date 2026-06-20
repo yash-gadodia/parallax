@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Parallax — couples, soft launch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Hanken+Grotesk:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* soft & dreamy — pastel dawn */
+    --bg-0:#FBF1F2; --bg-1:#F1ECFB;
+    --surface:#FFFDFD; --surface-soft:rgba(255,255,255,0.62); --sunken:#F4ECF4;
+    --line:rgba(58,51,64,0.09);
+    --ink:#3A3340; --ink-soft:#8B8398; --ink-mute:#B7B0C2;
+    --p1:#FF8E7A; --p1-deep:#EF6A53;     /* you — pastel coral */
+    --p2:#9D95F5; --p2-deep:#7064E6;     /* them — pastel periwinkle */
+    --match:#54C2A0; --match-deep:#2E9C7C; /* hunch landed — mint */
+    --us:linear-gradient(118deg,#FF8E7A 0%,#C387C9 48%,#9D95F5 100%);
+    --us-soft:linear-gradient(118deg,rgba(255,142,122,0.16),rgba(157,149,245,0.16));
+    --dawn:radial-gradient(120% 80% at 18% 0%,#FCEFF0 0%,#F6EDF6 42%,#EEEDFB 100%);
+    --shadow:0 16px 44px rgba(112,100,230,0.13),0 4px 14px rgba(239,106,83,0.07);
+    --shadow-soft:0 10px 30px rgba(112,100,230,0.10);
+    --shadow-pop:0 -10px 44px rgba(58,40,70,0.18);
+    --font-disp:'Instrument Serif',Georgia,serif;
+    --font-ui:'Hanken Grotesk',system-ui,sans-serif;
+    --font-mono:'Space Mono',ui-monospace,monospace;
+  }
+  html,body{margin:0;height:100%;background:#E7E2F0;}
+  body{display:flex;align-items:center;justify-content:center;min-height:100vh;
+    font-family:var(--font-ui);padding:24px;box-sizing:border-box;
+    background:radial-gradient(120% 100% at 50% -10%,#F3EEFB 0%,#E7E2F0 60%,#E0DAEE 100%);}
+  #root{display:flex;flex-direction:column;align-items:center;gap:14px;}
+  .hint{font-family:var(--font-mono);font-size:10px;letter-spacing:0.16em;
+    text-transform:uppercase;color:#9991ab;}
+  *{-webkit-tap-highlight-color:transparent;}
+  button{font-family:inherit;}
+  ::-webkit-scrollbar{width:0;height:0;}
+  @keyframes pxdim{from{opacity:0}to{opacity:1}}
+  @keyframes pxsheet{from{transform:translateY(100%)}to{transform:translateY(0)}}
+  @keyframes pxrise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes pxpop{from{opacity:0;transform:scale(0.94)}to{opacity:1;transform:scale(1)}}
+  @keyframes pxtoast{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes pxfloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+  @keyframes pxsheen{0%{background-position:0% 50%}100%{background-position:200% 50%}}
+  @keyframes pxheart{0%{opacity:0;transform:translateY(0) scale(.5)}18%{opacity:1}100%{opacity:0;transform:translateY(-140px) scale(1.15)}}
+  @keyframes pxbar{from{width:0%}to{width:100%}}
+  @keyframes pxpulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+  @keyframes pxspin{to{transform:rotate(360deg)}}
+  @keyframes pxblink{0%,90%,100%{transform:scaleY(1)}95%{transform:scaleY(0.12)}}
+  @keyframes pxdart{0%,100%{transform:translateX(0)}25%{transform:translateX(-2.4px)}75%{transform:translateX(2.4px)}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="couples-core.jsx"></script>
+<script type="text/babel" src="couples-screens.jsx"></script>
+<script type="text/babel" src="couples-flows.jsx"></script>
+<script type="text/babel" src="couples-viral.jsx"></script>
+<script type="text/babel" src="couples-pay.jsx"></script>
+<script type="text/babel" src="couples-refocus.jsx"></script>
+<script type="text/babel" src="couples-lovemap.jsx"></script>
+<script type="text/babel" src="couples-activity.jsx"></script>
+<script type="text/babel" src="couples-app.jsx"></script>
+</body>
+</html>
