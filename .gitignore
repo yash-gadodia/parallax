@@ -13,5 +13,18 @@
 # Logs
 *.log
 
-# TODO: add stack-specific ignores once the stack is chosen
-# (e.g. node_modules/, dist/, __pycache__/, target/, .venv/)
+# Node / npm
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Expo
+.expo/
+dist/
+.expo-shared/
+
+# TypeScript
+*.tsbuildinfo
+
+# SDD scratch (ledger, task briefs, review packages)
+.superpowers/
