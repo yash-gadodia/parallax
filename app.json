@@ -7,7 +7,8 @@
     "scheme": "parallax",
     "userInterfaceStyle": "automatic",
     "android": {
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.anonymous.parallax"
     },
     "web": {
       "output": "static"
@@ -24,6 +25,9 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "ios": {
+      "bundleIdentifier": "com.anonymous.parallax"
     }
   }
 }
