@@ -6,7 +6,7 @@ import { gradients } from '../design/tokens';
 
 interface GradientTextProps extends TextProps {
   children: string;
-  gradient?: readonly [ColorValue, ...ColorValue[]];
+  gradient?: readonly [ColorValue, ColorValue, ...ColorValue[]];
 }
 
 export default function GradientText({
