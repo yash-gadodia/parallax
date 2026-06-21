@@ -1,5 +1,482 @@
-import { ScreenStub } from '../src/components/ScreenStub';
+import React from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  ViewStyle,
+} from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
+
+import TopBar from '../src/components/TopBar';
+import { Peek } from '../src/components/Peek';
+import { Float } from '../src/components/Float';
+import { Serif, Kick } from '../src/components/Text';
+import Tok from '../src/components/Tok';
+import Btn from '../src/components/Btn';
+import { DawnBlobs } from '../src/components/DawnBlobs';
+import { Icon, ICONS } from '../src/components/Icon';
+import { colors, gradients, radius, shadows, space } from '../src/design/tokens';
+import { fontFamily } from '../src/design/typography';
+import { LEARNINGS, MASTERY } from '../src/content/us';
+
+const YOU = { initial: 'Y' };
+const PAR = { initial: 'D' };
+
+function Mastery({ level }: { level: 0 | 1 | 2 | 3 }) {
+  return (
+    <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+      <View style={{ display: 'flex', flexDirection: 'row', gap: 4 }}>
+        {[0, 1, 2, 3].map(i => (
+          <View
+            key={i}
+            style={{
+              width: 22,
+              height: 5,
+              borderRadius: 3,
+              backgroundColor: i <= level ? colors.p2 : colors.sunken,
+            }}
+          />
+        ))}
+      </View>
+      <Text
+        allowFontScaling={false}
+        style={{
+          fontFamily: fontFamily.mono,
+          fontSize: 10,
+          letterSpacing: 1.44,
+          textTransform: 'uppercase',
+          color: level >= 2 ? colors.matchDeep : colors.inkMute,
+          fontWeight: '700',
+        }}
+      >
+        {MASTERY[level]}
+      </Text>
+    </View>
+  );
+}
+
+function WhoChip({ who }: { who: 'you' | 'dani' }) {
+  const isYou = who === 'you';
+  return (
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        paddingVertical: 4,
+        paddingHorizontal: 10,
+        paddingLeft: 4,
+        borderRadius: radius.pill,
+        backgroundColor: isYou ? 'rgba(255,142,122,0.14)' : 'rgba(157,149,245,0.16)',
+      }}
+    >
+      <Tok who={isYou ? YOU : PAR} you={isYou} size={18} />
+      <Text
+        allowFontScaling={false}
+        style={{
+          fontSize: 12,
+          fontWeight: '700',
+          color: isYou ? colors.p1Deep : colors.p2Deep,
+          fontFamily: fontFamily.ui,
+          lineHeight: 16,
+        }}
+      >
+        {isYou ? 'You' : 'Dani'}
+      </Text>
+    </View>
+  );
+}
+
+function LearnCard({
+  l,
+}: {
+  l: (typeof LEARNINGS)[number];
+}) {
+  const isYou = l.who === 'you';
+  const fromFight = l.from === 'refocus';
+
+  return (
+    <View
+      style={{
+        backgroundColor: colors.surface,
+        borderWidth: 1,
+        borderColor: colors.line,
+        borderRadius: 22,
+        padding: 16,
+        ...shadows.shadow,
+      }}
+    >
+      {/* Header: emoji + chip + badge */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 9, marginBottom: 11 }}>
+        <Text allowFontScaling={false} style={{ fontSize: 22 }}>
+          {l.emoji}
+        </Text>
+        <WhoChip who={l.who} />
+        <View style={{ flex: 1 }} />
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 5,
+            paddingVertical: 4,
+            paddingHorizontal: 8,
+            borderRadius: radius.pill,
+            backgroundColor: fromFight ? 'rgba(157,149,245,0.16)' : colors.sunken,
+          }}
+        >
+          <Text
+            allowFontScaling={false}
+            style={{
+              fontFamily: fontFamily.mono,
+              fontSize: 8.5,
+              fontWeight: '700',
+              letterSpacing: 1.02,
+              textTransform: 'uppercase',
+              color: fromFight ? colors.p2Deep : colors.inkMute,
+            }}
+          >
+            {fromFight ? '💢 FROM A FIGHT' : '💬 FROM A DROP'}
+          </Text>
+        </View>
+      </View>
+
+      {/* Need (title) */}
+      <Text
+        allowFontScaling={false}
+        style={{
+          fontSize: 16,
+          fontWeight: '700',
+          color: colors.ink,
+          lineHeight: 16 * 1.3,
+          fontFamily: fontFamily.ui,
+        }}
+      >
+        {l.need}
+      </Text>
+
+      {/* Detail */}
+      <Text
+        allowFontScaling={false}
+        style={{
+          fontSize: 13.5,
+          color: colors.inkSoft,
+          lineHeight: 13.5 * 1.45,
+          marginTop: 4,
+          fontFamily: fontFamily.ui,
+        }}
+      >
+        {l.detail}
+      </Text>
+
+      {/* Divider + Mastery meter */}
+      <View style={{ marginTop: 13, paddingTop: 13, borderTopWidth: 1, borderTopColor: colors.line }}>
+        <Mastery level={l.mastery} />
+      </View>
+
+      {/* Became Q card (optional) */}
+      {l.becameQ && (
+        <View
+          style={{
+            marginTop: 12,
+            padding: 13,
+            borderRadius: 14,
+            backgroundColor: 'rgba(157,149,245,0.08)',
+            borderWidth: 1,
+            borderColor: 'rgba(157,149,245,0.22)',
+          }}
+        >
+          <Text
+            allowFontScaling={false}
+            style={{
+              fontFamily: fontFamily.mono,
+              fontSize: 9,
+              letterSpacing: 1.6,
+              textTransform: 'uppercase',
+              color: colors.p2Deep,
+              marginBottom: 5,
+              fontWeight: '700',
+            }}
+          >
+            🎯 now a question in your drops
+          </Text>
+          <Text
+            allowFontScaling={false}
+            style={{
+              fontSize: 13.5,
+              color: colors.ink,
+              fontStyle: 'italic',
+              fontFamily: fontFamily.disp,
+              lineHeight: 13.5 * 1.4,
+            }}
+          >
+            "{l.becameQ}"
+          </Text>
+        </View>
+      )}
+    </View>
+  );
+}
 
 export default function LovemapScreen() {
-  return <ScreenStub label="Lovemap" />;
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const fightCount = LEARNINGS.filter(l => l.from === 'refocus').length;
+
+  return (
+    <View style={{ flex: 1, backgroundColor: colors.bg0 }}>
+      {/* Background: dawn gradient + blobs */}
+      <LinearGradient
+        colors={gradients.dawn.colors}
+        locations={gradients.dawn.locations}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+      />
+      <DawnBlobs />
+
+      {/* TopBar */}
+      <TopBar
+        title="love map"
+        onBack={() => router.back()}
+      />
+
+      {/* Scrollable content */}
+      <ScrollView
+        contentContainerStyle={{
+          paddingTop: insets.top + 52 + 46,
+          paddingHorizontal: space.gutter,
+          paddingBottom: 160 + insets.bottom,
+        }}
+        scrollIndicatorInsets={{ right: 1 }}
+      >
+        {/* Hero: Peek + heading + copy */}
+        <View style={{ alignItems: 'center', marginBottom: 22 }}>
+          <View style={{ marginBottom: 6, justifyContent: 'center', alignItems: 'center' }}>
+            <Float distance={7} duration={2600}>
+              <Peek size={76} mood="focus" />
+            </Float>
+          </View>
+          <Serif s={36} c={colors.ink} style={{ textAlign: 'center' }}>
+            What you're learning{'\n'}about each other
+          </Serif>
+          <Text
+            allowFontScaling={false}
+            style={{
+              fontSize: 14.5,
+              color: colors.inkSoft,
+              lineHeight: 20,
+              maxWidth: 300,
+              marginTop: 10,
+              textAlign: 'center',
+              fontFamily: fontFamily.ui,
+            }}
+          >
+            Every drop and every fight teaches Parallax a little more about how you each see the world. The more it knows, the better its questions get.
+          </Text>
+        </View>
+
+        {/* The parallax loop card */}
+        <View
+          style={{
+            borderRadius: 24,
+            overflow: 'hidden',
+            marginTop: 22,
+            marginBottom: 24,
+            ...shadows.shadow,
+          }}
+        >
+          <LinearGradient
+            colors={gradients.us.colors}
+            locations={gradients.us.locations}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={{
+              padding: 18,
+              paddingBottom: 20,
+            }}
+          >
+            {/* Radial overlay (simulating the white radial gradient in the source) */}
+            <View
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: 'rgba(255,255,255,0.2)',
+              }}
+              pointerEvents="none"
+            />
+
+            <View style={{ position: 'relative', zIndex: 1 }}>
+              <Text
+                allowFontScaling={false}
+                style={{
+                  fontFamily: fontFamily.mono,
+                  fontSize: 9.5,
+                  letterSpacing: 2.128,
+                  textTransform: 'uppercase',
+                  color: 'rgba(255,255,255,0.9)',
+                  fontWeight: '700',
+                }}
+              >
+                the parallax loop
+              </Text>
+              <Serif s={24} c="#fff" style={{ marginTop: 4 }}>
+                A fight becomes a lesson.
+              </Serif>
+
+              <View style={{ flexDirection: 'row', alignItems: 'stretch', gap: 9, marginTop: 14 }}>
+                {[
+                  { emoji: '💢', bold: 'you fought', light: 'the Saturday silence' },
+                  { emoji: '🤍', bold: 'you refocused', light: "found each other's side" },
+                  { emoji: '🎯', bold: 'it became a Q', light: 'now in your drops' },
+                ].map((step, i) => (
+                  <React.Fragment key={i}>
+                    <View
+                      style={{
+                        flex: 1,
+                        backgroundColor: 'rgba(255,255,255,0.16)',
+                        borderRadius: 14,
+                        padding: 11,
+                        paddingHorizontal: 8,
+                        alignItems: 'center',
+                      }}
+                    >
+                      <Text
+                        allowFontScaling={false}
+                        style={{ fontSize: 20 }}
+                      >
+                        {step.emoji}
+                      </Text>
+                      <Text
+                        allowFontScaling={false}
+                        style={{
+                          fontSize: 11.5,
+                          fontWeight: '700',
+                          color: '#fff',
+                          marginTop: 5,
+                          lineHeight: 14,
+                          fontFamily: fontFamily.ui,
+                          textAlign: 'center',
+                        }}
+                      >
+                        {step.bold}
+                      </Text>
+                      <Text
+                        allowFontScaling={false}
+                        style={{
+                          fontSize: 9.5,
+                          color: 'rgba(255,255,255,0.85)',
+                          marginTop: 2,
+                          lineHeight: 12,
+                          fontFamily: fontFamily.ui,
+                          textAlign: 'center',
+                        }}
+                      >
+                        {step.light}
+                      </Text>
+                    </View>
+                    {i < 2 && (
+                      <View
+                        style={{
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                        }}
+                      >
+                        <Text
+                          allowFontScaling={false}
+                          style={{
+                            color: 'rgba(255,255,255,0.8)',
+                            fontSize: 14,
+                          }}
+                        >
+                          →
+                        </Text>
+                      </View>
+                    )}
+                  </React.Fragment>
+                ))}
+              </View>
+            </View>
+          </LinearGradient>
+        </View>
+
+        {/* Learnings section header */}
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginHorizontal: 2,
+            marginBottom: 12,
+          }}
+        >
+          <Kick c={colors.inkMute}>the map · {LEARNINGS.length} learnings</Kick>
+          <Text
+            allowFontScaling={false}
+            style={{
+              fontFamily: fontFamily.mono,
+              fontSize: 10,
+              color: colors.inkMute,
+              fontWeight: '400',
+              letterSpacing: 1.8,
+              textTransform: 'uppercase',
+            }}
+          >
+            {fightCount} from fights
+          </Text>
+        </View>
+
+        {/* Learning cards */}
+        <View style={{ gap: space.gap }}>
+          {LEARNINGS.map(l => (
+            <LearnCard key={l.id} l={l} />
+          ))}
+        </View>
+
+        {/* Privacy footer */}
+        <Text
+          allowFontScaling={false}
+          style={{
+            textAlign: 'center',
+            fontSize: 12,
+            color: colors.inkMute,
+            lineHeight: 18,
+            marginTop: 20,
+            marginHorizontal: 14,
+            fontFamily: fontFamily.ui,
+          }}
+        >
+          The more honestly you play, the sharper your map. Nothing here is ever shown to anyone outside the two of you.
+        </Text>
+      </ScrollView>
+
+      {/* Floating CTA button */}
+      <View
+        style={{
+          position: 'absolute',
+          left: space.gutter,
+          right: space.gutter,
+          bottom: 22 + insets.bottom,
+          zIndex: 40,
+        }}
+      >
+        <Btn
+          kind="soft"
+          onPress={() => router.push('/refocus')}
+          sub="turn a rough moment into a lesson"
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Icon d={ICONS.heart} size={17} color={colors.p2Deep} />
+            <Text style={{ color: colors.ink }} allowFontScaling={false}>
+              Refocus something
+            </Text>
+          </View>
+        </Btn>
+      </View>
+    </View>
+  );
 }
