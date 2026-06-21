@@ -1,0 +1,18 @@
+# Supabase configuration for Parallax
+
+[api]
+enabled = true
+max_rows = 1000
+
+[db]
+major_version = 15
+
+[realtime]
+enabled = true
+
+[auth]
+enabled = true
+
+[storage]
+enabled = true
+file_size_limit = 52428800
