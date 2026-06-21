@@ -39,6 +39,7 @@
     "jest-expo": "^56.0.0",
     "react-native-worklets": "^0.9.2",
     "react-test-renderer": "19.2.3",
+    "test-renderer": "^1.2.0",
     "typescript": "^5.3.0"
   },
   "scripts": {
