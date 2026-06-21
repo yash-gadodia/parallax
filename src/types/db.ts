@@ -74,6 +74,28 @@ export interface Activity {
   created_at: string;
 }
 
+export interface Learning {
+  id: string;
+  couple_id: string;
+  about: string;
+  emoji: string | null;
+  need: string | null;
+  detail: string | null;
+  source: 'drop' | 'refocus';
+  origin: string | null;
+  mastery: number;
+  became_prompt_id: string | null;
+  created_at: string;
+}
+
+export interface CoupleHistoryRow {
+  date: string;
+  code: string;
+  title: string;
+  wavelength: number;
+  twins_count: number;
+}
+
 export type Json = unknown;
 
 export interface Database {
@@ -113,6 +135,11 @@ export interface Database {
         Row: Activity;
         Insert: Omit<Activity, 'id' | 'created_at'>;
         Update: Partial<Omit<Activity, 'id' | 'created_at'>>;
+      };
+      learnings: {
+        Row: Learning;
+        Insert: Omit<Learning, 'id' | 'created_at'>;
+        Update: Partial<Omit<Learning, 'id' | 'created_at'>>;
       };
     };
     Functions: {
@@ -158,6 +185,22 @@ export interface Database {
       complete_streak: {
         Args: { p_couple_drop: string };
         Returns: void;
+      };
+      add_learning: {
+        Args: {
+          p_couple: string;
+          p_about: string;
+          p_emoji: string;
+          p_need: string;
+          p_detail: string;
+          p_source: string;
+          p_origin: string;
+        };
+        Returns: string;
+      };
+      couple_history: {
+        Args: { p_couple: string };
+        Returns: CoupleHistoryRow[];
       };
     };
   };

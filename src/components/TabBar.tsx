@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, ViewStyle } from 'react-native';
+import { View, Text, ViewStyle, useWindowDimensions } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Press from './Press';
@@ -22,11 +22,12 @@ const tabs: Array<[TabName, string, string]> = [
 
 export default function TabBar({ active, go }: TabBarProps) {
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
 
   const containerStyle: ViewStyle = {
     position: 'absolute',
     left: 20,
-    right: 20,
+    width: width - 40,
     bottom: 18 + insets.bottom,
     height: 62,
     borderRadius: 999,

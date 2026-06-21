@@ -46,6 +46,9 @@ import {
   RefocusResult,
   RefocusMode,
 } from '../../src/content/refocus';
+import { useSession } from '../../src/features/auth/useSession';
+import { useCouple } from '../../src/features/pairing/useCouple';
+import { addLearning } from '../../src/features/lovemap/addLearning';
 
 // Identity definitions
 const YOU = { name: 'you', initial: 'Y' };
@@ -887,6 +890,9 @@ function ResultStep({
 }: ResultStepProps) {
   const [msg, setMsg] = useState(result.bridge);
   const [sent, setSent] = useState(false);
+  const [savingLearnings, setSavingLearnings] = useState(false);
+  const { session } = useSession();
+  const { couple } = useCouple();
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
@@ -1147,7 +1153,53 @@ function ResultStep({
             <NeedCard who={YOU} youSide text={result.underneath.you} />
             <NeedCard who={PAR} text={result.underneath.dani} />
           </View>
-          <Btn kind="soft" onPress={onOpenLoveMap} sub="see what you're learning">
+          <Btn
+            kind="soft"
+            onPress={async () => {
+              if (session && couple) {
+                try {
+                  setSavingLearnings(true);
+                  const partner = couple.member_a === session.user.id
+                    ? couple.member_b
+                    : couple.member_a;
+
+                  // Add learning for "you" (about your needs)
+                  if (result.underneath.you) {
+                    await addLearning({
+                      coupleId: couple.id,
+                      aboutId: session.user.id,
+                      emoji: '🤍',
+                      need: result.underneath.you.split('\n')[0] || 'Underlying need',
+                      detail: result.underneath.you,
+                      source: 'refocus',
+                      origin: 'refocus-' + Date.now(),
+                    });
+                  }
+
+                  // Add learning for partner
+                  if (result.underneath.dani && partner) {
+                    await addLearning({
+                      coupleId: couple.id,
+                      aboutId: partner,
+                      emoji: '💗',
+                      need: result.underneath.dani.split('\n')[0] || 'Underlying need',
+                      detail: result.underneath.dani,
+                      source: 'refocus',
+                      origin: 'refocus-' + Date.now(),
+                    });
+                  }
+
+                  onShowToast('Added to Love Map 🗺️');
+                  setSavingLearnings(false);
+                } catch (err) {
+                  onShowToast('Failed to save learnings');
+                  setSavingLearnings(false);
+                }
+              }
+              onOpenLoveMap();
+            }}
+            sub="see what you're learning"
+          >
             Open your Love Map
           </Btn>
         </Card>

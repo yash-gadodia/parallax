@@ -18,6 +18,8 @@ import { colors, gradients, radius, shadows, space } from '../../src/design/toke
 import { fontFamily } from '../../src/design/typography';
 import { LEARNINGS } from '../../src/content/us';
 import { ARCHIVE } from '../../src/content/drop';
+import { useLearnings } from '../../src/features/lovemap/useLearnings';
+import { useCoupleHistory } from '../../src/features/lovemap/useCoupleHistory';
 
 // Identity definitions
 const YOU = { name: 'you', initial: 'Y' };
@@ -25,14 +27,24 @@ const PAR = { name: 'Dani', initial: 'D' };
 
 export default function UsScreen() {
   const router = useRouter();
+  const { items: learningItems, isSample: learningsSample } = useLearnings();
+  const { history, isSample: historySample } = useCoupleHistory();
 
   // Mock state for demonstration
   const streak = 23;
   const done = true;
-  const wave = 76;
+  const currentWave = history.length > 0 ? `${history[0].wavelength}` : '76';
 
-  // Wavelength history (last 7 from ARCHIVE) + current
-  const hist = [62, 71, 58, 80, 74, 88, done ? wave : 83];
+  // Wavelength history (last 7 + current)
+  const hist: number[] = history.slice(0, 7).reverse().map(h => h.wavelength);
+  if (hist.length < 7) {
+    // Pad with historical data if needed
+    const archiveWaves = ARCHIVE.map(a => a.wave);
+    const combined = [...hist, ...archiveWaves.slice(hist.length)].slice(0, 7);
+    hist.length = 0;
+    hist.push(...combined);
+  }
+  hist.push(done ? parseInt(currentWave) : 83);
 
   const handleProfilePress = () => {
     router.push('/profile');
@@ -234,8 +246,8 @@ export default function UsScreen() {
 
               {/* First 2 learnings preview */}
               <View style={{ flexDirection: 'column', gap: 9 }}>
-                {LEARNINGS.slice(0, 2).map((l) => {
-                  const isYou = l.who === 'you';
+                {learningItems.slice(0, 2).map((l) => {
+                  const isYou = l.about === 'you';
                   return (
                     <View
                       key={l.id}
@@ -266,7 +278,7 @@ export default function UsScreen() {
                       >
                         {l.need}
                       </Text>
-                      {l.from === 'refocus' && (
+                      {l.source === 'refocus' && (
                         <Text
                           style={{
                             fontSize: 8,
@@ -326,7 +338,7 @@ export default function UsScreen() {
                       paddingRight: 2.4,
                     }}
                   >
-                    76%
+                    {`${currentWave}%`}
                   </GradientText>
                   <Text
                     style={{
@@ -413,71 +425,74 @@ export default function UsScreen() {
 
           {/* History list */}
           <View style={{ flexDirection: 'column', gap: 10 }}>
-            {ARCHIVE.map((d) => (
-              <Press key={d.code} onPress={() => handleDropPress(d.code)}>
-                <Card
-                  style={{
-                    borderRadius: 20,
-                    paddingHorizontal: 15,
-                    paddingVertical: 13,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 13,
-                  }}
-                >
-                  {/* Emoji icon */}
-                  <View
+            {history.map((h) => {
+              const archiveEntry = ARCHIVE.find(a => a.code === h.code);
+              return (
+                <Press key={h.code} onPress={() => handleDropPress(h.code)}>
+                  <Card
                     style={{
-                      width: 44,
-                      height: 44,
-                      borderRadius: 14,
-                      backgroundColor: colors.sunken,
+                      borderRadius: 20,
+                      paddingHorizontal: 15,
+                      paddingVertical: 13,
+                      flexDirection: 'row',
                       alignItems: 'center',
-                      justifyContent: 'center',
+                      gap: 13,
                     }}
                   >
-                    <Text style={{ fontSize: 22 }}>{d.emoji}</Text>
-                  </View>
-
-                  {/* Title + code/day */}
-                  <View style={{ flex: 1 }}>
-                    <Text
+                    {/* Emoji icon */}
+                    <View
                       style={{
-                        fontSize: 15,
-                        fontWeight: '700',
-                        color: colors.ink,
-                        fontFamily: fontFamily.disp,
+                        width: 44,
+                        height: 44,
+                        borderRadius: 14,
+                        backgroundColor: colors.sunken,
+                        alignItems: 'center',
+                        justifyContent: 'center',
                       }}
                     >
-                      {d.title}
-                    </Text>
-                    <Kick style={{ marginTop: 3 }}>
-                      {d.code} · {d.day}
-                    </Kick>
-                  </View>
+                      <Text style={{ fontSize: 22 }}>{archiveEntry?.emoji || '💬'}</Text>
+                    </View>
 
-                  {/* Wave % + twins count (right side) */}
-                  <View style={{ alignItems: 'flex-end' }}>
-                    <GradientText
-                      style={{
-                        fontFamily: fontFamily.disp,
-                        fontSize: 22,
-                        lineHeight: 24,
-                        textAlign: 'right',
-                      }}
-                    >
-                      {`${d.wave}%`}
-                    </GradientText>
-                    <Kick style={{ marginTop: 2 }}>
-                      {d.twins} 👯
-                    </Kick>
-                  </View>
+                    {/* Title + code/day */}
+                    <View style={{ flex: 1 }}>
+                      <Text
+                        style={{
+                          fontSize: 15,
+                          fontWeight: '700',
+                          color: colors.ink,
+                          fontFamily: fontFamily.disp,
+                        }}
+                      >
+                        {h.title}
+                      </Text>
+                      <Kick style={{ marginTop: 3 }}>
+                        {h.code} · {h.date}
+                      </Kick>
+                    </View>
 
-                  {/* Chevron */}
-                  <Icon d={ICONS.chevR} size={17} color={colors.inkMute} />
-                </Card>
-              </Press>
-            ))}
+                    {/* Wave % + twins count (right side) */}
+                    <View style={{ alignItems: 'flex-end' }}>
+                      <GradientText
+                        style={{
+                          fontFamily: fontFamily.disp,
+                          fontSize: 22,
+                          lineHeight: 24,
+                          textAlign: 'right',
+                        }}
+                      >
+                        {`${h.wavelength}%`}
+                      </GradientText>
+                      <Kick style={{ marginTop: 2 }}>
+                        {h.twins_count} 👯
+                      </Kick>
+                    </View>
+
+                    {/* Chevron */}
+                    <Icon d={ICONS.chevR} size={17} color={colors.inkMute} />
+                  </Card>
+                </Press>
+              );
+            })}
           </View>
         </ScrollView>
       </SafeAreaView>

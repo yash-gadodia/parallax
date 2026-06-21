@@ -19,7 +19,8 @@ import { DawnBlobs } from '../src/components/DawnBlobs';
 import { Icon, ICONS } from '../src/components/Icon';
 import { colors, gradients, radius, shadows, space } from '../src/design/tokens';
 import { fontFamily } from '../src/design/typography';
-import { LEARNINGS, MASTERY } from '../src/content/us';
+import { MASTERY } from '../src/content/us';
+import { useLearnings } from '../src/features/lovemap/useLearnings';
 
 const YOU = { initial: 'Y' };
 const PAR = { initial: 'D' };
@@ -92,10 +93,10 @@ function WhoChip({ who }: { who: 'you' | 'dani' }) {
 function LearnCard({
   l,
 }: {
-  l: (typeof LEARNINGS)[number];
+  l: { emoji: string | null; need: string | null; detail: string | null; source: string; mastery: number; about: string; became_prompt_id: string | null };
 }) {
-  const isYou = l.who === 'you';
-  const fromFight = l.from === 'refocus';
+  const isYou = l.about === 'you';
+  const fromFight = l.source === 'refocus';
 
   return (
     <View
@@ -113,7 +114,7 @@ function LearnCard({
         <Text allowFontScaling={false} style={{ fontSize: 22 }}>
           {l.emoji}
         </Text>
-        <WhoChip who={l.who} />
+        <WhoChip who={isYou ? 'you' : 'dani'} />
         <View style={{ flex: 1 }} />
         <View
           style={{
@@ -172,11 +173,11 @@ function LearnCard({
 
       {/* Divider + Mastery meter */}
       <View style={{ marginTop: 13, paddingTop: 13, borderTopWidth: 1, borderTopColor: colors.line }}>
-        <Mastery level={l.mastery} />
+        <Mastery level={(l.mastery as 0 | 1 | 2 | 3) || 0} />
       </View>
 
       {/* Became Q card (optional) */}
-      {l.becameQ && (
+      {l.became_prompt_id && (
         <View
           style={{
             marginTop: 12,
@@ -211,7 +212,7 @@ function LearnCard({
               lineHeight: 13.5 * 1.4,
             }}
           >
-            "{l.becameQ}"
+            This learning is being woven into future prompts.
           </Text>
         </View>
       )}
@@ -222,7 +223,8 @@ function LearnCard({
 export default function LovemapScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const fightCount = LEARNINGS.filter(l => l.from === 'refocus').length;
+  const { items: learnings, loading, isSample } = useLearnings();
+  const fightCount = learnings.filter(l => l.source === 'refocus').length;
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg0 }}>
@@ -414,7 +416,7 @@ export default function LovemapScreen() {
             marginBottom: 12,
           }}
         >
-          <Kick c={colors.inkMute}>the map · {LEARNINGS.length} learnings</Kick>
+          <Kick c={colors.inkMute}>the map · {learnings.length} learnings</Kick>
           <Text
             allowFontScaling={false}
             style={{
@@ -432,7 +434,7 @@ export default function LovemapScreen() {
 
         {/* Learning cards */}
         <View style={{ gap: space.gap }}>
-          {LEARNINGS.map(l => (
+          {learnings.map(l => (
             <LearnCard key={l.id} l={l} />
           ))}
         </View>

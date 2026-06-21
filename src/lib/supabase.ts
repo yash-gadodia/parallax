@@ -21,5 +21,5 @@ export const supabase = createClient<Database>(url, anonKey, {
   },
 });
 
-export type { Database, Profile, Couple, Activity } from '@/types/db';
+export type { Database, Profile, Couple, Activity, Learning, CoupleHistoryRow } from '@/types/db';
 
