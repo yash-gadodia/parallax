@@ -31,18 +31,21 @@ describe('supabase client', () => {
     const module = require('./supabase');
 
     expect(module.supabase).toBeDefined();
-    // Type exports are re-exported from the module
-    expect(module.supabase).toBeDefined();
   });
 });
 
 describe('supabase client - missing env vars', () => {
-  it('throws error at module load when env vars are missing', () => {
-    // To properly test this, you would need to:
-    // 1. Run a separate Node process with missing env vars
-    // 2. Try to require the module
-    // 3. Catch the error
-    // For integration testing, this is validated by the error thrown in supabase.ts
-    expect(true).toBe(true);
+  it('throws a clear error when env vars are missing', () => {
+    jest.resetModules();
+    const prevUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
+    const prevKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+    delete process.env.EXPO_PUBLIC_SUPABASE_URL;
+    delete process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+
+    expect(() => require('./supabase')).toThrow(/EXPO_PUBLIC_SUPABASE/);
+
+    process.env.EXPO_PUBLIC_SUPABASE_URL = prevUrl;
+    process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY = prevKey;
+    jest.resetModules();
   });
 });
