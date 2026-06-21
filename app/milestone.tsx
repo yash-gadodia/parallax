@@ -285,7 +285,7 @@ export default function MilestoneScreen() {
           gap: 10,
         }}
       >
-        <Btn kind="us" onPress={handleShare} sub="show it off">
+        <Btn kind="soft" onPress={handleShare} sub="show it off">
           Share our milestone
         </Btn>
         <Press onPress={handleBack}>

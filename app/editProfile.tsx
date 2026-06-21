@@ -233,7 +233,7 @@ export default function EditProfileScreen(props: EditProfileScreenProps) {
                 lineHeight: 10,
               }}
             >
-              Paired with
+              paired with
             </Text>
             <View
               style={{

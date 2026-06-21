@@ -97,7 +97,7 @@ export default function SpiceSheet() {
                         fontSize: 12.5,
                         color: colors.inkSoft,
                         marginTop: 2,
-                        lineHeight: 18,
+                        lineHeight: 17.5,
                         fontFamily: fontFamily.ui,
                       }}
                     >

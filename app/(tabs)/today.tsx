@@ -191,38 +191,47 @@ export default function TodayScreen() {
           {/* Partner ping banner (show when not done) */}
           {!done && (
             <Press onPress={handlePlay}>
-              <View
+              <LinearGradient
+                colors={gradients.usSoft.colors}
+                locations={gradients.usSoft.locations}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
                 style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 11,
-                  paddingVertical: 12,
-                  paddingHorizontal: 14,
                   borderRadius: 18,
+                  overflow: 'hidden',
                   marginBottom: 14,
-                  backgroundColor: 'rgba(157,149,245,0.12)',
-                  borderWidth: 1,
-                  borderColor: 'rgba(157,149,245,0.28)',
                 }}
               >
-                <Text style={{ fontSize: 22 }}>💌</Text>
-                <View style={{ flex: 1 }}>
-                  <Text
-                    style={{
-                      fontSize: 14,
-                      fontWeight: '700',
-                      color: colors.ink,
-                      fontFamily: fontFamily.ui,
-                    }}
-                  >
-                    Dani already played today
-                  </Text>
-                  <Kick c={colors.p2Deep} style={{ marginTop: 2 }}>
-                    your turn · no peeking at theirs
-                  </Kick>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 11,
+                    paddingVertical: 12,
+                    paddingHorizontal: 14,
+                    borderWidth: 1,
+                    borderColor: 'rgba(157,149,245,0.28)',
+                  }}
+                >
+                  <Text style={{ fontSize: 22 }}>💌</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text
+                      style={{
+                        fontSize: 14,
+                        fontWeight: '700',
+                        color: colors.ink,
+                        fontFamily: fontFamily.ui,
+                      }}
+                    >
+                      Dani already played today
+                    </Text>
+                    <Kick c={colors.p2Deep} style={{ marginTop: 2 }}>
+                      your turn · no peeking at theirs
+                    </Kick>
+                  </View>
+                  <Icon d={ICONS.chevR} size={18} color={colors.p2Deep} />
                 </View>
-                <Icon d={ICONS.chevR} size={18} color={colors.p2Deep} />
-              </View>
+              </LinearGradient>
             </Press>
           )}
 

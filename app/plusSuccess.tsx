@@ -86,7 +86,7 @@ export default function PlusSuccessScreen() {
             flex: 1,
             alignItems: 'center',
             justifyContent: 'center',
-            paddingHorizontal: space.gutter,
+            paddingHorizontal: 32,
             paddingTop: 48,
             overflow: 'hidden',
           }}

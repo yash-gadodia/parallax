@@ -234,7 +234,7 @@ export default function WrappedScreen() {
                   textAlign: 'center',
                 }}
               >
-                Your month, wrapped
+                Your month,{'\n'}wrapped
               </Serif>
               <Text
                 allowFontScaling={false}
@@ -402,7 +402,7 @@ export default function WrappedScreen() {
                   textAlign: 'center',
                 }}
               >
-                Show the world your type.
+                Show the{'\n'}world your type.
               </Serif>
 
               {/* Share preview card */}

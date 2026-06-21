@@ -54,7 +54,7 @@ export default function DropDetailScreen() {
           <View style={{ height: 50 }} />
 
           {/* Header: emoji, title, day, wave */}
-          <View style={{ alignItems: 'center', marginBottom: 8 }}>
+          <View style={{ alignItems: 'center', marginBottom: 8, paddingHorizontal: space.gutter }}>
             <Text
               allowFontScaling={false}
               style={{
@@ -116,7 +116,8 @@ export default function DropDetailScreen() {
                 <Card
                   key={i}
                   style={{
-                    padding: 16,
+                    paddingVertical: 15,
+                    paddingHorizontal: 16,
                     borderRadius: 20,
                     marginBottom: i < d.rows.length - 1 ? 12 : 0,
                   }}

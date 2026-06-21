@@ -143,7 +143,8 @@ export default function ThreadScreen() {
       <View
         style={{
           paddingHorizontal: 16,
-          paddingVertical: 8,
+          paddingTop: 8,
+          paddingBottom: 6,
           flexDirection: 'row',
           gap: 8,
         }}

@@ -140,14 +140,18 @@ export default function PacksScreen() {
           </View>
 
           {/* Plus upsell card */}
-          <View
+          <LinearGradient
+            colors={gradients.usSoft.colors}
+            locations={gradients.usSoft.locations}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
             style={{
-              backgroundColor: 'rgba(157,149,245,0.08)',
               borderWidth: 1,
               borderColor: 'rgba(157,149,245,0.25)',
               borderRadius: radius.card,
               padding: 20,
               marginBottom: 0,
+              overflow: 'hidden',
             }}
           >
             {plus ? (
@@ -207,7 +211,7 @@ export default function PacksScreen() {
                 </Btn>
               </>
             )}
-          </View>
+          </LinearGradient>
         </ScrollView>
       </SafeAreaView>
     </LinearGradient>
@@ -292,7 +296,7 @@ function PackCard({ pack, onPress, isLocked }: PackCardProps) {
                 style={{
                   fontSize: 8.5,
                   fontWeight: '700',
-                  letterSpacing: 1.6,
+                  letterSpacing: 0.85,
                   textTransform: 'uppercase',
                   color: colors.matchDeep,
                 }}

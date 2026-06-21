@@ -5,6 +5,7 @@ import {
   ScrollView,
   ViewStyle,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 
@@ -264,15 +265,19 @@ export default function ProfileScreen() {
         </Press>
 
         {/* Nudge Banner */}
-        <View
+        <LinearGradient
+          colors={gradients.usSoft.colors}
+          locations={gradients.usSoft.locations}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
           style={{
             borderRadius: 22,
             paddingHorizontal: 16,
             paddingVertical: 16,
             marginBottom: 14,
-            backgroundColor: gradients.usSoft.colors[0],
             borderWidth: 1,
             borderColor: 'rgba(157,149,245,0.25)',
+            overflow: 'hidden',
             ...shadows.shadowSoft,
           }}
         >
@@ -299,20 +304,24 @@ export default function ProfileScreen() {
               <Text style={{ fontSize: 14.5, color: '#fff', fontFamily: fontFamily.ui }}>Send a nudge</Text>
             </Btn>
           </View>
-        </View>
+        </LinearGradient>
 
         {/* Plus Banner (conditional) */}
         {state.plus && (
-          <View
+          <LinearGradient
+            colors={gradients.us.colors}
+            locations={gradients.us.locations}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
             style={{
               borderRadius: 22,
               paddingHorizontal: 16,
               paddingVertical: 14,
               marginBottom: 14,
-              backgroundColor: colors.p2,
               flexDirection: 'row',
               alignItems: 'center',
               gap: 12,
+              overflow: 'hidden',
               ...shadows.shadowSoft,
             }}
           >
@@ -365,7 +374,7 @@ export default function ProfileScreen() {
                 </Text>
               </View>
             </Press>
-          </View>
+          </LinearGradient>
         )}
 
         {/* Preferences Group */}

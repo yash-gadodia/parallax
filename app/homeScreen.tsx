@@ -142,11 +142,14 @@ function WaveWidget({ onTap, big }: { onTap?: () => void; big?: boolean }) {
 function PingWidget({ onTap }: { onTap?: () => void }) {
   return (
     <Press onPress={onTap} scale>
-      <View
+      <LinearGradient
+        colors={gradients.us.colors}
+        locations={gradients.us.locations}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
         style={{
           aspectRatio: 1,
           borderRadius: 24,
-          backgroundColor: colors.p2,
           position: 'relative',
           overflow: 'hidden',
           display: 'flex',
@@ -189,7 +192,7 @@ function PingWidget({ onTap }: { onTap?: () => void }) {
         >
           tap to ping
         </Text>
-      </View>
+      </LinearGradient>
     </Press>
   );
 }
@@ -208,24 +211,41 @@ function AppIcon({
   mark?: boolean;
   onTap?: () => void;
 }) {
+  const isGradient = typeof bg === 'string' && bg.startsWith('linear-gradient');
+  const tileStyle = {
+    width: 58 as const,
+    height: 58 as const,
+    borderRadius: 15 as const,
+    display: 'flex' as const,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    overflow: 'hidden' as const,
+    ...shadows.shadowSoft,
+  };
+
   return (
     <Press onPress={onTap} scale={!!onTap} style={{ width: 'auto' }}>
       <View style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-        <View
-          style={{
-            width: 58,
-            height: 58,
-            borderRadius: 15,
-            backgroundColor: bg,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            overflow: 'hidden',
-            ...shadows.shadowSoft,
-          }}
-        >
-          {mark ? <Mark size={30} /> : glyph}
-        </View>
+        {isGradient ? (
+          <LinearGradient
+            colors={gradients.us.colors}
+            locations={gradients.us.locations}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={tileStyle}
+          >
+            {mark ? <Mark size={30} /> : glyph}
+          </LinearGradient>
+        ) : (
+          <View
+            style={{
+              ...tileStyle,
+              backgroundColor: bg,
+            }}
+          >
+            {mark ? <Mark size={30} /> : glyph}
+          </View>
+        )}
         {label ? (
           <Text
             allowFontScaling={false}

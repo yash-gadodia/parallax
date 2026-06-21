@@ -26,7 +26,7 @@ function StatusCard() {
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={{
-        borderRadius: radius.cardLg,
+        borderRadius: 24,
         padding: 20,
         borderWidth: 1,
         borderColor: 'rgba(157,149,245,0.25)',
@@ -88,7 +88,7 @@ function PlanDetailsCard() {
   ];
 
   return (
-    <Card style={{ overflow: 'hidden', marginTop: 14 }}>
+    <Card style={{ overflow: 'hidden', marginTop: 14, borderRadius: 20 }}>
       {rows.map((row, i) => (
         <View
           key={`row-${i}`}
@@ -221,6 +221,7 @@ export default function ManageSubScreen() {
                   fontWeight: '700',
                   color: colors.p1Deep,
                   textAlign: 'center',
+                  lineHeight: 20,
                 }}
               >
                 Cancel subscription

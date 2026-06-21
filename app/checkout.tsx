@@ -502,15 +502,19 @@ function PlanCard({ id, selected, onSelect }: PlanCardProps) {
 
         {/* Badge (if any) */}
         {p.badge && (
-          <View
+          <LinearGradient
+            colors={gradients.us.colors}
+            locations={gradients.us.locations}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
             style={{
               position: 'absolute',
               top: -9,
               right: 14,
-              backgroundColor: colors.p2Deep,
               paddingVertical: 3,
               paddingHorizontal: 9,
               borderRadius: 999,
+              overflow: 'hidden',
             }}
           >
             <Text
@@ -526,7 +530,7 @@ function PlanCard({ id, selected, onSelect }: PlanCardProps) {
             >
               {p.badge}
             </Text>
-          </View>
+          </LinearGradient>
         )}
       </View>
     </Press>

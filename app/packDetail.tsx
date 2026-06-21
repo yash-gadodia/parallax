@@ -229,7 +229,7 @@ export default function PackDetailScreen() {
             </View>
 
             {/* Description */}
-            <View style={{ padding: 18, paddingBottom: 20 }}>
+            <View style={{ paddingHorizontal: 20, paddingTop: 18, paddingBottom: 20 }}>
               <Text
                 allowFontScaling={false}
                 style={{
@@ -265,7 +265,8 @@ export default function PackDetailScreen() {
               <Card
                 key={i}
                 style={{
-                  padding: 16,
+                  paddingVertical: 15,
+                  paddingHorizontal: 16,
                   flexDirection: 'row',
                   alignItems: 'center',
                   gap: 12,

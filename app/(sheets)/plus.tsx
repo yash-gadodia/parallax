@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, ScrollView } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import Sheet from '../../src/components/Sheet';
 import Btn from '../../src/components/Btn';
@@ -61,15 +62,19 @@ export default function PlusSheet() {
         <View style={{ flexDirection: 'column', gap: 14, marginBottom: 20 }}>
           {perks.map((perk, i) => (
             <View key={i} style={{ display: 'flex', flexDirection: 'row', gap: 13, alignItems: 'center' }}>
-              <View
+              <LinearGradient
+                colors={gradients.usSoft.colors}
+                locations={gradients.usSoft.locations}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
                 style={{
                   width: 42,
                   height: 42,
                   borderRadius: 13,
-                  backgroundColor: gradients.usSoft.colors[0],
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
+                  overflow: 'hidden',
                 }}
               >
                 <Text
@@ -82,7 +87,7 @@ export default function PlusSheet() {
                 >
                   {perk.emoji}
                 </Text>
-              </View>
+              </LinearGradient>
               <View style={{ flex: 1 }}>
                 <Text
                   allowFontScaling={false}

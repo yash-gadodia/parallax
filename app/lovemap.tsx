@@ -135,7 +135,7 @@ function LearnCard({
               fontWeight: '700',
               letterSpacing: 1.02,
               textTransform: 'uppercase',
-              color: fromFight ? colors.p2Deep : colors.inkMute,
+              color: fromFight ? colors.p2Deep : colors.inkSoft,
             }}
           >
             {fromFight ? '💢 FROM A FIGHT' : '💬 FROM A DROP'}
@@ -178,43 +178,53 @@ function LearnCard({
 
       {/* Became Q card (optional) */}
       {l.became_prompt_id && (
-        <View
+        <LinearGradient
+          colors={gradients.usSoft.colors}
+          locations={gradients.usSoft.locations}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
           style={{
             marginTop: 12,
-            padding: 13,
             borderRadius: 14,
-            backgroundColor: 'rgba(157,149,245,0.08)',
             borderWidth: 1,
             borderColor: 'rgba(157,149,245,0.22)',
+            overflow: 'hidden',
           }}
         >
-          <Text
-            allowFontScaling={false}
+          <View
             style={{
-              fontFamily: fontFamily.mono,
-              fontSize: 9,
-              letterSpacing: 1.6,
-              textTransform: 'uppercase',
-              color: colors.p2Deep,
-              marginBottom: 5,
-              fontWeight: '700',
+              paddingVertical: 12,
+              paddingHorizontal: 13,
             }}
           >
-            🎯 now a question in your drops
-          </Text>
-          <Text
-            allowFontScaling={false}
-            style={{
-              fontSize: 13.5,
-              color: colors.ink,
-              fontStyle: 'italic',
-              fontFamily: fontFamily.disp,
-              lineHeight: 13.5 * 1.4,
-            }}
-          >
-            This learning is being woven into future prompts.
-          </Text>
-        </View>
+            <Text
+              allowFontScaling={false}
+              style={{
+                fontFamily: fontFamily.mono,
+                fontSize: 9,
+                letterSpacing: 1.6,
+                textTransform: 'uppercase',
+                color: colors.p2Deep,
+                marginBottom: 5,
+                fontWeight: '700',
+              }}
+            >
+              🎯 now a question in your drops
+            </Text>
+            <Text
+              allowFontScaling={false}
+              style={{
+                fontSize: 13.5,
+                color: colors.ink,
+                fontStyle: 'italic',
+                fontFamily: fontFamily.disp,
+                lineHeight: 13.5 * 1.4,
+              }}
+            >
+              This learning is being woven into future prompts.
+            </Text>
+          </View>
+        </LinearGradient>
       )}
     </View>
   );

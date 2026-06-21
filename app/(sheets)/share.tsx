@@ -59,7 +59,9 @@ export default function ShareSheet() {
           >
             <View
               style={{
-                padding: 22,
+                paddingHorizontal: 22,
+                paddingTop: 22,
+                paddingBottom: 24,
                 position: 'relative',
               }}
             >
@@ -86,7 +88,6 @@ export default function ShareSheet() {
                     fontWeight: '600',
                     color: 'rgba(255,255,255,0.95)',
                     lineHeight: 20,
-                    marginBottom: 16,
                     marginTop: 2,
                     fontFamily: fontFamily.ui,
                   }}
@@ -148,7 +149,7 @@ export default function ShareSheet() {
                   paddingVertical: 14,
                   paddingHorizontal: 8,
                   alignItems: 'center',
-                  ...(!btn.isGray && shadows.shadowSoft),
+                  ...shadows.shadowSoft,
                 }}
               >
                 <Text

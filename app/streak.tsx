@@ -150,7 +150,8 @@ export default function StreakScreen() {
             borderWidth: 1,
             borderColor: 'rgba(157,149,245,0.25)',
             borderRadius: 22,
-            padding: 16,
+            paddingVertical: 15,
+            paddingHorizontal: 16,
             marginBottom: 22,
           }}
         >
@@ -256,7 +257,8 @@ export default function StreakScreen() {
             borderWidth: 1,
             borderColor: colors.line,
             borderRadius: 22,
-            padding: 18,
+            paddingVertical: 18,
+            paddingHorizontal: 16,
           }}
         >
           {/* Progress bar */}

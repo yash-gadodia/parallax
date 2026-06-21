@@ -133,63 +133,118 @@ export default function ActivityScreen() {
                   scale={tappable}
                   disabled={!tappable}
                 >
-                  <View
-                    style={[
-                      styles.card,
-                      {
-                        backgroundColor: isUnread ? colors.p1 + '14' : colors.surface,
-                        borderColor: isUnread ? 'rgba(157,149,245,0.28)' : colors.line,
-                      },
-                    ]}
-                  >
-                    {/* Emoji icon with optional Tok overlay */}
-                    <View style={styles.iconContainer}>
-                      <View style={styles.emojiBox}>
-                        <Text allowFontScaling={false} style={styles.emoji}>
-                          {a.emoji}
-                        </Text>
-                      </View>
-                      {a.who !== 'us' && (
-                        <View style={styles.tokOverlay}>
-                          <Tok
-                            who={a.who === 'you' ? YOU : DANI}
-                            you={a.who === 'you'}
-                            size={20}
-                          />
+                  {isUnread ? (
+                    <LinearGradient
+                      colors={gradients.usSoft.colors}
+                      locations={gradients.usSoft.locations}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={[
+                        styles.card,
+                        {
+                          overflow: 'hidden',
+                          borderColor: 'rgba(157,149,245,0.28)',
+                        },
+                      ]}
+                    >
+                      {/* Emoji icon with optional Tok overlay */}
+                      <View style={styles.iconContainer}>
+                        <View style={styles.emojiBox}>
+                          <Text allowFontScaling={false} style={styles.emoji}>
+                            {a.emoji}
+                          </Text>
                         </View>
+                        {a.who !== 'us' && (
+                          <View style={styles.tokOverlay}>
+                            <Tok
+                              who={a.who === 'you' ? YOU : DANI}
+                              you={a.who === 'you'}
+                              size={20}
+                            />
+                          </View>
+                        )}
+                      </View>
+
+                      {/* Content: title, body, when */}
+                      <View style={styles.content}>
+                        <Text
+                          style={styles.title}
+                          numberOfLines={2}
+                          allowFontScaling={false}
+                        >
+                          {a.title}
+                        </Text>
+                        <Text
+                          style={styles.body}
+                          numberOfLines={2}
+                          allowFontScaling={false}
+                        >
+                          {a.body}
+                        </Text>
+                        <Kick style={{ marginTop: 5 }}>{a.when}</Kick>
+                      </View>
+
+                      {/* Unread dot or chevron */}
+                      <View style={styles.unreadDot} />
+                    </LinearGradient>
+                  ) : (
+                    <View
+                      style={[
+                        styles.card,
+                        {
+                          borderColor: colors.line,
+                          backgroundColor: colors.surface,
+                        },
+                      ]}
+                    >
+                      {/* Emoji icon with optional Tok overlay */}
+                      <View style={styles.iconContainer}>
+                        <View style={styles.emojiBox}>
+                          <Text allowFontScaling={false} style={styles.emoji}>
+                            {a.emoji}
+                          </Text>
+                        </View>
+                        {a.who !== 'us' && (
+                          <View style={styles.tokOverlay}>
+                            <Tok
+                              who={a.who === 'you' ? YOU : DANI}
+                              you={a.who === 'you'}
+                              size={20}
+                            />
+                          </View>
+                        )}
+                      </View>
+
+                      {/* Content: title, body, when */}
+                      <View style={styles.content}>
+                        <Text
+                          style={styles.title}
+                          numberOfLines={2}
+                          allowFontScaling={false}
+                        >
+                          {a.title}
+                        </Text>
+                        <Text
+                          style={styles.body}
+                          numberOfLines={2}
+                          allowFontScaling={false}
+                        >
+                          {a.body}
+                        </Text>
+                        <Kick style={{ marginTop: 5 }}>{a.when}</Kick>
+                      </View>
+
+                      {/* Unread dot or chevron */}
+                      {tappable && (
+                        <Icon
+                          d={ICONS.chevR}
+                          size={16}
+                          color={colors.inkMute}
+                          style={styles.chevron}
+                        />
                       )}
                     </View>
-
-                    {/* Content: title, body, when */}
-                    <View style={styles.content}>
-                      <Text
-                        style={styles.title}
-                        numberOfLines={2}
-                        allowFontScaling={false}
-                      >
-                        {a.title}
-                      </Text>
-                      <Text
-                        style={styles.body}
-                        numberOfLines={2}
-                        allowFontScaling={false}
-                      >
-                        {a.body}
-                      </Text>
-                      <Kick style={{ marginTop: 5 }}>{a.when}</Kick>
-                    </View>
-
-                    {/* Unread dot or chevron */}
-                    {isUnread && <View style={styles.unreadDot} />}
-                    {!isUnread && tappable && (
-                      <Icon
-                        d={ICONS.chevR}
-                        size={16}
-                        color={colors.inkMute}
-                        style={styles.chevron}
-                      />
-                    )}
-                  </View>
+                  )}
                 </Press>
               );
             })}
@@ -290,7 +345,6 @@ const styles = StyleSheet.create({
     fontSize: 10.5,
     color: colors.inkMute,
     marginTop: 22,
-    letterSpacing: 1.5,
   },
   bottomSpacer: {
     height: 40,
