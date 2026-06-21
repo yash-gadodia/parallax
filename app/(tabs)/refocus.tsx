@@ -303,7 +303,7 @@ function IntroStep({ insets, onStart, onBack }: IntroStepProps) {
           zIndex: 40,
         }}
       >
-        <Btn kind="us" onPress={onStart} sub="just your side, privately">
+        <Btn kind="us" onPress={onStart} sub="just your side, privately" testID="refocus-start">
           Start, share my side
         </Btn>
       </View>

@@ -23,4 +23,17 @@ describe('Btn', () => {
     fireEvent.press(getByTestId('test-btn-disabled'));
     expect(onPress).not.toHaveBeenCalled();
   });
+
+  // Guards the Press refactor (Animated.createAnimatedComponent(Pressable)):
+  // the gradient kind='us' CTA — the app's primary button — must stay pressable.
+  test('gradient (kind="us") Btn fires onPress', async () => {
+    const onPress = jest.fn();
+    const { getByTestId } = await render(
+      <Btn kind="us" onPress={onPress} testID="test-btn-us">
+        Start free trial
+      </Btn>
+    );
+    fireEvent.press(getByTestId('test-btn-us'));
+    expect(onPress).toHaveBeenCalledTimes(1);
+  });
 });
