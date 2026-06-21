@@ -15,12 +15,15 @@ export default function TabsLayout(): ReactNode {
   const pathname = usePathname();
   const router = useRouter();
   // "refocus" contains "us", so check it first.
-  const active: TabName = pathname.includes('refocus')
+  const onRefocus = pathname.includes('refocus');
+  const active: TabName = onRefocus
     ? 'refocus'
     : pathname.includes('/us')
       ? 'us'
       : 'home';
 
+  // Refocus is a full-screen flow launched from the nav (design: showNav excludes it),
+  // so the floating bar hides while you're inside it — its TopBar back is the exit.
   return (
     <View style={{ flex: 1 }}>
       <Tabs
@@ -30,7 +33,9 @@ export default function TabsLayout(): ReactNode {
         <Tabs.Screen name="refocus" />
         <Tabs.Screen name="us" />
       </Tabs>
-      <TabBar active={active} go={(t) => router.navigate(tabToRoute[t] as never)} />
+      {!onRefocus && (
+        <TabBar active={active} go={(t) => router.navigate(tabToRoute[t] as never)} />
+      )}
     </View>
   );
 }

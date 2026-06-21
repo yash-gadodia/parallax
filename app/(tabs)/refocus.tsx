@@ -65,9 +65,14 @@ export default function RefocusScreen() {
   const [result, setResult] = useState<RefocusResult | null>(null);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
+  const exitToTabs = () => {
+    if (router.canGoBack()) router.back();
+    else router.navigate('/(tabs)/today');
+  };
+
   const handleBack = () => {
     if (step === 'intro') {
-      router.back();
+      exitToTabs();
     } else if (step === 'mode') {
       setStep('intro');
     } else if (step === 'share') {
@@ -75,7 +80,7 @@ export default function RefocusScreen() {
     } else if (step === 'waiting') {
       // Can't go back from waiting
     } else if (step === 'result') {
-      router.back();
+      exitToTabs();
     }
   };
 
@@ -293,7 +298,7 @@ function IntroStep({ insets, onStart, onBack }: IntroStepProps) {
       <View
         style={{
           position: 'absolute',
-          bottom: 22,
+          bottom: 22 + insets.bottom,
           left: space.gutter,
           right: space.gutter,
           zIndex: 40,

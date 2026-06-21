@@ -8,6 +8,10 @@ export interface Prompt {
   opts: string[];
   remy: number;
   remyHunch: number;
+  // DEMO: your own pick + hunch shown when reveal is opened solo (no real play yet),
+  // tuned so the demo reveal lands one twin, one good guess, one miss.
+  youDemo: number;
+  youHunchDemo: number;
   note: [string, string, string];
   why: string;
 }
@@ -53,6 +57,8 @@ export const DROP: Drop = {
       ],
       remy: 1,
       remyHunch: 4,
+      youDemo: 1,
+      youHunchDemo: 1,
       note: [
         'Same instinct for care. Rare and lovely.',
         'You knew exactly how they want to be held.',
@@ -73,6 +79,8 @@ export const DROP: Drop = {
       ],
       remy: 1,
       remyHunch: 0,
+      youDemo: 3,
+      youHunchDemo: 1,
       note: [
         'You weather storms the same way.',
         'You read their storm right, most partners don\'t.',
@@ -93,6 +101,8 @@ export const DROP: Drop = {
       ],
       remy: 3,
       remyHunch: 1,
+      youDemo: 0,
+      youHunchDemo: 0,
       note: [
         'You both carry the same quiet thing. Say it.',
         'You saw what they don\'t say. That\'s intimacy.',

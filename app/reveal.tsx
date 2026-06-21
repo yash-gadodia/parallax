@@ -185,9 +185,9 @@ export default function RevealScreen() {
           {/* Per-prompt compare cards */}
           <View style={{ marginTop: 26, gap: 12 }}>
             {DROP.prompts.map((prompt, i) => {
-              const myChoice = playState.myPicks[i] ?? -1;
+              const myChoice = playState.myPicks[i] ?? prompt.youDemo;
               const theirChoice = prompt.remy;
-              const myHunch = playState.myHunches[i] ?? -1;
+              const myHunch = playState.myHunches[i] ?? prompt.youHunchDemo;
               const theirHunch = prompt.remyHunch;
 
               const isTwin = myChoice === theirChoice;

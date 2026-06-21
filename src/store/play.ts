@@ -47,8 +47,8 @@ export const usePlayStore = create<PlayState>((set) => ({
 // Derived helper: maps current play state to PromptAnswers and calls scoreReveal
 export function computeReveal(state: PlayState): RevealScore {
   const promptAnswers: PromptAnswers[] = DROP.prompts.map((prompt, i) => ({
-    youPick: state.myPicks[i] ?? -1,
-    youHunch: state.myHunches[i] ?? -1,
+    youPick: state.myPicks[i] ?? prompt.youDemo,
+    youHunch: state.myHunches[i] ?? prompt.youHunchDemo,
     themPick: prompt.remy,
     themHunch: prompt.remyHunch,
   }));
