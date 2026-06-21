@@ -10,6 +10,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { DawnBlobs } from '../../src/components/DawnBlobs';
+import { RadialGlow } from '../../src/components/RadialGlow';
 import { Wordmark } from '../../src/components/Wordmark';
 import { Peek } from '../../src/components/Peek';
 import Tok from '../../src/components/Tok';
@@ -256,14 +257,8 @@ export default function TodayScreen() {
                 overflow: 'hidden',
               }}
             >
-              {/* Radial overlay for subtle depth */}
-              <View
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  backgroundColor: 'rgba(255,255,255,0.15)',
-                }}
-              />
+              {/* Radial overlay for subtle depth (shine from top-right) */}
+              <RadialGlow color="#ffffff" opacity={0.5} cx="80%" cy="-10%" r="100%" stop={0.6} />
 
               {/* DROP code and day */}
               <View style={{ position: 'absolute', top: 16, left: 18 }}>

@@ -12,6 +12,7 @@ import Press from '../src/components/Press';
 import { Kick, Serif } from '../src/components/Text';
 import GradientText from '../src/components/GradientText';
 import { Float } from '../src/components/Float';
+import { RadialGlow } from '../src/components/RadialGlow';
 import Tok from '../src/components/Tok';
 import { Icon, ICONS } from '../src/components/Icon';
 import { DawnBlobs } from '../src/components/DawnBlobs';
@@ -100,14 +101,7 @@ export default function StreakScreen() {
               }}
             >
               {/* Radial glow background */}
-              <View
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  borderRadius: 75,
-                  backgroundColor: 'rgba(255,142,122,0.32)',
-                }}
-              />
+              <RadialGlow color="#FF8E7A" opacity={0.32} r="50%" stop={0.65} />
               <Text style={{ fontSize: 72 }}>🔥</Text>
             </View>
           </Float>

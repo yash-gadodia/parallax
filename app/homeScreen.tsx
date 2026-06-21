@@ -14,6 +14,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { colors, shadows, radius, space, gradients } from '../src/design/tokens';
 import { fontFamily } from '../src/design/typography';
 import { Icon, ICONS } from '../src/components/Icon';
+import { RadialGlow } from '../src/components/RadialGlow';
 import { Kick, Serif } from '../src/components/Text';
 import Press from '../src/components/Press';
 import Tok from '../src/components/Tok';
@@ -160,13 +161,7 @@ function PingWidget({ onTap }: { onTap?: () => void }) {
         }}
       >
         {/* top sheen */}
-        <View
-          style={{
-            position: 'absolute',
-            inset: 0,
-            backgroundColor: 'rgba(255,255,255,0.4)',
-          }}
-        />
+        <RadialGlow color="#ffffff" opacity={0.4} cx="50%" cy="0%" r="80%" stop={0.6} />
 
         <Text
           allowFontScaling={false}

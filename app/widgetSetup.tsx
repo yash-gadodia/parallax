@@ -11,6 +11,7 @@ import { useRouter } from 'expo-router';
 import { colors, gradients, shadows, space, radius } from '../src/design/tokens';
 import { fontFamily } from '../src/design/typography';
 import { Icon, ICONS } from '../src/components/Icon';
+import { RadialGlow } from '../src/components/RadialGlow';
 import { Kick, Serif } from '../src/components/Text';
 import Press from '../src/components/Press';
 import { Mark } from '../src/components/Mark';
@@ -150,15 +151,7 @@ function PingWidget({ onTap }: { onTap?: () => void }) {
         }}
       >
         {/* Radial gradient shine overlay */}
-        <LinearGradient
-          colors={['rgba(255,255,255,0.4)', 'rgba(255,255,255,0)']}
-          start={{ x: 0.5, y: 0 }}
-          end={{ x: 0.5, y: 1 }}
-          style={{
-            position: 'absolute',
-            inset: 0,
-          }}
-        />
+        <RadialGlow color="#ffffff" opacity={0.4} cx="50%" cy="0%" r="80%" stop={0.6} />
 
         <View style={{ zIndex: 1, alignItems: 'center' }}>
           <Text
