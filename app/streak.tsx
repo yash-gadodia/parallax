@@ -19,6 +19,7 @@ import Toast from '../src/components/Toast';
 import { colors, gradients, radius, shadows, space } from '../src/design/tokens';
 import { fontFamily } from '../src/design/typography';
 import { MILES } from '../src/content/us';
+import { useCouple } from '../src/features/pairing/useCouple';
 
 // Mock partner data
 const YOU = { initial: 'Y' };
@@ -29,8 +30,9 @@ export default function StreakScreen() {
   const { width } = useWindowDimensions();
   const [frozen, setFrozen] = useState(false);
   const [showToast, setShowToast] = useState('');
+  const { couple } = useCouple();
 
-  const streak = 23; // Local streak number
+  const streak = couple?.streak ?? 23;
   const week = [true, true, true, true, true, true, false]; // M-S, today not yet
   const next = MILES.find((m) => m > streak) || 365;
   const prevM = [0, ...MILES].reverse().find((m) => m <= streak) || 0;

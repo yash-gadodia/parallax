@@ -1,6 +1,7 @@
 import { supabase } from '../../lib/supabase';
 import { PromptAnswers, scoreReveal } from '../../domain/reveal';
 import { useUiStore } from '../../store/ui';
+import { completeDrop } from '../engagement/engagementActions';
 import type { CoupleDrop, Answer, DropPrompt, Couple, Json } from '../../types/db';
 
 /**
@@ -91,6 +92,9 @@ export async function submitMyAnswers(
     if (simError) {
       throw simError;
     }
+
+    // Complete the drop to increment streak
+    await completeDrop(coupleDropId);
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Failed to submit answers';
     useUiStore.getState().fireToast(`Error: ${msg}`);

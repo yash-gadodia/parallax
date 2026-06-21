@@ -64,6 +64,16 @@ export interface Answer {
   created_at: string;
 }
 
+export interface Activity {
+  id: string;
+  couple_id: string;
+  kind: string;
+  actor: string | null;
+  payload: Json;
+  read_by: string[];
+  created_at: string;
+}
+
 export type Json = unknown;
 
 export interface Database {
@@ -99,6 +109,11 @@ export interface Database {
         Insert: Omit<Answer, 'id' | 'created_at'>;
         Update: Partial<Omit<Answer, 'id' | 'created_at'>>;
       };
+      activity: {
+        Row: Activity;
+        Insert: Omit<Activity, 'id' | 'created_at'>;
+        Update: Partial<Omit<Activity, 'id' | 'created_at'>>;
+      };
     };
     Functions: {
       create_couple: {
@@ -121,6 +136,26 @@ export interface Database {
         Returns: Json;
       };
       sim_partner_submit: {
+        Args: { p_couple_drop: string };
+        Returns: void;
+      };
+      log_activity: {
+        Args: {
+          p_couple: string;
+          p_kind: string;
+          p_payload?: Json;
+        };
+        Returns: string;
+      };
+      mark_activity_read: {
+        Args: { p_couple: string };
+        Returns: void;
+      };
+      nudge_partner: {
+        Args: { p_couple: string };
+        Returns: string;
+      };
+      complete_streak: {
         Args: { p_couple_drop: string };
         Returns: void;
       };

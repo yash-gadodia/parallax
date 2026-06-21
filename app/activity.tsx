@@ -18,9 +18,13 @@ import { Icon, ICONS } from '../src/components/Icon';
 import { Kick } from '../src/components/Text';
 import { DawnBlobs } from '../src/components/DawnBlobs';
 
-import { ACTIVITY, Activity as ActivityItem } from '../src/content/us';
+import { ACTIVITY } from '../src/content/us';
 import { colors, gradients, radius, shadows, space } from '../src/design/tokens';
 import { fontFamily } from '../src/design/typography';
+import { useSession } from '../src/features/auth/useSession';
+import { useCouple } from '../src/features/pairing/useCouple';
+import { useActivity } from '../src/features/engagement/useActivity';
+import { mapActivityToDisplay, DisplayActivity } from '../src/features/engagement/activityFormatter';
 
 const YOU = { initial: 'Y' };
 const DANI = { initial: 'D' };
@@ -28,26 +32,52 @@ const DANI = { initial: 'D' };
 export default function ActivityScreen() {
   const router = useRouter();
   const { width, height } = useWindowDimensions();
+  const { session } = useSession();
+  const { couple } = useCouple();
+  const { items: dbItems, markAllRead: markAllReadDb, loading: activityLoading } = useActivity(couple?.id || null);
 
-  const [items, setItems] = useState<ActivityItem[]>(ACTIVITY);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
-  // Mark all as read on mount (after ~900ms)
-  useEffect(() => {
-    const t = setTimeout(() => {
-      setItems(a => a.map(x => ({ ...x, unread: false })));
-    }, 900);
-    return () => clearTimeout(t);
-  }, []);
+  const userId = session?.user?.id;
 
-  const handleMarkAllRead = () => {
-    setItems(a => a.map(x => ({ ...x, unread: false })));
-    setToastMsg('All caught up');
-    // Clear toast after 2s
-    setTimeout(() => setToastMsg(null), 2000);
+  // Use real data if logged in with couple, else fallback to mock
+  const displayItems: DisplayActivity[] = session && couple && dbItems.length > 0
+    ? dbItems
+        .map(a => {
+          const mapped = mapActivityToDisplay(a);
+          return {
+            ...mapped,
+            unread: userId && a.read_by ? !a.read_by.includes(userId) : false,
+          };
+        })
+        .sort((a, b) => {
+          const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
+          const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
+          return bTime - aTime;
+        })
+    : ACTIVITY.map(item => ({
+        ...item,
+        created_at: undefined,
+        read_by: [],
+      }));
+
+  const handleMarkAllRead = async () => {
+    if (session && couple) {
+      try {
+        await markAllReadDb();
+        setToastMsg('All caught up');
+        setTimeout(() => setToastMsg(null), 2000);
+      } catch {
+        setToastMsg('Failed to mark as read');
+        setTimeout(() => setToastMsg(null), 2000);
+      }
+    } else {
+      setToastMsg('All caught up');
+      setTimeout(() => setToastMsg(null), 2000);
+    }
   };
 
-  const handleActivityPress = (item: ActivityItem) => {
+  const handleActivityPress = (item: DisplayActivity) => {
     if (!item.cta) return;
 
     if (item.cta === 'play') {
@@ -92,7 +122,7 @@ export default function ActivityScreen() {
           <View style={styles.topSpacer} />
 
           <View style={styles.itemsContainer}>
-            {items.map(a => {
+            {(displayItems as DisplayActivity[]).map(a => {
               const tappable = !!a.cta;
               const isUnread = a.unread;
 

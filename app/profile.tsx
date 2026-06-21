@@ -19,6 +19,8 @@ import { Mark } from '../src/components/Mark';
 
 import { colors, gradients, radius, shadows, space } from '../src/design/tokens';
 import { fontFamily } from '../src/design/typography';
+import { useCouple } from '../src/features/pairing/useCouple';
+import { nudge } from '../src/features/engagement/engagementActions';
 
 const YOU = { initial: 'Y' };
 const DANI = { initial: 'D' };
@@ -125,6 +127,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const { couple } = useCouple();
 
   // Mock profile state
   const state: ProfileState = {
@@ -138,8 +141,17 @@ export default function ProfileScreen() {
     setTimeout(() => setToastMsg(null), 2000);
   };
 
-  const handleNudge = () => {
-    showToast('Nudge sent to Dani 👋');
+  const handleNudge = async () => {
+    if (!couple) {
+      showToast('Not paired yet');
+      return;
+    }
+    try {
+      await nudge(couple.id);
+      showToast('Nudge sent to Dani 👋');
+    } catch {
+      showToast('Failed to send nudge');
+    }
   };
 
   const handleNotifications = () => {

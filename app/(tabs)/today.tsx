@@ -23,6 +23,9 @@ import { colors, gradients, radius, shadows, space } from '../../src/design/toke
 import { fontFamily } from '../../src/design/typography';
 import { DROP } from '../../src/content/drop';
 import { usePlayStore, computeReveal } from '../../src/store/play';
+import { useCouple } from '../../src/features/pairing/useCouple';
+import { useActivity } from '../../src/features/engagement/useActivity';
+import { useSession } from '../../src/features/auth/useSession';
 
 // Identity definitions
 const YOU = { name: 'you', initial: 'Y' };
@@ -35,10 +38,13 @@ export default function TodayScreen() {
   const playState = usePlayStore();
   const done = playState.done;
   const reveal = done ? computeReveal(playState) : null;
+  const { session } = useSession();
+  const { couple } = useCouple();
+  const { items: dbActivity, unreadCount } = useActivity(couple?.id || null);
 
-  // Mock streak and wave for display (in real app, would come from persistent store)
-  const streak = 23;
+  const streak = couple?.streak ?? 23;
   const wave = reveal?.wave ?? 76;
+  const hasUnreadActivity = unreadCount > 0;
 
   const handlePlay = () => {
     router.push('/play');
@@ -153,19 +159,21 @@ export default function TodayScreen() {
                   }}
                 >
                   <Icon d={ICONS.bell} size={18} color={colors.inkSoft} />
-                  <View
-                    style={{
-                      position: 'absolute',
-                      top: 7,
-                      right: 8,
-                      width: 8,
-                      height: 8,
-                      borderRadius: radius.pill,
-                      backgroundColor: colors.p1Deep,
-                      borderWidth: 1.5,
-                      borderColor: colors.surface,
-                    }}
-                  />
+                  {hasUnreadActivity && (
+                    <View
+                      style={{
+                        position: 'absolute',
+                        top: 7,
+                        right: 8,
+                        width: 8,
+                        height: 8,
+                        borderRadius: radius.pill,
+                        backgroundColor: colors.p1Deep,
+                        borderWidth: 1.5,
+                        borderColor: colors.surface,
+                      }}
+                    />
+                  )}
                 </View>
               </Press>
 

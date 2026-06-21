@@ -1,5 +1,61 @@
 import '@testing-library/react-native/matchers';
 
+// Default Supabase env so src/lib/supabase.ts constructs in tests (no real network is hit
+// in render-smoke tests). The env-missing-throw test deletes these itself.
+process.env.EXPO_PUBLIC_SUPABASE_URL =
+  process.env.EXPO_PUBLIC_SUPABASE_URL || 'http://localhost:54321';
+process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY =
+  process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 'test-anon-key';
+
+// AsyncStorage's native module isn't available in jest — use its official mock
+// (supabase.ts imports it for auth persistence).
+jest.mock('@react-native-async-storage/async-storage', () =>
+  require('@react-native-async-storage/async-storage/jest/async-storage-mock')
+);
+
+// Mock the Supabase client so screen render-smoke tests don't hit the network
+// (clean empty results -> pristine output). Tests that need specific behavior
+// mock '../lib/supabase' locally and override this.
+jest.mock('@supabase/supabase-js', () => {
+  const makeQuery = () => {
+    const q: any = {};
+    const chain = [
+      'select', 'insert', 'update', 'upsert', 'delete', 'eq', 'neq', 'or',
+      'in', 'is', 'order', 'limit', 'range', 'filter', 'match', 'gte', 'lte',
+    ];
+    chain.forEach((m) => { q[m] = () => q; });
+    q.single = () => Promise.resolve({ data: null, error: null });
+    q.maybeSingle = () => Promise.resolve({ data: null, error: null });
+    q.then = (resolve: (v: { data: never[]; error: null }) => unknown) =>
+      resolve({ data: [], error: null });
+    return q;
+  };
+  const channel = () => {
+    const c: any = {};
+    c.on = () => c;
+    c.subscribe = () => c;
+    c.unsubscribe = () => {};
+    return c;
+  };
+  return {
+    createClient: () => ({
+      from: () => makeQuery(),
+      rpc: () => Promise.resolve({ data: null, error: null }),
+      channel,
+      removeChannel: () => {},
+      auth: {
+        getSession: () => Promise.resolve({ data: { session: null }, error: null }),
+        getUser: () => Promise.resolve({ data: { user: null }, error: null }),
+        onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
+        signInWithPassword: () => Promise.resolve({ data: { session: null }, error: null }),
+        signUp: () => Promise.resolve({ data: { session: null }, error: null }),
+        signOut: () => Promise.resolve({ error: null }),
+        signInWithIdToken: () => Promise.resolve({ data: { session: null }, error: null }),
+      },
+    }),
+  };
+});
+
 // Mock reanimated to avoid native module initialization
 jest.mock('react-native-reanimated', () => {
   const View = require('react-native').View;
