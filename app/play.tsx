@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -17,13 +17,19 @@ import { Kick, Serif } from '../src/components/Text';
 import Press from '../src/components/Press';
 import Tok from '../src/components/Tok';
 import { DawnBlobs } from '../src/components/DawnBlobs';
+import { useSession } from '../src/features/auth/useSession';
+import { useCouple } from '../src/features/pairing/useCouple';
+import { submitMyAnswers } from '../src/features/drops/dropActions';
 
 const YOU = { initial: 'Y' };
 const PAR = { initial: 'D' };
 
 export default function PlayScreen() {
   const router = useRouter();
+  const { session } = useSession();
+  const { couple } = useCouple();
   const { idx, phase, myPicks, myHunches, reset } = usePlayStore();
+  const [submitting, setSubmitting] = useState(false);
   const prompt = DROP.prompts[idx];
   const isPick = phase === 'pick';
   const color = isPick ? colors.p1 : colors.p2;
@@ -38,7 +44,7 @@ export default function PlayScreen() {
     reset();
   }, [reset]);
 
-  const choose = (optionIdx: number) => {
+  const choose = async (optionIdx: number) => {
     if (isPick) {
       usePlayStore.setState((s) => ({
         myPicks: s.myPicks.map((p, i) => (i === idx ? optionIdx : p)),
@@ -54,9 +60,27 @@ export default function PlayScreen() {
       if (!isLast) {
         usePlayStore.setState({ idx: idx + 1, phase: 'pick' });
       } else {
-        setTimeout(() => {
-          router.push('/waiting');
-        }, 220);
+        // Final submit: either via Supabase (if session + couple) or local fallback
+        if (session && couple) {
+          setSubmitting(true);
+          try {
+            const currentState = usePlayStore.getState();
+            await submitMyAnswers(
+              couple.id,
+              currentState.myPicks,
+              currentState.myHunches
+            );
+            setTimeout(() => {
+              router.push('/waiting');
+            }, 220);
+          } catch (_err) {
+            setSubmitting(false);
+          }
+        } else {
+          setTimeout(() => {
+            router.push('/waiting');
+          }, 220);
+        }
       }
     }
   };

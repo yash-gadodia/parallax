@@ -26,6 +26,46 @@ export interface Couple {
   created_at: string;
 }
 
+export interface Drop {
+  id: string;
+  code: string | null;
+  title: string | null;
+  theme: string | null;
+  pack_id: string | null;
+  created_at: string;
+}
+
+export interface DropPrompt {
+  id: string;
+  drop_id: string;
+  position: number | null;
+  emoji: string | null;
+  question: string | null;
+  options: string[];
+  created_at: string;
+}
+
+export interface CoupleDrop {
+  id: string;
+  couple_id: string;
+  drop_id: string;
+  date: string;
+  state: 'open' | 'one_done' | 'revealed';
+  created_at: string;
+}
+
+export interface Answer {
+  id: string;
+  couple_drop_id: string;
+  prompt_id: string;
+  author: string;
+  pick: number | null;
+  hunch: number | null;
+  created_at: string;
+}
+
+export type Json = unknown;
+
 export interface Database {
   public: {
     Tables: {
@@ -39,15 +79,50 @@ export interface Database {
         Insert: Omit<Couple, 'id' | 'created_at'>;
         Update: Partial<Omit<Couple, 'id' | 'created_at'>>;
       };
+      drops: {
+        Row: Drop;
+        Insert: Omit<Drop, 'id' | 'created_at'>;
+        Update: Partial<Omit<Drop, 'id' | 'created_at'>>;
+      };
+      drop_prompts: {
+        Row: DropPrompt;
+        Insert: Omit<DropPrompt, 'id' | 'created_at'>;
+        Update: Partial<Omit<DropPrompt, 'id' | 'created_at'>>;
+      };
+      couple_drops: {
+        Row: CoupleDrop;
+        Insert: Omit<CoupleDrop, 'id' | 'created_at'>;
+        Update: Partial<Omit<CoupleDrop, 'id' | 'created_at'>>;
+      };
+      answers: {
+        Row: Answer;
+        Insert: Omit<Answer, 'id' | 'created_at'>;
+        Update: Partial<Omit<Answer, 'id' | 'created_at'>>;
+      };
     };
     Functions: {
       create_couple: {
-        Args: Record<string, string> | {};
+        Args: object;
         Returns: Couple;
       };
       join_couple: {
-        Args: Record<string, string> | {};
+        Args: { p_code: string };
         Returns: Couple;
+      };
+      ensure_today_drop: {
+        Args: { p_couple: string };
+        Returns: string;
+      };
+      submit_answers: {
+        Args: {
+          p_couple_drop: string;
+          p_answers: Json;
+        };
+        Returns: Json;
+      };
+      sim_partner_submit: {
+        Args: { p_couple_drop: string };
+        Returns: void;
       };
     };
   };

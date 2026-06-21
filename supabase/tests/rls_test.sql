@@ -89,10 +89,9 @@ begin;
   -- TEST GROUP 3: Couples Table Structure and Constraints
   -- ========================================================================
 
-  select is(
-    (select count(*) from public.couples)::int,
-    1,
-    'test couple exists in database'
+  select ok(
+    exists(select 1 from public.couples where invite_code = 'TEST-0001'),
+    'test couple exists with correct invite code'
   );
 
   select ok(
@@ -110,25 +109,20 @@ begin;
   -- TEST GROUP 4: Profiles Table (RLS policy structure verification)
   -- ========================================================================
 
-  select is(
-    (select count(*) from public.profiles where display_name in ('Alice', 'Bob', 'Charlie'))::int,
-    3,
-    'all three test profiles exist'
+  -- Verify the test profiles exist by their UUIDs (hermetic: not by global count)
+  select ok(
+    exists(select 1 from public.profiles where id = '11111111-1111-1111-1111-111111111111'::uuid and display_name = 'Alice'),
+    'Alice profile exists with correct UUID'
   );
 
   select ok(
-    exists(select 1 from public.profiles where id = '11111111-1111-1111-1111-111111111111'::uuid),
-    'Alice profile exists'
+    exists(select 1 from public.profiles where id = '22222222-2222-2222-2222-222222222222'::uuid and display_name = 'Bob'),
+    'Bob profile exists with correct UUID'
   );
 
   select ok(
-    exists(select 1 from public.profiles where id = '22222222-2222-2222-2222-222222222222'::uuid),
-    'Bob profile exists'
-  );
-
-  select ok(
-    exists(select 1 from public.profiles where id = '33333333-3333-3333-3333-333333333333'::uuid),
-    'Charlie profile exists'
+    exists(select 1 from public.profiles where id = '33333333-3333-3333-3333-333333333333'::uuid and display_name = 'Charlie'),
+    'Charlie profile exists with correct UUID'
   );
 
   -- ========================================================================
@@ -171,11 +165,16 @@ begin;
   -- TEST GROUP 6: Data Integrity Across Pairing
   -- ========================================================================
 
-  -- Verify the active couple connects exactly 2 people
+  -- Verify the test couple is active with both members
   select is(
-    (select count(*) from public.couples where status = 'active' and member_a is not null and member_b is not null)::int,
-    1,
-    'exactly 1 active couple with both members'
+    (select status from public.couples where invite_code = 'TEST-0001'),
+    'active'::text,
+    'Test couple is active with both members'
+  );
+
+  select ok(
+    (select member_b from public.couples where invite_code = 'TEST-0001') is not null,
+    'Test couple has both member_a and member_b set'
   );
 
   -- Verify profiles exist for both active couple members

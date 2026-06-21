@@ -26,12 +26,16 @@ import Card from '../src/components/Card';
 import Btn from '../src/components/Btn';
 import GradientText from '../src/components/GradientText';
 import { DawnBlobs } from '../src/components/DawnBlobs';
+import { useSession } from '../src/features/auth/useSession';
+import { useCouple } from '../src/features/pairing/useCouple';
 
 const YOU = { initial: 'Y' };
 const PAR = { initial: 'D' };
 
 export default function RevealScreen() {
   const router = useRouter();
+  const { session } = useSession();
+  const { couple } = useCouple();
   const playState = usePlayStore();
   const reveal = computeReveal(playState);
 

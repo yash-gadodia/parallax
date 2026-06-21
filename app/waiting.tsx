@@ -7,16 +7,26 @@ import { Peek } from '../src/components/Peek';
 import { Kick, Serif } from '../src/components/Text';
 import { DawnBlobs } from '../src/components/DawnBlobs';
 import { colors, gradients, space } from '../src/design/tokens';
+import { useSession } from '../src/features/auth/useSession';
+import { useCouple } from '../src/features/pairing/useCouple';
+import { useDropState } from '../src/features/drops/useDropState';
 
 export default function WaitingScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { session } = useSession();
+  const { couple } = useCouple();
   const blobAnim = React.useRef(new Animated.Value(0)).current;
   const dotAnims = React.useRef([
     new Animated.Value(0),
     new Animated.Value(0),
     new Animated.Value(0),
   ]).current;
+
+  // If we have session + couple, use real-time polling for couple_drop state
+  // We store couplDropId from session/couple context if available
+  // For now, pass null to useDropState to fall back to timer
+  const { coupleDrop } = useDropState(null);
 
   useEffect(() => {
     // Animate blob (pxfloat 3.5s)
@@ -55,12 +65,19 @@ export default function WaitingScreen() {
       }, i * 180);
     });
 
+    // If supabase connected and couple_drop revealed, go to reveal immediately
+    if (session && coupleDrop?.state === 'revealed') {
+      router.replace('/reveal');
+      return;
+    }
+
+    // Otherwise fall back to timer (2.6s for demo)
     const timer = setTimeout(() => {
       router.replace('/reveal');
     }, 2600);
 
     return () => clearTimeout(timer);
-  }, [router, blobAnim, dotAnims]);
+  }, [router, blobAnim, dotAnims, session, coupleDrop?.state]);
 
   return (
     <LinearGradient

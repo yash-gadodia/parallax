@@ -190,18 +190,17 @@ begin;
   );
 
   -- ========================================================================
-  -- TEST 9: Verify drops and drop_prompts are in the public catalog
+  -- TEST 9: Verify the test drop and prompts exist (hermetic: query by test IDs)
   -- ========================================================================
-  select is(
-    (select count(*)::int from public.drops),
-    1,
-    'Global drops catalog has 1 drop'
+  select ok(
+    exists(select 1 from public.drops where id = '00000000-0000-0000-0000-000000000100'::uuid),
+    'Test drop exists in catalog'
   );
 
   select is(
-    (select count(*)::int from public.drop_prompts),
+    (select count(*)::int from public.drop_prompts where drop_id = '00000000-0000-0000-0000-000000000100'::uuid),
     2,
-    'Global drop_prompts catalog has 2 prompts'
+    'Test drop has 2 prompts'
   );
 
   -- ========================================================================
