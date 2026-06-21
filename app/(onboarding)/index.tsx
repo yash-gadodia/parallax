@@ -60,6 +60,12 @@ function ProgressDots({ current, total }: { current: number; total: number }) {
 
 // Step 0: Welcome
 function Step0Welcome({ onNext }: { onNext: () => void }) {
+  const router = useRouter();
+
+  const handleExistingAccount = () => {
+    router.push('/login');
+  };
+
   return (
     <SafeAreaViewContext style={styles.screenContainer}>
       <View style={styles.screenContent}>
@@ -101,7 +107,7 @@ function Step0Welcome({ onNext }: { onNext: () => void }) {
           <Btn kind="us" onPress={onNext} sub="takes a minute">
             Get started
           </Btn>
-          <Press scale={false}>
+          <Press scale={false} onPress={handleExistingAccount}>
             <Text
               allowFontScaling={false}
               style={{

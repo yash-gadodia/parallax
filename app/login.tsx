@@ -1,0 +1,229 @@
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  ScrollView,
+  ActivityIndicator,
+  Platform,
+} from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { colors, gradients, radius, shadows, space } from '../src/design/tokens';
+import { fontFamily } from '../src/design/typography';
+import { Kick, Serif } from '../src/components/Text';
+import Btn from '../src/components/Btn';
+import Press from '../src/components/Press';
+import { Wordmark } from '../src/components/Wordmark';
+import TopBar from '../src/components/TopBar';
+import { DawnBlobs } from '../src/components/DawnBlobs';
+import Toast from '../src/components/Toast';
+import { useUiStore } from '../src/store/ui';
+import { signInWithEmail } from '../src/features/auth/authActions';
+
+export default function LoginScreen() {
+  const router = useRouter();
+  const { toast, fireToast } = useUiStore();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleBack = () => {
+    router.replace('/(onboarding)');
+  };
+
+  const handleLogIn = async () => {
+    if (!email.trim()) {
+      fireToast('Please enter your email');
+      return;
+    }
+
+    if (!password) {
+      fireToast('Please enter your password');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await signInWithEmail(email, password);
+      router.replace('/');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Sign in failed';
+      fireToast(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateAccount = () => {
+    router.replace('/(onboarding)');
+  };
+
+  return (
+    <View style={{ flex: 1, backgroundColor: colors.bg0 }}>
+      <LinearGradient
+        colors={gradients.dawn.colors}
+        locations={gradients.dawn.locations}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={{ position: 'absolute', inset: 0 }}
+      />
+      <DawnBlobs />
+
+      <TopBar title="sign in" onBack={handleBack} />
+
+      <SafeAreaView style={{ flex: 1 }} edges={['bottom']}>
+        <ScrollView
+          contentContainerStyle={{
+            paddingHorizontal: space.gutter,
+            paddingBottom: 40,
+          }}
+          style={{ flex: 1 }}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Top spacing */}
+          <View style={{ height: 72 }} />
+
+          {/* Logo */}
+          <View style={{ alignItems: 'center', marginBottom: 36 }}>
+            <Wordmark size={48} />
+          </View>
+
+          {/* Heading */}
+          <Kick style={{ marginBottom: 8 }}>welcome back</Kick>
+          <Serif s={34} style={{ marginBottom: 28 }}>
+            Log in to your account
+          </Serif>
+
+          {/* Email Input */}
+          <View style={{ marginBottom: 16 }}>
+            <Text
+              allowFontScaling={false}
+              style={{
+                fontFamily: fontFamily.mono,
+                fontSize: 10,
+                letterSpacing: 1.2,
+                textTransform: 'uppercase',
+                color: colors.inkMute,
+                marginBottom: 8,
+                lineHeight: 10,
+              }}
+            >
+              Email
+            </Text>
+            <View
+              style={{
+                paddingVertical: 14,
+                paddingHorizontal: 15,
+                borderRadius: radius.input,
+                backgroundColor: colors.surface,
+                borderWidth: 1,
+                borderColor: colors.line,
+                ...shadows.shadowSoft,
+              }}
+            >
+              <TextInput
+                value={email}
+                onChangeText={setEmail}
+                placeholder="you@example.com"
+                placeholderTextColor={colors.inkMute}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                editable={!loading}
+                allowFontScaling={false}
+                style={{
+                  fontSize: 15.5,
+                  fontWeight: '600',
+                  fontFamily: fontFamily.ui,
+                  color: colors.ink,
+                  lineHeight: 24,
+                }}
+              />
+            </View>
+          </View>
+
+          {/* Password Input */}
+          <View style={{ marginBottom: 32 }}>
+            <Text
+              allowFontScaling={false}
+              style={{
+                fontFamily: fontFamily.mono,
+                fontSize: 10,
+                letterSpacing: 1.2,
+                textTransform: 'uppercase',
+                color: colors.inkMute,
+                marginBottom: 8,
+                lineHeight: 10,
+              }}
+            >
+              Password
+            </Text>
+            <View
+              style={{
+                paddingVertical: 14,
+                paddingHorizontal: 15,
+                borderRadius: radius.input,
+                backgroundColor: colors.surface,
+                borderWidth: 1,
+                borderColor: colors.line,
+                ...shadows.shadowSoft,
+              }}
+            >
+              <TextInput
+                value={password}
+                onChangeText={setPassword}
+                placeholder="••••••••"
+                placeholderTextColor={colors.inkMute}
+                secureTextEntry
+                editable={!loading}
+                allowFontScaling={false}
+                style={{
+                  fontSize: 15.5,
+                  fontWeight: '600',
+                  fontFamily: fontFamily.ui,
+                  color: colors.ink,
+                  lineHeight: 24,
+                }}
+              />
+            </View>
+          </View>
+
+          {/* Log In Button */}
+          <Btn
+            kind="us"
+            onPress={handleLogIn}
+            disabled={loading}
+            style={{ marginBottom: 12 }}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              'Log in'
+            )}
+          </Btn>
+
+          {/* Sign Up Link */}
+          <Press scale={false} onPress={handleCreateAccount}>
+            <Text
+              allowFontScaling={false}
+              style={{
+                textAlign: 'center',
+                padding: 12,
+                fontSize: 14,
+                fontWeight: '600',
+                color: colors.inkMute,
+                fontFamily: fontFamily.ui,
+                lineHeight: 20,
+              }}
+            >
+              New here? Create an account
+            </Text>
+          </Press>
+        </ScrollView>
+      </SafeAreaView>
+
+      {toast && <Toast msg={toast} />}
+    </View>
+  );
+}
