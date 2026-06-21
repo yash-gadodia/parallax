@@ -9,6 +9,7 @@ import {
   Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { colors, gradients, radius, shadows, space } from '../src/design/tokens';
 import { fontFamily } from '../src/design/typography';
@@ -28,6 +29,7 @@ interface EditProfileScreenProps {
 
 export default function EditProfileScreen(props: EditProfileScreenProps) {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [name, setName] = useState(props.initialName || 'Yash');
   const [since, setSince] = useState(props.initialSince || 'February 2024');
   const [showCameraToast, setShowCameraToast] = useState(false);
@@ -145,8 +147,8 @@ export default function EditProfileScreen(props: EditProfileScreenProps) {
         }}
         style={{ flex: 1 }}
       >
-        {/* Top padding */}
-        <View style={{ height: 50 }} />
+        {/* Top padding — clear the absolute TopBar (insets.top + 52) */}
+        <View style={{ height: insets.top + 64 }} />
 
         {/* Avatar section */}
         <View
