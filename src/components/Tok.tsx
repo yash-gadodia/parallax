@@ -21,9 +21,7 @@ export default function Tok({
   you = false,
 }: TokProps) {
   const bgColor = you ? colors.p1 : colors.p2;
-  const ringColor = ring ? bgColor : 'transparent';
   const ringBorderWidth = ring ? 3 : 0;
-  const outerRingBorderWidth = ring ? 2 : 0;
 
   return (
     <View
