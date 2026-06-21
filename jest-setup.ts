@@ -1,3 +1,5 @@
+import '@testing-library/react-native/matchers';
+
 try {
   require('react-native-reanimated').setUpTests?.();
 } catch (e) {
