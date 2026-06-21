@@ -21,6 +21,7 @@ import Btn from '../../src/components/Btn';
 import Press from '../../src/components/Press';
 import Tok from '../../src/components/Tok';
 import { DawnBlobs } from '../../src/components/DawnBlobs';
+import { Float } from '../../src/components/Float';
 import { INTENTS, MOMENTS } from '../../src/features/onboarding/constants';
 import { useUiStore } from '../../src/store/ui';
 import { useSession } from '../../src/features/auth/useSession';
@@ -63,9 +64,9 @@ function Step0Welcome({ onNext }: { onNext: () => void }) {
     <SafeAreaViewContext style={styles.screenContainer}>
       <View style={styles.screenContent}>
         <View style={styles.welcomeCenter}>
-          <View style={styles.peekContainer}>
+          <Float style={styles.peekContainer}>
             <Peek size={132} mood="love" />
-          </View>
+          </Float>
           <View style={{ marginTop: 24 }}>
             <Wordmark size={64} />
           </View>

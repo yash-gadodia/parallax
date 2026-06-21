@@ -1,4 +1,5 @@
 # Supabase configuration for Parallax
+project_id = "parallax"
 
 [api]
 enabled = true

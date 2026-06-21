@@ -42,12 +42,18 @@ jest.mock('react-native-reanimated', () => {
     withTiming: (target: any, config?: any) => target,
     withSpring: (target: any, config?: any) => target,
     withDecay: (config: any) => 0,
+    withRepeat: (anim: any) => anim,
+    withSequence: (...anims: any[]) => anims[anims.length - 1],
+    withDelay: (_delay: any, anim: any) => anim,
     Easing: {
       linear: () => 0,
       ease: () => 0,
       quad: () => 0,
       cubic: () => 0,
       bezier: () => () => 0,
+      in: (fn: any) => fn,
+      out: (fn: any) => fn,
+      inOut: (fn: any) => fn,
     },
     cancelAnimation: () => {},
     getAnimatedStyle: () => ({}),
@@ -66,5 +72,31 @@ jest.mock('react-native-safe-area-context', () => {
     useSafeAreaFrame: () => ({ x: 0, y: 0, width: 390, height: 844 }),
     SafeAreaInsetsContext: { Provider: ({ children }: any) => children },
     SafeAreaFrameContext: { Provider: ({ children }: any) => children },
+  };
+});
+
+// Mock expo-router (avoids its ESM-only deps in jest + gives screens a router)
+jest.mock('expo-router', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+  const passthrough = ({ children }: any) => children ?? null;
+  const Stack: any = passthrough;
+  Stack.Screen = () => null;
+  const Tabs: any = passthrough;
+  Tabs.Screen = () => null;
+  return {
+    __esModule: true,
+    useRouter: () => ({ push: jest.fn(), replace: jest.fn(), back: jest.fn(), navigate: jest.fn(), dismiss: jest.fn() }),
+    useLocalSearchParams: () => ({}),
+    useGlobalSearchParams: () => ({}),
+    usePathname: () => '/',
+    useSegments: () => [],
+    useFocusEffect: () => {},
+    router: { push: jest.fn(), replace: jest.fn(), back: jest.fn(), navigate: jest.fn() },
+    Link: ({ children }: any) => React.createElement(View, null, children),
+    Redirect: () => null,
+    Stack,
+    Tabs,
+    Slot: passthrough,
   };
 });

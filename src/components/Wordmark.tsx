@@ -45,7 +45,7 @@ export function Slashes({ h = 25, offset = false, light = false }: SlashesProps)
   const bar2Color = light ? 'rgba(255,255,255,0.82)' : colors.p2;
 
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'flex-end', marginHorizontal: h * 0.1 }}>
+    <View style={{ flexDirection: 'row', alignItems: 'flex-end', marginHorizontal: h * 0.1, marginBottom: h * 0.18 }}>
       <View
         style={{
           width: barWidth,
