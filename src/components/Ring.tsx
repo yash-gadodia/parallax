@@ -17,8 +17,7 @@ interface RingProps {
 
 let AnimatedCircle: any;
 try {
-  const { createAnimatedComponent } = require('react-native-reanimated');
-  AnimatedCircle = createAnimatedComponent(Circle);
+  AnimatedCircle = Animated.createAnimatedComponent(Circle);
 } catch {
   AnimatedCircle = Circle;
 }
@@ -36,7 +35,7 @@ export function Ring({ pct, size = 168, animate = true }: RingProps) {
         easing: Easing.bezier(0.3, 0.9, 0.3, 1),
       });
     }
-  }, [pct, animate, targetOffset, offsetValue]);
+  }, [pct, animate, targetOffset]);
 
   const animatedProps = useAnimatedProps(() => ({
     strokeDashoffset: offsetValue.value,
