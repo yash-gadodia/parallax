@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase, Couple } from '../../lib/supabase';
+import { PostgrestMaybeSingleResponse } from '@supabase/supabase-js';
 
 interface UseCoupleReturn {
   couple: Couple | null;
@@ -23,14 +24,13 @@ export function useCouple(): UseCoupleReturn {
         return;
       }
 
-      const result = await supabase
+      const result: PostgrestMaybeSingleResponse<Couple> = await supabase
         .from('couples')
         .select('*')
         .or(`member_a.eq.${uid},member_b.eq.${uid}`)
         .maybeSingle();
 
-      const data = (result as any).data as Couple | null;
-      const error = (result as any).error;
+      const { data, error } = result;
 
       if (error) {
         console.error('Error fetching couple:', error);

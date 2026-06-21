@@ -40,5 +40,15 @@ export interface Database {
         Update: Partial<Omit<Couple, 'id' | 'created_at'>>;
       };
     };
+    Functions: {
+      create_couple: {
+        Args: Record<string, string> | {};
+        Returns: Couple;
+      };
+      join_couple: {
+        Args: Record<string, string> | {};
+        Returns: Couple;
+      };
+    };
   };
 }

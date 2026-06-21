@@ -2,13 +2,13 @@ import { supabase, Couple } from '../../lib/supabase';
 import { normalizeInviteCode, isValidInviteCode } from '../../domain/inviteCode';
 
 export async function createCouple(): Promise<Couple> {
-  const { data, error } = await (supabase.rpc as any)('create_couple');
+  const { data, error } = await supabase.rpc('create_couple');
 
   if (error) {
     throw error;
   }
 
-  return data as Couple;
+  return data;
 }
 
 export async function joinCouple(input: string): Promise<Couple> {
@@ -18,7 +18,8 @@ export async function joinCouple(input: string): Promise<Couple> {
     throw new Error(`Invalid invite code format: "${code}"`);
   }
 
-  const { data, error } = await (supabase.rpc as any)('join_couple', {
+  //@ts-ignore supabase-js RPC overload limitation with multiple function signatures
+  const { data, error } = await supabase.rpc('join_couple', {
     p_code: code,
   });
 
@@ -26,5 +27,5 @@ export async function joinCouple(input: string): Promise<Couple> {
     throw error;
   }
 
-  return data as Couple;
+  return data;
 }
