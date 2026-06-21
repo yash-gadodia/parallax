@@ -15,12 +15,7 @@ interface RingProps {
   animate?: boolean;
 }
 
-let AnimatedCircle: any;
-try {
-  AnimatedCircle = Animated.createAnimatedComponent(Circle);
-} catch {
-  AnimatedCircle = Circle;
-}
+const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 export function Ring({ pct, size = 168, animate = true }: RingProps) {
   const r = (size - 18) / 2;

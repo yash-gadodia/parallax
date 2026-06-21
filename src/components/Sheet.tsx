@@ -11,12 +11,7 @@ interface SheetProps {
   children: React.ReactNode;
 }
 
-let AnimatedView: any = Animated.View;
-try {
-  AnimatedView = Animated.createAnimatedComponent(View);
-} catch {
-  AnimatedView = View as any;
-}
+const AnimatedView = Animated.createAnimatedComponent(View);
 
 export default function Sheet({ title, onClose, children }: SheetProps) {
   const translateY = useSharedValue(100);

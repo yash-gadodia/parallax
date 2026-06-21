@@ -7,12 +7,7 @@ interface ToastProps {
   msg: string;
 }
 
-let AnimatedView: any = Animated.View;
-try {
-  AnimatedView = Animated.createAnimatedComponent(View);
-} catch {
-  AnimatedView = View as any;
-}
+const AnimatedView = Animated.createAnimatedComponent(View);
 
 export default function Toast({ msg }: ToastProps) {
   const opacity = useSharedValue(0);
