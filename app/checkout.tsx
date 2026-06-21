@@ -9,6 +9,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import { useRouter } from 'expo-router';
 import { colors, gradients, space, shadows, radius } from '../src/design/tokens';
 import { fontFamily } from '../src/design/typography';
@@ -352,7 +353,9 @@ export default function CheckoutScreen() {
 
         {/* Confirming Overlay */}
         {confirming && (
-          <View
+          <BlurView
+            intensity={18}
+            tint="dark"
             style={{
               position: 'absolute',
               top: 0,
@@ -391,7 +394,7 @@ export default function CheckoutScreen() {
             >
               Confirming…
             </Text>
-          </View>
+          </BlurView>
         )}
       </SafeAreaView>
     </LinearGradient>

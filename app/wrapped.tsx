@@ -405,8 +405,10 @@ export default function WrappedScreen() {
                 Show the{'\n'}world your type.
               </Serif>
 
-              {/* Share preview card */}
-              <View
+              {/* Share preview card — frosted glass */}
+              <BlurView
+                intensity={28}
+                tint="light"
                 style={{
                   backgroundColor: 'rgba(255,255,255,0.16)',
                   borderRadius: 24,
@@ -416,6 +418,7 @@ export default function WrappedScreen() {
                   marginHorizontal: 0,
                   alignItems: 'center',
                   gap: 10,
+                  overflow: 'hidden',
                 }}
               >
                 <View
@@ -458,7 +461,7 @@ export default function WrappedScreen() {
                 >
                   YASH & DANI · 83% IN SYNC
                 </Text>
-              </View>
+              </BlurView>
 
               <Btn kind="soft" onPress={handleShare} sub="post your wrapped">
                 Share our Wrapped

@@ -8,6 +8,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PACKS, PACK_SAMPLE } from '../src/content/extras';
@@ -305,14 +306,15 @@ export default function PackDetailScreen() {
 
                 {/* Blur effect for locked questions (beyond first) */}
                 {locked && i > 0 && (
-                  <View
+                  <BlurView
+                    intensity={14}
+                    tint="light"
                     pointerEvents="none"
                     style={{
                       position: 'absolute',
                       inset: 0,
-                      backgroundColor: 'rgba(255,255,255,0.3)',
                       borderRadius: radius.tile,
-                      opacity: 0.4,
+                      overflow: 'hidden',
                     }}
                   />
                 )}
