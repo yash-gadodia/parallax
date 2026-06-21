@@ -19,6 +19,7 @@ export function useSession(): { session: Session | null; loading: boolean } {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
+      setLoading(false);
     });
 
     return () => {
