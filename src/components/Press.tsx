@@ -1,11 +1,7 @@
-import React, { useState } from 'react';
-import {
-  Pressable,
-  PressableProps,
-  ViewStyle,
-  Animated,
-  View,
-} from 'react-native';
+import React from 'react';
+import { Pressable, PressableProps, ViewStyle, Animated } from 'react-native';
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 interface PressProps extends Omit<PressableProps, 'style'> {
   onPress?: () => void;
@@ -45,24 +41,18 @@ export default function Press({
     }
   };
 
+  // style (incl. flex:1 for tab items) and the scale transform must live on the
+  // same element — the touch target — or flex never reaches the flexing element.
   return (
-    <Pressable
+    <AnimatedPressable
       onPress={disabled ? undefined : onPress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       disabled={disabled}
+      style={[style, { transform: [{ scale: scaleValue }] }]}
       {...props}
     >
-      <Animated.View
-        style={[
-          style,
-          {
-            transform: [{ scale: scaleValue }],
-          },
-        ]}
-      >
-        {children}
-      </Animated.View>
-    </Pressable>
+      {children}
+    </AnimatedPressable>
   );
 }
