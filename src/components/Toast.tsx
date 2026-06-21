@@ -46,7 +46,7 @@ export default function Toast({ msg }: ToastProps) {
         justifyContent: 'center',
         alignItems: 'center',
         pointerEvents: 'none',
-      } as any}
+      }}
     >
       <AnimatedView
         style={[
@@ -57,7 +57,7 @@ export default function Toast({ msg }: ToastProps) {
             borderRadius: radius.pill,
             maxWidth: '80%',
           },
-          shadows.shadow as any,
+          shadows.shadow,
           animatedStyle,
         ]}
       >

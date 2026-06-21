@@ -1,21 +1,22 @@
+import { render } from '@testing-library/react-native';
 import { Peek } from './Peek';
 
 test('renders Peek with happy mood (default)', () => {
-  expect(<Peek />).toBeTruthy();
+  expect(() => render(<Peek />)).not.toThrow();
 });
 
 test('renders Peek with focus mood', () => {
-  expect(<Peek mood="focus" />).toBeTruthy();
+  expect(() => render(<Peek mood="focus" />)).not.toThrow();
 });
 
 test('renders Peek with search mood', () => {
-  expect(<Peek mood="search" />).toBeTruthy();
+  expect(() => render(<Peek mood="search" />)).not.toThrow();
 });
 
 test('renders Peek with love mood', () => {
-  expect(<Peek mood="love" />).toBeTruthy();
+  expect(() => render(<Peek mood="love" />)).not.toThrow();
 });
 
 test('renders Peek with custom size', () => {
-  expect(<Peek size={120} mood="happy" />).toBeTruthy();
+  expect(() => render(<Peek size={120} mood="happy" />)).not.toThrow();
 });

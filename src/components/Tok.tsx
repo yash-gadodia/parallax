@@ -37,11 +37,9 @@ export default function Tok({
         ...(ring && {
           borderWidth: ringBorderWidth,
           borderColor: colors.surface,
-          ...(shadows.shadow as any),
+          ...shadows.shadow,
         }),
-        ...(!ring && {
-          ...(shadows.shadowSoft as any),
-        }),
+        ...(!ring && shadows.shadowSoft),
       }}
     >
       <Text

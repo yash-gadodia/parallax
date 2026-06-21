@@ -1,3 +1,5 @@
+import { ViewStyle, ColorValue } from 'react-native';
+
 export const colors = {
   bg0: '#FBF1F2',
   bg1: '#F1ECFB',
@@ -18,18 +20,18 @@ export const colors = {
 
 export const gradients = {
   us: {
-    colors: ['#FF8E7A', '#C387C9', '#9D95F5'],
-    locations: [0, 0.48, 1],
+    colors: ['#FF8E7A', '#C387C9', '#9D95F5'] as const satisfies readonly [ColorValue, ColorValue, ...ColorValue[]],
+    locations: [0, 0.48, 1] as const satisfies readonly number[],
   },
   usSoft: {
-    colors: ['rgba(255,142,122,0.16)', 'rgba(157,149,245,0.16)'],
-    locations: [0, 1],
+    colors: ['rgba(255,142,122,0.16)', 'rgba(157,149,245,0.16)'] as const satisfies readonly [ColorValue, ColorValue, ...ColorValue[]],
+    locations: [0, 1] as const satisfies readonly number[],
   },
   dawn: {
-    colors: ['#FCEFF0', '#F6EDF6', '#EEEDFB'],
-    locations: [0, 0.42, 1],
+    colors: ['#FCEFF0', '#F6EDF6', '#EEEDFB'] as const satisfies readonly [ColorValue, ColorValue, ...ColorValue[]],
+    locations: [0, 0.42, 1] as const satisfies readonly number[],
   },
-};
+} as const;
 
 export const shadows = {
   shadow: {
@@ -53,7 +55,7 @@ export const shadows = {
     shadowRadius: 22,
     elevation: 16,
   },
-};
+} as const satisfies Record<string, ViewStyle>;
 
 export const radius = {
   pill: 999,

@@ -15,8 +15,8 @@ export default function GradientText({
   gradient,
   ...props
 }: GradientTextProps) {
-  const colors = (gradient ?? gradients.us.colors) as readonly [ColorValue, ColorValue, ...ColorValue[]];
-  const locations = gradient ? undefined : (gradients.us.locations as unknown) as readonly [number, number, ...number[]];
+  const colors = gradient ?? gradients.us.colors;
+  const locations = gradient ? undefined : gradients.us.locations;
 
   return (
     <MaskedView

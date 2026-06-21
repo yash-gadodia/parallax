@@ -63,8 +63,8 @@ export default function Gallery() {
 
   return (
     <LinearGradient
-      colors={gradients.dawn.colors as any}
-      locations={gradients.dawn.locations as any}
+      colors={gradients.dawn.colors}
+      locations={gradients.dawn.locations}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={{ flex: 1 }}

@@ -33,15 +33,18 @@ export default function Sheet({ title, onClose, children }: SheetProps) {
   }));
 
   return (
-    <View style={{ position: 'absolute', inset: 0, zIndex: 80, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' } as any}>
+    <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 80, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
       <Pressable
         testID="sheet-backdrop"
         onPress={onClose}
         style={{
           position: 'absolute',
-          inset: 0,
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
           backgroundColor: 'rgba(40,28,50,0.4)',
-        } as any}
+        }}
       >
         <BlurView intensity={2} style={{ flex: 1 }} />
       </Pressable>
@@ -57,7 +60,7 @@ export default function Sheet({ title, onClose, children }: SheetProps) {
               paddingTop: 12,
               paddingBottom: 26,
             },
-            shadows.shadowPop as any,
+            shadows.shadowPop,
           ]}
         >
           <View

@@ -1,18 +1,19 @@
+import { render } from '@testing-library/react-native';
 import { Wordmark, Slashes } from './Wordmark';
 import { Mark } from './Mark';
 
 test('Wordmark renders without throwing', () => {
-  expect(<Wordmark />).toBeTruthy();
+  expect(() => render(<Wordmark />)).not.toThrow();
 });
 
 test('Wordmark with offset renders without throwing', () => {
-  expect(<Wordmark offset />).toBeTruthy();
+  expect(() => render(<Wordmark offset />)).not.toThrow();
 });
 
 test('Slashes renders without throwing', () => {
-  expect(<Slashes />).toBeTruthy();
+  expect(() => render(<Slashes />)).not.toThrow();
 });
 
 test('Mark renders without throwing', () => {
-  expect(<Mark />).toBeTruthy();
+  expect(() => render(<Mark />)).not.toThrow();
 });

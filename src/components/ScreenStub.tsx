@@ -16,13 +16,10 @@ function ScreenStubInner({ label }: ScreenStubProps) {
 }
 
 export function ScreenStub({ label }: ScreenStubProps) {
-  const colors = gradients.dawn.colors as unknown as readonly [string, string, string];
-  const locations = gradients.dawn.locations as unknown as readonly [number, number, number];
-
   return (
     <LinearGradient
-      colors={colors}
-      locations={locations}
+      colors={gradients.dawn.colors}
+      locations={gradients.dawn.locations}
       style={styles.container}
     >
       <ScreenStubInner label={label} />

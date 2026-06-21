@@ -64,9 +64,7 @@ export default function Btn({
           borderWidth: 1,
           borderColor: colors.line,
         }),
-        ...(!disabled && {
-          ...(shadows.shadowSoft as any),
-        }),
+        ...(!disabled && shadows.shadowSoft),
       }}
     >
       <Text
@@ -101,8 +99,8 @@ export default function Btn({
 
   const content = isGradient ? (
     <LinearGradient
-      colors={gradients.us.colors as [string, string, string]}
-      locations={gradients.us.locations as [number, number, number]}
+      colors={gradients.us.colors}
+      locations={gradients.us.locations}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={{

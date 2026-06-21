@@ -15,7 +15,7 @@ export default function Card({ children, style, ...props }: CardProps) {
           borderWidth: 1,
           borderColor: colors.line,
           borderRadius: radius.card,
-          ...(shadows.shadow as any),
+          ...shadows.shadow,
         },
         style,
       ]}
