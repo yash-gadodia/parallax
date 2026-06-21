@@ -1,5 +1,6 @@
 import { Text, View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { gradients } from '../design/tokens';
 
 interface ScreenStubProps {
@@ -15,29 +16,17 @@ function ScreenStubInner({ label }: ScreenStubProps) {
 }
 
 export function ScreenStub({ label }: ScreenStubProps) {
-  let LinearGradient: any;
-  try {
-    LinearGradient = require('expo-linear-gradient').default;
-  } catch {
-    LinearGradient = null;
-  }
-
-  if (LinearGradient) {
-    return (
-      <LinearGradient
-        colors={gradients.dawn.colors}
-        locations={gradients.dawn.locations}
-        style={styles.container}
-      >
-        <ScreenStubInner label={label} />
-      </LinearGradient>
-    );
-  }
+  const colors = gradients.dawn.colors as unknown as readonly [string, string, string];
+  const locations = gradients.dawn.locations as unknown as readonly [number, number, number];
 
   return (
-    <View style={styles.fallback}>
+    <LinearGradient
+      colors={colors}
+      locations={locations}
+      style={styles.container}
+    >
       <ScreenStubInner label={label} />
-    </View>
+    </LinearGradient>
   );
 }
 

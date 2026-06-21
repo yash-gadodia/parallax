@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Stack } from 'expo-router';
+import { Tabs } from 'expo-router';
+import type { ReactNode } from 'react';
 import TabBar from '../../src/components/TabBar';
 
 type TabName = 'home' | 'refocus' | 'us';
@@ -17,23 +17,30 @@ const tabToRoute: Record<TabName, RouteName> = {
   us: 'us',
 };
 
-export default function TabsLayout() {
-  const [activeTab, setActiveTab] = useState<TabName>('home');
+interface TabBarProps {
+  state: { routes: Array<{ name: string }>, index: number };
+  navigation: { navigate: (route: string) => void };
+  descriptors: Record<string, any>;
+  insets: { bottom: number };
+}
 
-  const handleTabChange = (tabName: TabName) => {
-    setActiveTab(tabName);
-    const route = tabToRoute[tabName];
-    // Navigation handled by Stack
-  };
-
+export default function TabsLayout(): ReactNode {
   return (
-    <>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="today" />
-        <Stack.Screen name="refocus" />
-        <Stack.Screen name="us" />
-      </Stack>
-      <TabBar active={activeTab} go={handleTabChange} />
-    </>
+    <Tabs
+      screenOptions={{ headerShown: false }}
+      tabBar={(props: TabBarProps) => {
+        const current = props.state.routes[props.state.index].name as keyof typeof routeToTab;
+        return (
+          <TabBar
+            active={routeToTab[current] ?? 'home'}
+            go={(t) => props.navigation.navigate(tabToRoute[t] as never)}
+          />
+        );
+      }}
+    >
+      <Tabs.Screen name="today" />
+      <Tabs.Screen name="refocus" />
+      <Tabs.Screen name="us" />
+    </Tabs>
   );
 }
