@@ -35,7 +35,7 @@ export default function Chip({ children, you = false, soft = false }: ChipProps)
         style={{
           fontSize: 13.5,
           fontWeight: '600',
-          lineHeight: 1.25,
+          lineHeight: 17,
           color: textColor,
           fontFamily: fontFamily.ui,
         }}

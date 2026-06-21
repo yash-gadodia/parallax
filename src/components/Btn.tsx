@@ -72,7 +72,7 @@ export default function Btn({
         style={{
           fontSize: 16.5,
           fontWeight: '700',
-          lineHeight: 1.1,
+          lineHeight: 20,
           color: disabled ? colors.inkMute : palette.fg,
           fontFamily: fontFamily.ui,
         }}

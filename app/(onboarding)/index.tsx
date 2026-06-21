@@ -81,7 +81,7 @@ function Step0Welcome({ onNext }: { onNext: () => void }) {
             style={{
               fontSize: 15.5,
               color: colors.inkSoft,
-              lineHeight: 1.55,
+              lineHeight: 24,
               marginTop: 20,
               maxWidth: 302,
               textAlign: 'center',
@@ -204,7 +204,7 @@ function Step1HowItWorks({ onNext }: { onNext: () => void }) {
                   style={{
                     fontSize: 14.5,
                     color: colors.inkSoft,
-                    lineHeight: 1.5,
+                    lineHeight: 22,
                     marginTop: 4,
                     fontFamily: fontFamily.ui,
                   }}
@@ -289,7 +289,7 @@ function Step2Intent({
           style={{
             fontSize: 14.5,
             color: colors.inkSoft,
-            lineHeight: 1.5,
+            lineHeight: 22,
             marginBottom: 22,
             fontFamily: fontFamily.ui,
           }}
@@ -455,7 +455,7 @@ function Step3PairUp({
           style={{
             fontSize: 15,
             color: colors.inkSoft,
-            lineHeight: 1.5,
+            lineHeight: 22,
             marginBottom: 26,
             fontFamily: fontFamily.ui,
           }}
@@ -601,7 +601,7 @@ function Step4Joined({ onNext }: { onNext: () => void }) {
           style={{
             fontSize: 15.5,
             color: colors.inkSoft,
-            lineHeight: 1.55,
+            lineHeight: 24,
             marginTop: 18,
             maxWidth: 280,
             textAlign: 'center',
@@ -674,7 +674,7 @@ function Step5NotifyTime({
           style={{
             fontSize: 14.5,
             color: colors.inkSoft,
-            lineHeight: 1.5,
+            lineHeight: 22,
             marginBottom: 22,
             fontFamily: fontFamily.ui,
           }}
