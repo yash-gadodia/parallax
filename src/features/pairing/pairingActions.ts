@@ -18,7 +18,7 @@ export async function joinCouple(input: string): Promise<Couple> {
     throw new Error(`Invalid invite code format: "${code}"`);
   }
 
-  //@ts-ignore supabase-js RPC overload limitation with multiple function signatures
+  // @ts-expect-error supabase-js RPC overload limitation with multiple function signatures
   const { data, error } = await supabase.rpc('join_couple', {
     p_code: code,
   });
