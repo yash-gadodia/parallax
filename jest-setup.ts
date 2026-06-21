@@ -156,3 +156,14 @@ jest.mock('expo-router', () => {
     Slot: passthrough,
   };
 });
+
+// expo-blur's BlurView is native — render it as a plain View in jest so screens
+// that frost content (reveal, checkout, packDetail, wrapped, homeScreen, Sheet) test cleanly.
+jest.mock('expo-blur', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+  return {
+    __esModule: true,
+    BlurView: ({ children, ...props }: any) => React.createElement(View, props, children),
+  };
+});

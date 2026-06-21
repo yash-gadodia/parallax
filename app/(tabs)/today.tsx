@@ -2,12 +2,11 @@ import React from 'react';
 import {
   View,
   ScrollView,
-  SafeAreaView,
   Text,
   useWindowDimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets  } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { DawnBlobs } from '../../src/components/DawnBlobs';
 import { RadialGlow } from '../../src/components/RadialGlow';

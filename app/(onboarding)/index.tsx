@@ -5,7 +5,6 @@ import {
   ScrollView,
   Share,
   StyleSheet,
-  SafeAreaView,
   Pressable,
   TextInput,
 } from 'react-native';
