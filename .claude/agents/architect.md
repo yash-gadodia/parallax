@@ -22,5 +22,5 @@ Read ARCHITECTURE.md and follow all rules in `.claude/rules/` before proposing a
 4. Play devil's advocate against your own plan once before presenting it.
 
 ## Constraints
-- Stack is not yet chosen — when it is, update ARCHITECTURE.md and CLAUDE.md, then re-tailor with `/update`.
+- Stack: Expo SDK 56 + React Native + TypeScript + Expo Router; Supabase (Postgres + RLS) backend; Zustand + react-query + supabase-js; Reanimated/SVG/expo-blur. RLS is the privacy backbone + reveal gate. See ARCHITECTURE.md + `.claude/rules/{frontend,database,testing}.md`.
 - Don't write production code; hand the plan to the developer agent.

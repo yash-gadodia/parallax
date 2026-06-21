@@ -21,4 +21,6 @@ Read ARCHITECTURE.md and follow all rules in `.claude/rules/testing.md`.
 3. A test must be able to catch a real regression — not just confirm "it runs without crashing".
 
 ## Constraints
-- Test framework: TODO (not yet chosen — see `.claude/rules/testing.md`). Use the project's real runner command once it exists, not a generic `npm test`.
+- Stack: **jest + jest-expo + @testing-library/react-native** (v14, async `render`) for JS/TS; **pgTAP** (`supabase test db`) for SQL/RLS. Run `npm test`; `npm run typecheck`; `npx expo export -p ios` to catch crashes across all routes.
+- NEVER ship `expect(<Component/>).toBeTruthy()` — it's always-true and tests nothing; render + assert real behavior. Global jest mocks live in `jest-setup.ts`.
+- pgTAP suites must stay hermetic and keep the reveal-gate enforcement assertions green.
