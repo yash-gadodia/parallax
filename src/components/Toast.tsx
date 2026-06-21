@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { View, Text } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
 import { colors, shadows, radius } from '../design/tokens';
+import { fontFamily } from '../design/typography';
 
 interface ToastProps {
   msg: string;
@@ -57,7 +58,9 @@ export default function Toast({ msg }: ToastProps) {
         ]}
       >
         <Text
+          allowFontScaling={false}
           style={{
+            fontFamily: fontFamily.ui,
             color: '#fff',
             fontSize: 13.5,
             fontWeight: '600',

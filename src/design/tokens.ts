@@ -16,6 +16,7 @@ export const colors = {
   p2Deep: '#7064E6',
   match: '#54C2A0',
   matchDeep: '#2E9C7C',
+  usSoft: 'rgba(218, 202, 245, 0.6)',
 };
 
 export const gradients = {
@@ -62,6 +63,11 @@ export const radius = {
   card: 26,
   cardLg: 30,
   tile: 14,
+  cardMd: 22,
+  cardSm: 20,
+  cardXs: 18,
+  input: 16,
+  sm: 12,
 };
 
 export const space = {
