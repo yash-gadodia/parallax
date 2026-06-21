@@ -20,6 +20,7 @@ import { Serif, Kick } from '../../src/components/Text';
 import Btn from '../../src/components/Btn';
 import Press from '../../src/components/Press';
 import Tok from '../../src/components/Tok';
+import { DawnBlobs } from '../../src/components/DawnBlobs';
 import { INTENTS, MOMENTS } from '../../src/features/onboarding/constants';
 import { useUiStore } from '../../src/store/ui';
 import { useSession } from '../../src/features/auth/useSession';
@@ -790,6 +791,7 @@ export default function OnboardingScreen() {
       locations={gradients.dawn.locations}
       style={styles.bg}
     >
+      <DawnBlobs />
       {step0 && (
         <Step0Welcome onNext={() => setStep(1)} />
       )}
