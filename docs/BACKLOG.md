@@ -21,12 +21,20 @@ The shared task list. Plain-English, owner-tagged, and the Claude agent reads & 
 - [ ] **(Yash)** Anthropic key → `supabase secrets set ANTHROPIC_API_KEY` (powers Refocus AI) + add rate-limit for prod
 - [ ] **(Yash)** RevenueCat public SDK keys (`appl_…`/`goog_…`) + products + "Parallax Pro" entitlement
 - [ ] **(Yash)** Resend: verify the Parallax sending domain + set `RESEND_SMTP_PASSWORD` (prod confirmation emails)
+- [ ] **(Yash)** Set **Pro pricing** (Lifetime / Yearly / Monthly) — gates the RevenueCat product setup
+- [ ] **(Yash)** Privacy Policy + Terms of Service URLs (App Store requires a privacy policy; couples data is sensitive)
+- [ ] **(Yash)** App Store Connect: create the app record + enable **TestFlight** for the beta
+- [ ] **(Yash)** Cost monitoring/budgets for Anthropic + Supabase + EAS (so spend doesn't surprise)
 
 ### (Dani) — onboarding, product & design decisions
 - [ ] **(Dani)** Get set up locally + learn the stack — start with `WORKING_WITH_CLAUDE.md`, then `docs/DEV_SETUP.md` (run `npm run dev`), and skim `docs/FLOWS.md` for how the app works
 - [ ] **(Dani)** Decide: ship the **Wrapped** feature, or cut it?
 - [ ] **(Dani)** Decide: add **therapist escalation** in Refocus (offer a real couples therapist after repeated conflicts)?
 - [ ] **(Dani)** Review the daily **prompt quality** / write new prompt packs (the "voice" lives in `src/content/`)
+- [ ] **(Dani)** App Store **listing copy**: app name, subtitle, description, keywords, category
+- [ ] **(Dani)** App Store **screenshots** + a short preview (Claude can generate them from the simulator on request)
+- [ ] **(Dani)** Review the **Refocus AI voice** + onboarding/notification copy (tone check)
+- [ ] **(Dani)** Recruit a few **beta couples** to test via TestFlight
 
 ### (Claude) — buildable now
 - [ ] **(Claude)** Design-fidelity pass on remaining screens: pay/checkout, share/viral sheets, settings/profile, onboarding sub-steps, milestone/wrapped
