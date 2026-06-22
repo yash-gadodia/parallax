@@ -21,6 +21,7 @@ import TopBar from '../src/components/TopBar';
 import { Mark } from '../src/components/Mark';
 import { PLANS, PERKS } from '../src/content/pay';
 import { usePurchases } from '../src/features/purchases/usePurchases';
+import Toast from '../src/components/Toast';
 
 type PlanId = 'year' | 'month';
 type PaymentMethod = 'apple' | 'card';
@@ -30,6 +31,7 @@ export default function CheckoutScreen() {
   const [plan, setPlan] = useState<PlanId>('year');
   const [method, setMethod] = useState<PaymentMethod>('apple');
   const [confirming, setConfirming] = useState(false);
+  const [failMsg, setFailMsg] = useState<string | null>(null);
   const offering = usePurchases((s) => s.offering);
   const purchase = usePurchases((s) => s.purchase);
   const setDemoPro = usePurchases((s) => s.setDemoPro);
@@ -73,6 +75,8 @@ export default function CheckoutScreen() {
       router.replace('/plusSuccess');
     } catch {
       setConfirming(false);
+      setFailMsg("That didn't go through — no charge was made.");
+      setTimeout(() => setFailMsg(null), 2600);
     }
   };
 
@@ -411,6 +415,8 @@ export default function CheckoutScreen() {
             </Text>
           </BlurView>
         )}
+
+        {failMsg && <Toast msg={failMsg} />}
       </SafeAreaView>
     </LinearGradient>
   );

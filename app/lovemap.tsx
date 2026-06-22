@@ -442,11 +442,33 @@ export default function LovemapScreen() {
           </Text>
         </View>
 
-        {/* Learning cards */}
+        {/* Learning cards (or empty state before anything's been learned) */}
         <View style={{ gap: space.gap }}>
-          {learnings.map(l => (
-            <LearnCard key={l.id} l={l} />
-          ))}
+          {learnings.length === 0 ? (
+            <View style={{ alignItems: 'center', paddingVertical: 30, paddingHorizontal: 24 }}>
+              <Text allowFontScaling={false} style={{ fontSize: 30, marginBottom: 10 }}>
+                🌱
+              </Text>
+              <Serif s={21} style={{ textAlign: 'center', marginBottom: 6 }}>
+                Nothing learned yet
+              </Serif>
+              <Text
+                allowFontScaling={false}
+                style={{
+                  fontSize: 13.5,
+                  lineHeight: 13.5 * 1.45,
+                  color: colors.inkMute,
+                  textAlign: 'center',
+                  fontFamily: fontFamily.ui,
+                }}
+              >
+                Play a daily drop or refocus a rough moment, and what you learn about
+                each other shows up here.
+              </Text>
+            </View>
+          ) : (
+            learnings.map((l) => <LearnCard key={l.id} l={l} />)
+          )}
         </View>
 
         {/* Privacy footer */}
