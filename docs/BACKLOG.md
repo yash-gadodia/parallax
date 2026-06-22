@@ -22,7 +22,8 @@ The shared task list. Plain-English, owner-tagged, and the Claude agent reads & 
 - [ ] **(Yash)** RevenueCat public SDK keys (`appl_…`/`goog_…`) + products + "Parallax Pro" entitlement
 - [ ] **(Yash)** Resend: verify the Parallax sending domain + set `RESEND_SMTP_PASSWORD` (prod confirmation emails)
 
-### (Dani) — product & design decisions
+### (Dani) — onboarding, product & design decisions
+- [ ] **(Dani)** Get set up locally + learn the stack — start with `WORKING_WITH_CLAUDE.md`, then `docs/DEV_SETUP.md` (run `npm run dev`), and skim `docs/FLOWS.md` for how the app works
 - [ ] **(Dani)** Decide: ship the **Wrapped** feature, or cut it?
 - [ ] **(Dani)** Decide: add **therapist escalation** in Refocus (offer a real couples therapist after repeated conflicts)?
 - [ ] **(Dani)** Review the daily **prompt quality** / write new prompt packs (the "voice" lives in `src/content/`)
