@@ -56,7 +56,7 @@ export function useLearnings(): UseLearningsReturn {
           const sampleLearnings: Learning[] = LEARNINGS.map((l) => ({
             id: l.id,
             couple_id: couple.id,
-            about: l.who === 'you' ? session.user.id : couple.member_a === session.user.id ? couple.member_b || '' : couple.member_a,
+            about: l.who === 'you' ? 'you' : 'partner',
             emoji: l.emoji,
             need: l.need,
             detail: l.detail,
@@ -69,7 +69,14 @@ export function useLearnings(): UseLearningsReturn {
           }));
           setItems(sampleLearnings);
         } else {
-          setItems(data);
+          // Normalize `about` (stored as a member UUID) to 'you'/'partner' so the
+          // UI's who-chip resolves correctly regardless of which partner is viewing.
+          setItems(
+            (data as Learning[]).map((d) => ({
+              ...d,
+              about: d.about === session.user.id ? 'you' : 'partner',
+            }))
+          );
         }
 
         setLoading(false);

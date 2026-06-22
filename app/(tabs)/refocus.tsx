@@ -702,22 +702,22 @@ interface WaitingStepProps {
 
 function WaitingStep({ userText, daniText, onDone }: WaitingStepProps) {
   const [phase, setPhase] = useState(0); // 0 you in · 1 dani in · 2 analyzing
+  const mounted = useRef(true);
 
   useEffect(() => {
+    mounted.current = true;
     const t1 = setTimeout(() => setPhase(1), 1400);
     const t2 = setTimeout(() => setPhase(2), 2700);
     const min = new Promise((r) => setTimeout(r, 4200));
 
-    // GATE: live Claude mediation via Supabase edge function
-    // For now, use EXEMPLAR as fallback
-    Promise.all([
-      analyze(userText, daniText),
-      min,
-    ]).then(([res]) => {
-      onDone(res);
+    // Live Claude mediation (edge fn) raced against a min display time.
+    Promise.all([analyze(userText, daniText), min]).then(([res]) => {
+      // Guard: the user may navigate away during the ~4.2s wait.
+      if (mounted.current) onDone(res);
     });
 
     return () => {
+      mounted.current = false;
       clearTimeout(t1);
       clearTimeout(t2);
     };
