@@ -89,7 +89,7 @@ If all four are green, you're set.
 | Symptom | Fix |
 |---|---|
 | `npm install` peer-dep error | use `npm install --legacy-peer-deps` |
-| App can't reach Supabase / network errors | `.env` URL must be your **current** LAN IP (it changes between networks). Re-check `ipconfig getifaddr en0`, update `.env`, restart Metro. |
+| App can't reach Supabase / network errors / **sign-in fails or times out** | Two common causes on the **simulator**: (1) use `http://127.0.0.1:54321` as the URL — the sim reaches the Mac via loopback, the LAN IP is only for a physical phone (and goes stale between networks); (2) the **anon key in `.env` must match `supabase status`** — it drifts if the local stack is recreated. Fix both, then **restart Metro with `--clear`** and relaunch the app (env vars are bundled at Metro start). |
 | `supabase test db` shows FAIL right after manual psql/agent work | local DB is dirty → `supabase db reset` first, then re-run. |
 | Reload shows stale JS in the sim | Expo caches the bundle — shake → Reload, or rebuild. Verify route/layout changes with `npx expo export`. |
 | Port 8081 already in use | a Metro server is already running; reuse it, or kill it and re-run. |
