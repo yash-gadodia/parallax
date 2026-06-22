@@ -18,6 +18,9 @@ jest.mock('../../lib/supabase', () => ({
       signUp: jest.fn(),
       signOut: jest.fn(),
       signInWithIdToken: jest.fn(),
+      signInWithOAuth: jest.fn(),
+      exchangeCodeForSession: jest.fn(),
+      setSession: jest.fn(),
       onAuthStateChange: jest.fn(),
     },
   },
@@ -113,18 +116,30 @@ describe('Auth Actions', () => {
   });
 
   describe('signInWithApple', () => {
-    it('throws clear error when expo-apple-authentication is not available', async () => {
-      await expect(signInWithApple()).rejects.toThrow(
-        'Apple sign-in requires a dev build with expo-apple-authentication (service gate not yet configured)'
-      );
+    it('exchanges the Apple identity token with Supabase', async () => {
+      mockSupabase.auth.signInWithIdToken.mockResolvedValue({ error: null } as any);
+      await signInWithApple();
+      expect(mockSupabase.auth.signInWithIdToken).toHaveBeenCalledWith({
+        provider: 'apple',
+        token: 'apple-id-token',
+      });
     });
   });
 
   describe('signInWithGoogle', () => {
-    it('throws clear error when Google sign-in is not configured', async () => {
-      await expect(signInWithGoogle()).rejects.toThrow(
-        'Google sign-in not configured (service gate not yet set up)'
+    it('starts OAuth and exchanges the returned code for a session', async () => {
+      mockSupabase.auth.signInWithOAuth.mockResolvedValue({
+        data: { url: 'https://accounts.google.com/o/oauth2/auth?...' },
+        error: null,
+      } as any);
+      mockSupabase.auth.exchangeCodeForSession.mockResolvedValue({ error: null } as any);
+
+      await signInWithGoogle();
+
+      expect(mockSupabase.auth.signInWithOAuth).toHaveBeenCalledWith(
+        expect.objectContaining({ provider: 'google' })
       );
+      expect(mockSupabase.auth.exchangeCodeForSession).toHaveBeenCalledWith('test-code');
     });
   });
 });

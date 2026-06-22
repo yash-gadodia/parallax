@@ -18,6 +18,8 @@ export const supabase = createClient<Database>(url, anonKey, {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: false,
+    // PKCE is the recommended flow for native OAuth (Google/Apple via the browser).
+    flowType: 'pkce',
   },
 });
 

@@ -20,7 +20,7 @@ import TopBar from '../src/components/TopBar';
 import { DawnBlobs } from '../src/components/DawnBlobs';
 import Toast from '../src/components/Toast';
 import { useUiStore } from '../src/store/ui';
-import { signInWithEmail } from '../src/features/auth/authActions';
+import { signInWithEmail, signInWithApple, signInWithGoogle } from '../src/features/auth/authActions';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -58,6 +58,23 @@ export default function LoginScreen() {
 
   const handleCreateAccount = () => {
     router.replace('/(onboarding)');
+  };
+
+  const handleSocial = async (
+    provider: 'apple' | 'google',
+    fn: () => Promise<void>
+  ) => {
+    setLoading(true);
+    try {
+      await fn();
+      router.replace('/');
+    } catch (err) {
+      const fallback =
+        provider === 'apple' ? 'Apple sign-in failed' : 'Google sign-in failed';
+      fireToast(err instanceof Error ? err.message : fallback);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -202,6 +219,86 @@ export default function LoginScreen() {
               'Log in'
             )}
           </Btn>
+
+          {/* Divider */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginVertical: 14 }}>
+            <View style={{ flex: 1, height: 1, backgroundColor: colors.line }} />
+            <Text
+              allowFontScaling={false}
+              style={{
+                fontFamily: fontFamily.mono,
+                fontSize: 10,
+                letterSpacing: 1.5,
+                textTransform: 'uppercase',
+                color: colors.inkMute,
+              }}
+            >
+              or
+            </Text>
+            <View style={{ flex: 1, height: 1, backgroundColor: colors.line }} />
+          </View>
+
+          {/* Continue with Apple (iOS) */}
+          {Platform.OS === 'ios' && (
+            <Press
+              onPress={() => handleSocial('apple', signInWithApple)}
+              disabled={loading}
+              style={{ marginBottom: 10 }}
+            >
+              <View
+                style={{
+                  minHeight: 54,
+                  borderRadius: radius.pill,
+                  backgroundColor: colors.ink,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  ...shadows.shadowSoft,
+                }}
+              >
+                <Text
+                  allowFontScaling={false}
+                  style={{ fontSize: 15.5, fontWeight: '700', color: '#fff', fontFamily: fontFamily.ui }}
+                >
+                  Continue with Apple
+                </Text>
+              </View>
+            </Press>
+          )}
+
+          {/* Continue with Google */}
+          <Press
+            onPress={() => handleSocial('google', signInWithGoogle)}
+            disabled={loading}
+            style={{ marginBottom: 12 }}
+          >
+            <View
+              style={{
+                minHeight: 54,
+                borderRadius: radius.pill,
+                backgroundColor: colors.surface,
+                borderWidth: 1,
+                borderColor: colors.line,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 9,
+                ...shadows.shadowSoft,
+              }}
+            >
+              <Text
+                allowFontScaling={false}
+                style={{ fontSize: 16, fontWeight: '800', color: '#4285F4', fontFamily: fontFamily.ui }}
+              >
+                G
+              </Text>
+              <Text
+                allowFontScaling={false}
+                style={{ fontSize: 15.5, fontWeight: '700', color: colors.ink, fontFamily: fontFamily.ui }}
+              >
+                Continue with Google
+              </Text>
+            </View>
+          </Press>
 
           {/* Sign Up Link */}
           <Press scale={false} onPress={handleCreateAccount}>

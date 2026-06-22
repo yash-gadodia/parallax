@@ -158,6 +158,33 @@ jest.mock('expo-router', () => {
   };
 });
 
+// Social-auth native modules — absent in jest.
+jest.mock('expo-apple-authentication', () => ({
+  __esModule: true,
+  signInAsync: jest.fn(() =>
+    Promise.resolve({ identityToken: 'apple-id-token', fullName: null, email: null })
+  ),
+  AppleAuthenticationScope: { FULL_NAME: 0, EMAIL: 1 },
+  AppleAuthenticationButton: () => null,
+}));
+jest.mock('expo-web-browser', () => ({
+  __esModule: true,
+  openAuthSessionAsync: jest.fn(() =>
+    Promise.resolve({ type: 'success', url: 'parallax://auth-callback?code=test-code' })
+  ),
+  maybeCompleteAuthSession: jest.fn(),
+}));
+jest.mock('expo-linking', () => ({
+  __esModule: true,
+  createURL: (path: string) => `parallax://${path}`,
+  parse: (url: string) => {
+    const q: Record<string, string> = {};
+    const query = url.split('?')[1];
+    if (query) query.split('&').forEach((p) => { const [k, v] = p.split('='); q[k] = v; });
+    return { queryParams: q };
+  },
+}));
+
 // RevenueCat native modules — absent in jest. The app guards their require() at
 // runtime, but mock them so any code path that loads them stays inert in tests.
 jest.mock('react-native-purchases', () => ({
