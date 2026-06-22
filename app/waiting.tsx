@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Peek } from '../src/components/Peek';
+import { Float } from '../src/components/Float';
 import { Kick, Serif } from '../src/components/Text';
 import { DawnBlobs } from '../src/components/DawnBlobs';
 import { colors, gradients, space } from '../src/design/tokens';
@@ -110,17 +111,22 @@ export default function WaitingScreen() {
             alignItems: 'center',
           }}
         >
-          {/* Animated soft background blob (pxfloat 3.5s) */}
+          {/* Soft background blob — gentle vertical float (pxfloat 3.5s) */}
           <Animated.View
             style={{
               position: 'absolute',
               width: 120,
               height: 120,
               borderRadius: 999,
-              opacity: blobAnim.interpolate({
-                inputRange: [0, 1],
-                outputRange: [0.08, 0.16],
-              }),
+              opacity: 0.13,
+              transform: [
+                {
+                  translateY: blobAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0, -7],
+                  }),
+                },
+              ],
             }}
           >
             <LinearGradient
@@ -132,8 +138,10 @@ export default function WaitingScreen() {
             />
           </Animated.View>
 
-          {/* Peek (search mood) with animation (pxfloat 4s) */}
-          <Peek size={128} mood="search" />
+          {/* Peek (search mood) — gentle float (pxfloat 4s) */}
+          <Float distance={7} duration={4000}>
+            <Peek size={128} mood="search" />
+          </Float>
         </View>
 
         {/* Status label */}
@@ -186,7 +194,7 @@ export default function WaitingScreen() {
                   {
                     translateY: dotAnims[i].interpolate({
                       inputRange: [0, 0.5, 1],
-                      outputRange: [0, -4, 0],
+                      outputRange: [0, -7, 0],
                     }),
                   },
                 ],

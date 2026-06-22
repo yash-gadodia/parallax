@@ -180,6 +180,13 @@ jest.mock('react-native-purchases-ui', () => ({
   },
 }));
 
+// expo-clipboard is native — stub it for the share sheet's Copy action.
+jest.mock('expo-clipboard', () => ({
+  __esModule: true,
+  setStringAsync: jest.fn(() => Promise.resolve()),
+  getStringAsync: jest.fn(() => Promise.resolve('')),
+}));
+
 // expo-blur's BlurView is native — render it as a plain View in jest so screens
 // that frost content (reveal, checkout, packDetail, wrapped, homeScreen, Sheet) test cleanly.
 jest.mock('expo-blur', () => {

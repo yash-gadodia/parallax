@@ -37,7 +37,7 @@ export default function StreakScreen() {
   const week = [true, true, true, true, true, true, false]; // M-S, today not yet
   const next = MILES.find((m) => m > streak) || 365;
   const prevM = [0, ...MILES].reverse().find((m) => m <= streak) || 0;
-  const prog = Math.min(1, (streak - prevM) / (next - prevM));
+  const prog = next === prevM ? 1 : Math.min(1, (streak - prevM) / (next - prevM));
 
   const handleBack = () => router.back();
 

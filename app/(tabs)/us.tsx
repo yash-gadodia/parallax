@@ -35,12 +35,12 @@ export default function UsScreen() {
   const done = true;
   const currentWave = history.length > 0 ? `${history[0].wavelength}` : '76';
 
-  // Wavelength history (last 7 + current)
-  const hist: number[] = history.slice(0, 7).reverse().map(h => h.wavelength);
-  if (hist.length < 7) {
-    // Pad with historical data if needed
+  // Wavelength bar chart: 7 bars total = last 6 drops + today's wavelength.
+  const hist: number[] = history.slice(0, 6).reverse().map(h => h.wavelength);
+  if (hist.length < 6) {
+    // Pad with archive history if there aren't 6 real drops yet
     const archiveWaves = ARCHIVE.map(a => a.wave);
-    const combined = [...hist, ...archiveWaves.slice(hist.length)].slice(0, 7);
+    const combined = [...hist, ...archiveWaves.slice(hist.length)].slice(0, 6);
     hist.length = 0;
     hist.push(...combined);
   }

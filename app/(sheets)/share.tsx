@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, useWindowDimensions, StyleSheet } from 'react-native';
+import { View, Text, useWindowDimensions, StyleSheet, Share } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Defs, RadialGradient, Stop, Rect } from 'react-native-svg';
@@ -24,14 +25,23 @@ export default function ShareSheet() {
     router.back();
   };
 
-  const handleShare = (platform: 'Messages' | 'Instagram' | 'Copy') => {
-    handleClose();
-    const msg =
-      platform === 'Copy'
-        ? 'Copied to clipboard'
-        : `Shared to ${platform}`;
-    setToastMsg(msg);
-    setTimeout(() => setToastMsg(null), 2500);
+  const shareMessage = `We're ${reveal.wave}% on the same wavelength 💞 — find yours on Parallax.`;
+
+  const handleShare = async (platform: 'Messages' | 'Instagram' | 'Copy') => {
+    try {
+      if (platform === 'Copy') {
+        await Clipboard.setStringAsync(shareMessage);
+        setToastMsg('Copied to clipboard');
+        setTimeout(() => setToastMsg(null), 2200);
+        return;
+      }
+      // Messages/Instagram → the OS share sheet (routes to the right app).
+      await Share.share({ message: shareMessage });
+      handleClose();
+    } catch {
+      setToastMsg("Couldn't share — try again");
+      setTimeout(() => setToastMsg(null), 2200);
+    }
   };
 
   const grid = DROP.prompts

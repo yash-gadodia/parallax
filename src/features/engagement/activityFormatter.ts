@@ -42,6 +42,27 @@ const ACTIVITY_KINDS: Record<string, {
     cta: 'streak',
     who: 'us',
   },
+  pack: {
+    emoji: '🌊',
+    title: () => 'Partner sent you a pack',
+    body: () => 'See what they picked for you.',
+    cta: 'packs',
+    who: 'dani',
+  },
+  refocus: {
+    emoji: '🤍',
+    title: () => 'You refocused a moment',
+    body: () => 'Added to your Love Map.',
+    cta: 'lovemap',
+    who: 'us',
+  },
+  reveal: {
+    emoji: '👯',
+    title: () => 'A twin moment',
+    body: () => 'You matched on an answer.',
+    cta: null,
+    who: 'us',
+  },
 };
 
 export function formatActivityTime(createdAt: string): string {

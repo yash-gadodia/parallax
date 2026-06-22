@@ -78,8 +78,7 @@ export default function MilestoneScreen() {
   };
 
   const handleShare = () => {
-    // Share functionality would go here
-    // For now, just a stub
+    router.push('/(sheets)/share');
   };
 
   const width = useWindowDimensions().width;
