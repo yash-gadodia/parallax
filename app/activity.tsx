@@ -83,8 +83,7 @@ export default function ActivityScreen() {
     if (!item.cta) return;
 
     if (item.cta === 'play') {
-      // Would open play screen
-      router.push('/');
+      router.push('/play');
     } else if (item.cta === 'streak') {
       router.push('/streak');
     } else if (item.cta === 'packs') {

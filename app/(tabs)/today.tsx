@@ -59,15 +59,15 @@ export default function TodayScreen() {
   };
 
   const handleStreakPress = () => {
-    // Would open streak widget
+    router.push('/streak');
   };
 
   const handleActivityPress = () => {
-    // Would open activity panel
+    router.push('/activity');
   };
 
   const handleProfilePress = () => {
-    // Would open profile
+    router.push('/profile');
   };
 
   return (

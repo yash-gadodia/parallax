@@ -59,7 +59,7 @@ export default function UsScreen() {
   };
 
   const handleStreakPress = () => {
-    // Would open streak widget
+    router.push('/streak');
   };
 
   const handleDropPress = (code: string) => {
