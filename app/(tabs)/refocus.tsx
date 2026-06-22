@@ -47,6 +47,7 @@ import {
 } from '../../src/content/refocus';
 import { useSession } from '../../src/features/auth/useSession';
 import { useCouple } from '../../src/features/pairing/useCouple';
+import { supabase } from '../../src/lib/supabase';
 import { addLearning } from '../../src/features/lovemap/addLearning';
 
 // Identity definitions
@@ -1355,15 +1356,29 @@ async function analyze(
   userText: string,
   daniText: string
 ): Promise<RefocusResult> {
-  // GATE: live Claude mediation via Supabase edge function
-  // For now, return the scripted EXEMPLAR as a fallback
+  // Live Claude mediation via the `refocus` Supabase edge function (key is
+  // server-side). Falls back to the scripted EXEMPLAR if the function isn't
+  // configured/reachable or returns an unexpected shape, so the flow never breaks.
   try {
-    // TODO: Call Supabase edge function with mediation prompt
-    // const response = await fetch('...supabase edge function...');
-    // const result = await response.json();
-    // return result;
-    return EXEMPLAR;
-  } catch (e) {
+    const { data, error } = await supabase.functions.invoke<RefocusResult>(
+      'refocus',
+      { body: { userText, daniText, partnerName: 'Dani' } }
+    );
+    if (
+      error ||
+      !data ||
+      !Array.isArray(data.agree) ||
+      !data.angles?.you ||
+      !data.angles?.dani ||
+      !data.underneath?.you ||
+      !data.underneath?.dani ||
+      !data.wayback ||
+      !data.bridge
+    ) {
+      return EXEMPLAR;
+    }
+    return data;
+  } catch {
     return EXEMPLAR;
   }
 }

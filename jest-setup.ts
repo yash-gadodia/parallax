@@ -41,6 +41,7 @@ jest.mock('@supabase/supabase-js', () => {
     createClient: () => ({
       from: () => makeQuery(),
       rpc: () => Promise.resolve({ data: null, error: null }),
+      functions: { invoke: () => Promise.resolve({ data: null, error: null }) },
       channel,
       removeChannel: () => {},
       auth: {

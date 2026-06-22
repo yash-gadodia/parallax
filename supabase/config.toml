@@ -17,3 +17,8 @@ enabled = true
 [storage]
 enabled = true
 file_size_limit = 52428800
+
+# Refocus AI mediation — JWT off for local/demo serving. Production should gate
+# this (auth or rate-limit) since it spends Anthropic tokens per call.
+[functions.refocus]
+verify_jwt = false
