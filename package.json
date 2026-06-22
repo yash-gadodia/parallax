@@ -49,12 +49,17 @@
   },
   "scripts": {
     "start": "expo start",
+    "dev": "./scripts/dev.sh",
+    "doctor": "./scripts/doctor.sh",
+    "doctor:fix": "./scripts/doctor.sh --fix",
+    "seed": "./scripts/seed-test-user.sh",
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
     "test": "jest",
     "test:watch": "jest --watch",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "verify": "tsc --noEmit && jest && expo export -p ios"
   },
   "private": true
 }

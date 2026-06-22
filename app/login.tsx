@@ -25,8 +25,10 @@ import { signInWithEmail, signInWithApple, signInWithGoogle } from '../src/featu
 export default function LoginScreen() {
   const router = useRouter();
   const { toast, fireToast } = useUiStore();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  // Dev convenience: pre-fill the seeded test account so login is one tap.
+  // __DEV__ is false in any release build, so this never ships.
+  const [email, setEmail] = useState(__DEV__ ? 'test@parallax.app' : '');
+  const [password, setPassword] = useState(__DEV__ ? 'parallax123' : '');
   const [loading, setLoading] = useState(false);
 
   const handleBack = () => {

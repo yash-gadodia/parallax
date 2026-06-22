@@ -35,6 +35,8 @@ npm run ios
 
 | Task | Command |
 |---|---|
+| **One-command local run** | `npm run dev` (heals env: OrbStack + Supabase + `.env` sync + seed, then launches) |
+| **Diagnose/fix the env** | `npm run doctor` (report) · `npm run doctor:fix` (auto-repair) |
 | Dev server | `npm start` (then `i` for iOS) |
 | Run on iOS (dev build) | `npm run ios` |
 | Tests | `npm test` · watch: `npm run test:watch` |
