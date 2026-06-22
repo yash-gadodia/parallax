@@ -53,7 +53,19 @@ export default function TabBar({ active, go }: TabBarProps) {
             scale={false}
             style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}
           >
-            <View style={{ alignItems: 'center', justifyContent: 'center', gap: 3 }}>
+            <View
+              style={{
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 3,
+                paddingVertical: 6,
+                paddingHorizontal: 14,
+                borderRadius: 16,
+                // The active tab gets a soft pill so "selected" reads clearly even
+                // though the Refocus heart is always coral.
+                backgroundColor: isActive ? 'rgba(255,142,122,0.16)' : 'transparent',
+              }}
+            >
               <Icon
                 d={ICONS[iconKey as keyof typeof ICONS]}
                 size={isRefocus ? 22 : 21}

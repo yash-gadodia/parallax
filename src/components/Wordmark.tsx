@@ -37,15 +37,15 @@ export function Slashes({ h = 25, offset = false, light = false }: SlashesProps)
   }));
 
   const barWidth = h * 0.1;
-  const barHeight = h * 0.7;
+  const barHeight = h * 0.72;
   const borderRadius = h * 0.05;
-  const marginLeft = h * 0.08;
+  const marginLeft = h * 0.045;
 
   const bar1Color = light ? '#fff' : colors.p1;
   const bar2Color = light ? 'rgba(255,255,255,0.82)' : colors.p2;
 
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'flex-end', marginHorizontal: h * 0.04, marginBottom: h * 0.22 }}>
+    <View style={{ flexDirection: 'row', alignItems: 'flex-end', marginHorizontal: h * 0.025, marginBottom: h * 0.2 }}>
       <View
         style={{
           width: barWidth,
