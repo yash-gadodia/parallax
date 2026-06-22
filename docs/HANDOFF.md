@@ -42,6 +42,24 @@ Net effect: a turn can't end with a type error or a banned pattern, even from a 
 6. **Definition of done:** `npm run typecheck` (0) · `npm test` (green) · `npx expo export -p ios` (bundles) · `supabase test db` if you touched SQL. Show the output — don't claim done from inference.
 7. After **2 failed attempts** at the same approach, stop and rethink. Keep changes scoped to the task.
 
+## CI/CD pipeline
+
+GitHub Actions, in `.github/workflows/`:
+
+| Workflow | Trigger | Does |
+|---|---|---|
+| `ci.yml` | every push / PR | typecheck + tests (the safety net — always on) |
+| `ota-update.yml` | push to `main` | ships JS/asset changes **over-the-air** to the `preview` channel — testers get them instantly, no store review. *No-ops until `EXPO_TOKEN` is set.* |
+| `deploy-ios.yml` | **manual** (Actions tab → Run workflow) | runs checks, then `eas build` (iOS), and optionally `eas submit` to the App Store. Pick `preview` or `production`. |
+
+**One-time setup to turn the pipeline on:**
+1. Create an Expo account + `npx eas init` in the repo (writes `extra.eas.projectId` into `app.json`).
+2. Set a **real `ios.bundleIdentifier`** in `app.json` (currently the `com.anonymous.parallax` placeholder).
+3. Add repo secret **`EXPO_TOKEN`** (expo.dev → Account → Access Tokens) — this alone enables OTA + EAS builds from CI.
+4. For App Store submit: configure Apple creds once via `eas credentials` (or an App Store Connect API key in `eas.json` `submit.production`). Needs the Apple Developer account.
+
+After that: merges to `main` auto-ship OTA JS updates; cutting a release is one click of "Deploy iOS (EAS)".
+
 ## Go-live checklist
 
 Everything below is **built; it just needs credentials/config**. Set secrets via `supabase secrets set` / EAS secrets / the relevant dashboard — don't hardcode them.

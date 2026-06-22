@@ -1,0 +1,47 @@
+name: Deploy iOS (EAS)
+
+# Manual trigger so it never runs without credentials configured.
+# Run from the GitHub "Actions" tab → "Deploy iOS (EAS)" → Run workflow.
+on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: "EAS build profile"
+        type: choice
+        default: production
+        options: [preview, production]
+      submit:
+        description: "Submit to the App Store after the build (production only)"
+        type: boolean
+        default: false
+
+jobs:
+  deploy:
+    name: build + submit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install deps
+        run: npm install --legacy-peer-deps
+
+      # Never ship red: verify before building.
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Tests
+        run: npm test -- --ci
+
+      - name: EAS build (iOS)
+        run: eas build --platform ios --profile ${{ inputs.profile }} --non-interactive
+
+      - name: Submit to App Store
+        if: ${{ inputs.submit }}
+        run: eas submit --platform ios --profile ${{ inputs.profile }} --latest --non-interactive

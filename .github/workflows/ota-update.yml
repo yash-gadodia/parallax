@@ -1,0 +1,42 @@
+name: OTA Update (EAS)
+
+# Pushes JS/asset changes over-the-air to the "preview" channel on every merge to
+# main — testers with a preview build get them instantly, no store review.
+# Silently no-ops until EXPO_TOKEN is set (so it never fails before you're ready).
+on:
+  push:
+    branches: [main]
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Is EAS configured?
+        id: gate
+        env:
+          TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          if [ -n "$TOKEN" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "EXPO_TOKEN not set — skipping OTA. Add it in Settings → Secrets to enable."
+          fi
+      - uses: actions/checkout@v4
+        if: steps.gate.outputs.enabled == 'true'
+      - uses: actions/setup-node@v4
+        if: steps.gate.outputs.enabled == 'true'
+        with:
+          node-version: 20
+          cache: npm
+      - uses: expo/expo-github-action@v8
+        if: steps.gate.outputs.enabled == 'true'
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      - name: Install deps
+        if: steps.gate.outputs.enabled == 'true'
+        run: npm install --legacy-peer-deps
+      - name: Publish OTA update
+        if: steps.gate.outputs.enabled == 'true'
+        run: eas update --branch preview --message "${{ github.event.head_commit.message }}" --non-interactive
