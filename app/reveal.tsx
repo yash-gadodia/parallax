@@ -61,7 +61,7 @@ export default function RevealScreen() {
   const peekMood = peekMoodForWave(reveal.wave);
 
   const handleShare = () => {
-    // TODO: implement sharing
+    router.push('/(sheets)/share');
   };
 
   const handleDone = () => {
