@@ -88,7 +88,7 @@ export default function LoginScreen() {
       />
       <DawnBlobs />
 
-      <TopBar title="sign in" onBack={handleBack} />
+      <TopBar title="" onBack={handleBack} />
 
       <SafeAreaView style={{ flex: 1 }} edges={['bottom']}>
         <ScrollView

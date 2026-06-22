@@ -5,6 +5,7 @@ import {
   TextInput,
   ScrollView,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -21,7 +22,11 @@ import TopBar from '../src/components/TopBar';
 import { DawnBlobs } from '../src/components/DawnBlobs';
 import Toast from '../src/components/Toast';
 import { useUiStore } from '../src/store/ui';
-import { signUpWithEmail } from '../src/features/auth/authActions';
+import {
+  signUpWithEmail,
+  signInWithApple,
+  signInWithGoogle,
+} from '../src/features/auth/authActions';
 
 const labelStyle = {
   fontFamily: fontFamily.mono,
@@ -86,6 +91,23 @@ export default function SignupScreen() {
     }
   };
 
+  const handleSocial = async (
+    provider: 'apple' | 'google',
+    fn: () => Promise<void>
+  ) => {
+    setLoading(true);
+    try {
+      await fn();
+      router.replace('/');
+    } catch (err) {
+      const fallback =
+        provider === 'apple' ? 'Apple sign-in failed' : 'Google sign-in failed';
+      fireToast(err instanceof Error ? err.message : fallback);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg0 }}>
       <LinearGradient
@@ -97,7 +119,7 @@ export default function SignupScreen() {
       />
       <DawnBlobs />
 
-      <TopBar title="create account" onBack={() => router.replace('/(onboarding)')} />
+      <TopBar title="" onBack={() => router.replace('/(onboarding)')} />
 
       <SafeAreaView style={{ flex: 1 }} edges={['bottom']}>
         <ScrollView
@@ -106,7 +128,7 @@ export default function SignupScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={{ height: 56 }} />
+          <View style={{ height: 72 }} />
 
           {sent ? (
             <View style={{ alignItems: 'center', marginTop: 24 }}>
@@ -219,6 +241,86 @@ export default function SignupScreen() {
               <Btn kind="us" onPress={handleSignUp} disabled={loading}>
                 {loading ? <ActivityIndicator color="#fff" size="small" /> : 'Create account'}
               </Btn>
+
+              {/* OR divider */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginVertical: 14 }}>
+                <View style={{ flex: 1, height: 1, backgroundColor: colors.line }} />
+                <Text
+                  allowFontScaling={false}
+                  style={{
+                    fontFamily: fontFamily.mono,
+                    fontSize: 10,
+                    letterSpacing: 1.5,
+                    textTransform: 'uppercase',
+                    color: colors.inkMute,
+                  }}
+                >
+                  or
+                </Text>
+                <View style={{ flex: 1, height: 1, backgroundColor: colors.line }} />
+              </View>
+
+              {/* Continue with Apple (iOS) */}
+              {Platform.OS === 'ios' && (
+                <Press
+                  onPress={() => handleSocial('apple', signInWithApple)}
+                  disabled={loading}
+                  style={{ marginBottom: 10 }}
+                >
+                  <View
+                    style={{
+                      minHeight: 54,
+                      borderRadius: radius.pill,
+                      backgroundColor: colors.ink,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      ...shadows.shadowSoft,
+                    }}
+                  >
+                    <Text
+                      allowFontScaling={false}
+                      style={{ fontSize: 15.5, fontWeight: '700', color: '#fff', fontFamily: fontFamily.ui }}
+                    >
+                      Continue with Apple
+                    </Text>
+                  </View>
+                </Press>
+              )}
+
+              {/* Continue with Google */}
+              <Press
+                onPress={() => handleSocial('google', signInWithGoogle)}
+                disabled={loading}
+                style={{ marginBottom: 12 }}
+              >
+                <View
+                  style={{
+                    minHeight: 54,
+                    borderRadius: radius.pill,
+                    backgroundColor: colors.surface,
+                    borderWidth: 1,
+                    borderColor: colors.line,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 9,
+                    ...shadows.shadowSoft,
+                  }}
+                >
+                  <Text
+                    allowFontScaling={false}
+                    style={{ fontSize: 16, fontWeight: '800', color: '#4285F4', fontFamily: fontFamily.ui }}
+                  >
+                    G
+                  </Text>
+                  <Text
+                    allowFontScaling={false}
+                    style={{ fontSize: 15.5, fontWeight: '700', color: colors.ink, fontFamily: fontFamily.ui }}
+                  >
+                    Continue with Google
+                  </Text>
+                </View>
+              </Press>
 
               <Press scale={false} onPress={() => router.replace('/login')}>
                 <Text
