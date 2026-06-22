@@ -26,7 +26,7 @@ export default function ShareSheet() {
     safeBack(router);
   };
 
-  const shareMessage = `We're ${reveal.wave}% on the same wavelength 💞 — find yours on Parallax.`;
+  const shareMessage = `We're ${reveal.wave}% on the same wavelength 💞. Find yours on Parallax.`;
 
   const handleShare = async (platform: 'Messages' | 'Instagram' | 'Copy') => {
     try {
@@ -40,7 +40,7 @@ export default function ShareSheet() {
       await Share.share({ message: shareMessage });
       handleClose();
     } catch {
-      setToastMsg("Couldn't share — try again");
+      setToastMsg("Couldn't share, try again");
       setTimeout(() => setToastMsg(null), 2200);
     }
   };

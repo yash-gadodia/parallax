@@ -147,7 +147,7 @@ export default function EditProfileScreen(props: EditProfileScreenProps) {
         }}
         style={{ flex: 1 }}
       >
-        {/* Top padding — clear the absolute TopBar (insets.top + 52) */}
+        {/* Top padding - clear the absolute TopBar (insets.top + 52) */}
         <View style={{ height: insets.top + 64 }} />
 
         {/* Avatar section */}

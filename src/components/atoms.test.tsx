@@ -25,7 +25,7 @@ describe('Btn', () => {
   });
 
   // Guards the Press refactor (Animated.createAnimatedComponent(Pressable)):
-  // the gradient kind='us' CTA — the app's primary button — must stay pressable.
+  // the gradient kind='us' CTA - the app's primary button - must stay pressable.
   test('gradient (kind="us") Btn fires onPress', async () => {
     const onPress = jest.fn();
     const { getByTestId } = await render(

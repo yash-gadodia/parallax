@@ -3,7 +3,7 @@ import { StyleSheet, useWindowDimensions } from 'react-native';
 import Svg, { Defs, RadialGradient, Stop, Circle } from 'react-native-svg';
 
 // The prototype's "dawn" depth: two soft, blurred color blobs floating behind
-// the content — coral top-left, periwinkle mid-right. (couples-core Phone shell.)
+// the content - coral top-left, periwinkle mid-right. (couples-core Phone shell.)
 // SVG radial gradients fading to transparent stand in for the CSS blur.
 export function DawnBlobs() {
   const { width } = useWindowDimensions();

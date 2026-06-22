@@ -41,7 +41,7 @@ export default function ActivityScreen() {
 
   const userId = session?.user?.id;
 
-  // A paired couple shows their real feed (which may legitimately be empty — see
+  // A paired couple shows their real feed (which may legitimately be empty - see
   // the empty state below). Only the unauthenticated demo falls back to samples.
   const paired = !!(session && couple);
   const displayItems: DisplayActivity[] = paired
@@ -65,7 +65,7 @@ export default function ActivityScreen() {
       }));
 
   // PRD: opening the feed clears the unread dot. Auto-mark read shortly after open
-  // (silent — no toast; the manual button still confirms with one).
+  // (silent - no toast; the manual button still confirms with one).
   useEffect(() => {
     if (!session || !couple) return;
     const t = setTimeout(() => {

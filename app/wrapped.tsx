@@ -406,7 +406,7 @@ export default function WrappedScreen() {
                 Show the{'\n'}world your type.
               </Serif>
 
-              {/* Share preview card — frosted glass */}
+              {/* Share preview card - frosted glass */}
               <BlurView
                 intensity={28}
                 tint="light"

@@ -47,7 +47,7 @@ export default function MilestoneScreen() {
           ? 'A whole month of showing up for each other. That\'s rarer than you think.'
           : 'Seven days in a row. This is how rituals are born.';
 
-  // Confetti emoji hearts — 12 scattered across top, rising animation
+  // Confetti emoji hearts - 12 scattered across top, rising animation
   const hearts = Array.from({ length: 12 }, (_, i) => ({
     id: i,
     x: 4 + Math.random() * 92,
@@ -92,9 +92,9 @@ export default function MilestoneScreen() {
       end={{ x: 1, y: 1 }}
       style={{ flex: 1, position: 'relative' }}
     >
-      {/* Radial gradient overlay at top (light center) — not available in RN, skipped */}
+      {/* Radial gradient overlay at top (light center) - not available in RN, skipped */}
 
-      {/* Confetti emoji hearts — positioned absolutely, animated rise */}
+      {/* Confetti emoji hearts - positioned absolutely, animated rise */}
       {hearts.map((h, idx) => {
         const animValue = heartAnims[idx];
         const translateY = animValue.interpolate({

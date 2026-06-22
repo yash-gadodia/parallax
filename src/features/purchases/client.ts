@@ -2,7 +2,7 @@ import Constants from 'expo-constants';
 import type Purchases from 'react-native-purchases';
 import type RevenueCatUI from 'react-native-purchases-ui';
 
-// react-native-purchases is a NATIVE module — it is absent in Expo Go. We guard
+// react-native-purchases is a NATIVE module - it is absent in Expo Go. We guard
 // the require() so the app still runs in Expo Go (demo mode); a dev/EAS build
 // gets the real SDK. Type-only imports above are erased at compile time, so they
 // never trigger native access.

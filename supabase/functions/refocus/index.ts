@@ -1,4 +1,4 @@
-// Refocus AI — couples conflict mediation.
+// Refocus AI - couples conflict mediation.
 // Each partner privately shares their side; Claude returns a structured resolution:
 // where they agree, each person's angle, the need underneath, a way back, and a
 // kind bridge message. The ANTHROPIC_API_KEY lives only here (server-side); the
@@ -32,7 +32,7 @@ const RESOLUTION_TOOL = {
         type: "array",
         items: { type: "string" },
         description:
-          "2-3 short, neutral facts BOTH partners would agree actually happened — not interpretations or blame.",
+          "2-3 short, neutral facts BOTH partners would agree actually happened. Specific to their story. No interpretations, no blame, no em dashes.",
       },
       angles: {
         type: "object",
@@ -69,25 +69,35 @@ const RESOLUTION_TOOL = {
       wayback: {
         type: "string",
         description:
-          "A short, warm reframe: name that neither stopped caring, what they collided on, and the tiny thing that prevents a repeat. 1-2 sentences.",
+          "A short, warm reframe specific to what happened: neither of them stopped caring, what they actually collided on, and the one small thing that prevents a repeat. 1-2 plain sentences, no platitudes, no em dashes.",
       },
       bridge: {
         type: "string",
         description:
-          "A kind, first-person message Partner A could actually send to repair things. Lowercase, casual, warm, 1-2 sentences; may end with a soft emoji like 🤍. No quotes around it.",
+          "A warm first-person message Partner A could actually text to repair things, specific to their situation. Lowercase, casual, 1-2 sentences, may end with a soft emoji like 🤍. No quotes around it, no em dashes.",
       },
     },
     required: ["agree", "angles", "underneath", "wayback", "bridge"],
   },
 };
 
-const SYSTEM = `You are the mediator inside Parallax, a couples app. Two partners have had a rough moment and each privately shares their side. You are a calm, even-handed mediator — never a referee. Nobody is "right". Your job:
-- Find the small set of neutral facts both would agree on.
-- Steelman EACH person's angle so the other could nod at it.
-- Name the real need underneath each reaction (needs, not accusations).
-- Offer a genuine way back that assumes good intent on both sides.
-- Write one warm, sendable bridge message in Partner A's voice.
-Tone: warm, plain, modern, emotionally intelligent, never clinical or preachy. Keep every field tight. Always answer by calling the provide_resolution tool.`;
+const SYSTEM = `You are the quiet third person inside Parallax, a couples app. Two partners just had a rough moment and each privately told their side. Help them find each other again. You are even-handed, never a referee, and nobody is "right".
+
+Do:
+- Pull out the few plain facts both would agree happened.
+- Put each person's side in words the other could actually nod at.
+- Name the real need under each reaction (a need, not a jab).
+- Offer a genuine way back that assumes both of them meant well.
+- Write one warm message Partner A could actually send.
+
+Voice (this matters most):
+- Sound like a perceptive friend who knows them, not a therapist, a coach, or an AI.
+- Be specific to what they ACTUALLY said. Use their real details. Nothing generic that would fit any couple.
+- Short, plain sentences. Warm, not mushy. Direct, not preachy.
+- NEVER use an em dash. Use a comma, a period, "and", or "but".
+- Do not use these tells: "it makes sense", "it stings", "pulls away", "can feel like", "a signal that", "at the end of the day", "hold space", "showing up", or hedging like "maybe X, or maybe Y".
+
+Keep every field tight. Always answer by calling the provide_resolution tool.`;
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -96,7 +106,7 @@ Deno.serve(async (req: Request) => {
   if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
 
   if (!ANTHROPIC_API_KEY) {
-    // Not configured — the client falls back to its scripted EXEMPLAR.
+    // Not configured - the client falls back to its scripted EXEMPLAR.
     return json({ error: "not_configured" }, 503);
   }
 

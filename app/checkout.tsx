@@ -67,7 +67,7 @@ export default function CheckoutScreen() {
         const unlocked = await purchase(pkg);
         if (!unlocked) {
           setConfirming(false);
-          return; // cancelled or failed — stay on checkout
+          return; // cancelled or failed - stay on checkout
         }
       } else {
         // Expo Go / no live offering → demo unlock so the flow still completes.
@@ -76,7 +76,7 @@ export default function CheckoutScreen() {
       router.replace('/plusSuccess');
     } catch {
       setConfirming(false);
-      setFailMsg("That didn't go through — no charge was made.");
+      setFailMsg("That didn't go through. No charge was made.");
       setTimeout(() => setFailMsg(null), 2600);
     }
   };

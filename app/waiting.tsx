@@ -111,7 +111,7 @@ export default function WaitingScreen() {
             alignItems: 'center',
           }}
         >
-          {/* Soft background blob — gentle vertical float (pxfloat 3.5s) */}
+          {/* Soft background blob - gentle vertical float (pxfloat 3.5s) */}
           <Animated.View
             style={{
               position: 'absolute',
@@ -138,7 +138,7 @@ export default function WaitingScreen() {
             />
           </Animated.View>
 
-          {/* Peek (search mood) — gentle float (pxfloat 4s) */}
+          {/* Peek (search mood) - gentle float (pxfloat 4s) */}
           <Float distance={7} duration={4000}>
             <Peek size={128} mood="search" />
           </Float>

@@ -258,7 +258,7 @@ function Step2Intent({
     if (!selected.length) return;
 
     setLoading(true);
-    // Persist intents best-effort — never block advancing the flow on auth/network.
+    // Persist intents best-effort - never block advancing the flow on auth/network.
     try {
       const { data } = await supabase.auth.getUser();
       const uid = data.user?.id;
@@ -267,7 +267,7 @@ function Step2Intent({
         await supabase.from('profiles').update({ intents: selected }).eq('id', uid);
       }
     } catch {
-      // ignore — intents are saved if/when signed in
+      // ignore - intents are saved if/when signed in
     } finally {
       setLoading(false);
       onNext();
@@ -400,7 +400,7 @@ function Step3PairUp({
         const couple = await createCouple();
         setInviteCode(couple.invite_code || 'YASH-4827');
       } catch {
-        // not signed in yet (or offline) — show a demo code so the flow is smooth
+        // not signed in yet (or offline) - show a demo code so the flow is smooth
         setInviteCode('YASH-4827');
       } finally {
         setCreatingCouple(false);
@@ -633,7 +633,7 @@ function Step5NotifyTime({
 
   const handleFinish = async () => {
     setLoading(true);
-    // Persist best-effort — never block finishing onboarding on auth/network.
+    // Persist best-effort - never block finishing onboarding on auth/network.
     try {
       const { data } = await supabase.auth.getUser();
       const uid = data.user?.id;
@@ -644,7 +644,7 @@ function Step5NotifyTime({
         await supabase.from('profiles').update({ notify_time: time }).eq('id', uid);
       }
     } catch {
-      // ignore — saved if/when signed in
+      // ignore - saved if/when signed in
     } finally {
       setLoading(false);
       onFinish();

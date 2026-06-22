@@ -141,6 +141,6 @@ export async function presentCustomerCenter(): Promise<void> {
     await RevenueCatUI.presentCustomerCenter();
     await usePurchases.getState().restore();
   } catch {
-    // swallow — managing the sub should never crash the screen
+    // swallow - managing the sub should never crash the screen
   }
 }

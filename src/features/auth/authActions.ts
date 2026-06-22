@@ -92,7 +92,7 @@ export async function signInWithGoogle(): Promise<void> {
   if (!data?.url) throw new Error('Could not start Google sign-in');
 
   const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
-  // User backed out of the browser — not an error.
+  // User backed out of the browser - not an error.
   if (result.type === 'cancel' || result.type === 'dismiss') return;
   if (result.type !== 'success' || !result.url) {
     throw new Error('Google sign-in failed');

@@ -42,7 +42,7 @@ export default function Press({
   };
 
   // style (incl. flex:1 for tab items) and the scale transform must live on the
-  // same element — the touch target — or flex never reaches the flexing element.
+  // same element - the touch target - or flex never reaches the flexing element.
   return (
     <AnimatedPressable
       onPress={disabled ? undefined : onPress}

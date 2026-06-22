@@ -33,7 +33,7 @@ export default function TabsLayout(): ReactNode {
   const scrimH = gapH + 64;
 
   // Refocus is a full-screen flow launched from the nav (design: showNav excludes it),
-  // so the floating bar hides while you're inside it — its TopBar back is the exit.
+  // so the floating bar hides while you're inside it - its TopBar back is the exit.
   return (
     <View style={{ flex: 1 }}>
       <Tabs

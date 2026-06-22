@@ -16,7 +16,7 @@ import { completeDrop } from '../engagement/engagementActions';
 const mockSupabase = supabase as unknown as { rpc: jest.Mock; from: jest.Mock };
 
 // A thenable query builder: chainable methods return `self`, and `await`-ing it
-// (or maybeSingle()) resolves to the supplied result — covers every chain shape used.
+// (or maybeSingle()) resolves to the supplied result - covers every chain shape used.
 function builder(result: unknown) {
   const self: Record<string, unknown> = {};
   self.select = () => self;

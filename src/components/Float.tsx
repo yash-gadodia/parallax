@@ -9,7 +9,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 
-// Gentle, tasteful up/down bob — the prototype's `pxfloat` (translateY -7px, ~5s loop).
+// Gentle, tasteful up/down bob - the prototype's `pxfloat` (translateY -7px, ~5s loop).
 // Wrap a mascot / hero element to make it drift.
 export function Float({
   children,
