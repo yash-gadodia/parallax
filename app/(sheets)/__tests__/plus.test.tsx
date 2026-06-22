@@ -1,18 +1,18 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
-import PlusSheet from './plus';
+import PlusSheet from '../plus';
 
 // Mock the purchases module since it calls native RevenueCat
-jest.mock('../../src/features/purchases/usePurchases', () => ({
+jest.mock('../../../src/features/purchases/usePurchases', () => ({
   presentPaywall: jest.fn().mockResolvedValue(false),
 }));
 
-jest.mock('../../src/features/purchases/client', () => ({
+jest.mock('../../../src/features/purchases/client', () => ({
   purchasesAvailable: jest.fn().mockReturnValue(false),
 }));
 
 // Mock the navigation utility
-jest.mock('../../src/lib/nav', () => ({
+jest.mock('../../../src/lib/nav', () => ({
   safeBack: jest.fn(),
 }));
 

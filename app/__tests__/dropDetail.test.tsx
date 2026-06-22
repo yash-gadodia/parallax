@@ -1,6 +1,6 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
-import DropDetailScreen from './dropDetail';
+import DropDetailScreen from '../dropDetail';
 
 describe('DropDetailScreen', () => {
   it('renders the first drop from ARCHIVE with questions and labels', async () => {

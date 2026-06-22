@@ -1,12 +1,12 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
-import PacksScreen from './packs';
+import PacksScreen from '../packs';
 
-jest.mock('../src/lib/nav', () => ({
+jest.mock('../../src/lib/nav', () => ({
   safeBack: jest.fn(),
 }));
 
-jest.mock('../src/features/purchases/usePurchases', () => ({
+jest.mock('../../src/features/purchases/usePurchases', () => ({
   usePurchases: jest.fn((selector) => {
     if (typeof selector === 'function') {
       return selector({ isPro: false });

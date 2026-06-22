@@ -1,20 +1,20 @@
 import { render } from '@testing-library/react-native';
 import React from 'react';
-import ActivityScreen from './activity';
+import ActivityScreen from '../activity';
 
-jest.mock('../src/lib/nav', () => ({
+jest.mock('../../src/lib/nav', () => ({
   safeBack: jest.fn(),
 }));
 
-jest.mock('../src/features/auth/useSession', () => ({
+jest.mock('../../src/features/auth/useSession', () => ({
   useSession: () => ({ session: null }),
 }));
 
-jest.mock('../src/features/pairing/useCouple', () => ({
+jest.mock('../../src/features/pairing/useCouple', () => ({
   useCouple: () => ({ couple: null }),
 }));
 
-jest.mock('../src/features/engagement/useActivity', () => ({
+jest.mock('../../src/features/engagement/useActivity', () => ({
   useActivity: () => ({
     items: [],
     markAllRead: jest.fn(),

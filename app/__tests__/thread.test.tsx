@@ -1,6 +1,6 @@
 import React from 'react';
 import { render } from '@testing-library/react-native/pure';
-import ThreadScreen from './thread';
+import ThreadScreen from '../thread';
 
 describe('ThreadScreen', () => {
   it('renders the thread UI with title, prompt context, and messages', async () => {

@@ -1,6 +1,6 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
-import ShareSheet from './share';
+import ShareSheet from '../share';
 
 describe('ShareSheet', () => {
   it('renders the share sheet with title and content', async () => {

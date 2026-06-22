@@ -1,15 +1,15 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
-import PackDetailScreen from './packDetail';
-import { usePurchases } from '../src/features/purchases/usePurchases';
+import PackDetailScreen from '../packDetail';
+import { usePurchases } from '../../src/features/purchases/usePurchases';
 
 // Mock the purchases hook to return non-plus user (unlocked pack)
-jest.mock('../src/features/purchases/usePurchases', () => ({
+jest.mock('../../src/features/purchases/usePurchases', () => ({
   usePurchases: jest.fn(() => false),
 }));
 
 // Mock the nav helper
-jest.mock('../src/lib/nav', () => ({
+jest.mock('../../src/lib/nav', () => ({
   safeBack: jest.fn(),
 }));
 

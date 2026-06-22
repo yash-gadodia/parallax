@@ -1,8 +1,8 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
-import LovemapScreen from './lovemap';
+import LovemapScreen from '../lovemap';
 
-jest.mock('../src/features/lovemap/useLearnings', () => ({
+jest.mock('../../src/features/lovemap/useLearnings', () => ({
   useLearnings: jest.fn(() => ({
     items: [
       {
@@ -26,7 +26,7 @@ jest.mock('../src/features/lovemap/useLearnings', () => ({
   })),
 }));
 
-jest.mock('../src/lib/nav', () => ({
+jest.mock('../../src/lib/nav', () => ({
   safeBack: jest.fn(),
 }));
 

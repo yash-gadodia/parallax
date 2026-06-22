@@ -1,6 +1,6 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
-import WidgetSetupScreen from './widgetSetup';
+import WidgetSetupScreen from '../widgetSetup';
 
 describe('WidgetSetupScreen', () => {
   it('renders the home screen widget setup with title and main headline', async () => {

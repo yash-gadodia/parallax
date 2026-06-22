@@ -1,6 +1,6 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
-import MilestoneScreen from './milestone';
+import MilestoneScreen from '../milestone';
 
 describe('MilestoneScreen', () => {
   it('renders the milestone heading and cta buttons', async () => {

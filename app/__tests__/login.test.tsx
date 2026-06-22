@@ -1,6 +1,6 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
-import LoginScreen from './login';
+import LoginScreen from '../login';
 
 describe('LoginScreen', () => {
   it('renders the login form with email and password fields', async () => {

@@ -1,6 +1,6 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
-import CheckoutScreen from './checkout';
+import CheckoutScreen from '../checkout';
 
 describe('CheckoutScreen', () => {
   it('renders the checkout screen with heading and CTA', async () => {

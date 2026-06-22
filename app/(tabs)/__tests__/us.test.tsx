@@ -1,15 +1,15 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
-import UsScreen from './us';
+import UsScreen from '../us';
 
-jest.mock('../../src/features/lovemap/useLearnings', () => ({
+jest.mock('../../../src/features/lovemap/useLearnings', () => ({
   useLearnings: jest.fn(() => ({
     items: [],
     isSample: true,
   })),
 }));
 
-jest.mock('../../src/features/lovemap/useCoupleHistory', () => ({
+jest.mock('../../../src/features/lovemap/useCoupleHistory', () => ({
   useCoupleHistory: jest.fn(() => ({
     history: [],
     isSample: true,

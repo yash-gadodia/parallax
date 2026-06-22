@@ -1,12 +1,12 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
-import StreakScreen from './streak';
+import StreakScreen from '../streak';
 
-jest.mock('../src/lib/nav', () => ({
+jest.mock('../../src/lib/nav', () => ({
   safeBack: jest.fn(),
 }));
 
-jest.mock('../src/features/pairing/useCouple', () => ({
+jest.mock('../../src/features/pairing/useCouple', () => ({
   useCouple: jest.fn(() => ({
     couple: { streak: 23 },
   })),

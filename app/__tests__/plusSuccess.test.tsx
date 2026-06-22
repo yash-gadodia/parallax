@@ -1,6 +1,6 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
-import PlusSuccessScreen from './plusSuccess';
+import PlusSuccessScreen from '../plusSuccess';
 
 describe('PlusSuccessScreen', () => {
   it('renders the success message with all key UI elements', async () => {

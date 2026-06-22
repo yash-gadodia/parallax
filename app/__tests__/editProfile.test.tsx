@@ -1,6 +1,6 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
-import EditProfileScreen from './editProfile';
+import EditProfileScreen from '../editProfile';
 
 describe('EditProfileScreen', () => {
   it('renders the edit profile form with all fields and partner info', async () => {

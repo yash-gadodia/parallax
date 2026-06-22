@@ -1,6 +1,6 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
-import WrappedScreen from './wrapped';
+import WrappedScreen from '../wrapped';
 
 describe('WrappedScreen', () => {
   it('renders the cover slide with title and cta text', async () => {

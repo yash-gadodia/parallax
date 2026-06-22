@@ -1,9 +1,9 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
-import ManageSubScreen from './manageSub';
+import ManageSubScreen from '../manageSub';
 
 // Mock the purchases hook and functions
-jest.mock('../src/features/purchases/usePurchases', () => ({
+jest.mock('../../src/features/purchases/usePurchases', () => ({
   usePurchases: jest.fn((selector) => {
     // Mock the store with a setDemoPro function
     const store = {
@@ -14,7 +14,7 @@ jest.mock('../src/features/purchases/usePurchases', () => ({
   presentCustomerCenter: jest.fn(),
 }));
 
-jest.mock('../src/features/purchases/client', () => ({
+jest.mock('../../src/features/purchases/client', () => ({
   purchasesAvailable: jest.fn(() => false),
 }));
 

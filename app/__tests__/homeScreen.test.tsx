@@ -1,6 +1,6 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
-import HomeScreen from './homeScreen';
+import HomeScreen from '../homeScreen';
 
 describe('HomeScreen', () => {
   it('renders the exit pill with "Back to app" text', async () => {

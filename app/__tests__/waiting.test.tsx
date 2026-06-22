@@ -1,6 +1,6 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
-import WaitingScreen from './waiting';
+import WaitingScreen from '../waiting';
 
 describe('WaitingScreen', () => {
   beforeEach(() => {

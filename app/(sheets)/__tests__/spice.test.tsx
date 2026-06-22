@@ -1,5 +1,5 @@
 import { render } from '@testing-library/react-native';
-import SpiceSheet from './spice';
+import SpiceSheet from '../spice';
 
 describe('SpiceSheet', () => {
   it('renders the spice level options with descriptions', async () => {

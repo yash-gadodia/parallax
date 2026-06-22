@@ -1,18 +1,18 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
-import ProfileScreen from './profile';
+import ProfileScreen from '../profile';
 
-jest.mock('../src/lib/nav', () => ({
+jest.mock('../../src/lib/nav', () => ({
   safeBack: jest.fn(),
 }));
 
-jest.mock('../src/features/pairing/useCouple', () => ({
+jest.mock('../../src/features/pairing/useCouple', () => ({
   useCouple: jest.fn(() => ({
     couple: { id: 'test-couple-id' },
   })),
 }));
 
-jest.mock('../src/features/engagement/engagementActions', () => ({
+jest.mock('../../src/features/engagement/engagementActions', () => ({
   nudge: jest.fn(() => Promise.resolve()),
 }));
 
