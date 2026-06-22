@@ -20,6 +20,11 @@ A running log of major **product / tech / design** decisions — the *why* behin
 - **Decision:** GitHub default → `main`; deleted `phase-0-foundation` / `phase-1-auth-pairing` (both fully merged).
 - **Why:** Single source of truth; the phase branches were historical scaffolding with 0 unique commits.
 
+### Realtime subscriptions must cancel in-flight async setup
+- **Decision:** `useCouple` / `useDropState` guard their async effect with a `cancelled` flag (checked after each `await`) and capture the channel from `.channel().on()` (not from `.subscribe()`'s return), removing it on cleanup.
+- **Why:** React's dev double-mount ran the async setup twice and created a *second* channel with the same topic → "cannot add `postgres_changes` callbacks after `subscribe()`" crash on login. The fix makes the first (cancelled) mount bail before subscribing.
+- **Learning:** never derive the channel ref from `subscribe()`; `.on()` already returns the channel. Don't subscribe to realtime inside an un-cancellable async effect.
+
 ## Architecture invariants (set early, still hold)
 
 ### RLS is the security backbone; the reveal gate lives in the database

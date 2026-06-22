@@ -25,7 +25,10 @@ export function useDropState(couplDropId: string | null): DropState {
       return;
     }
 
-    let cleanup: (() => void) | null = null;
+    // cancelled guards the async work so React's double-mount never subscribes a
+    // second channel with the same topic ("cannot add callbacks after subscribe()").
+    let cancelled = false;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
 
     const fetchDrop = async () => {
       try {
@@ -35,6 +38,7 @@ export function useDropState(couplDropId: string | null): DropState {
           .eq('id', couplDropId)
           .maybeSingle();
 
+        if (cancelled) return;
         if (error) throw error;
 
         setState((prev) => ({
@@ -43,37 +47,32 @@ export function useDropState(couplDropId: string | null): DropState {
           loading: false,
         }));
 
-        if (data) {
-          const channel = supabase
-            .channel(`couple-drop-${couplDropId}`)
-            .on(
-              'postgres_changes',
-              {
-                event: '*',
-                schema: 'public',
-                table: 'couple_drops',
-                filter: `id=eq.${couplDropId}`,
-              },
-              (payload) => {
-                const newDrop = payload.new as CoupleDrop | null;
-                if (newDrop) {
-                  setState((prev) => ({
-                    ...prev,
-                    coupleDrop: {
-                      id: newDrop.id,
-                      state: newDrop.state,
-                    },
-                  }));
-                }
+        if (data && !cancelled) {
+          channel = supabase.channel(`couple-drop-${couplDropId}`).on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'couple_drops',
+              filter: `id=eq.${couplDropId}`,
+            },
+            (payload) => {
+              const newDrop = payload.new as CoupleDrop | null;
+              if (newDrop) {
+                setState((prev) => ({
+                  ...prev,
+                  coupleDrop: {
+                    id: newDrop.id,
+                    state: newDrop.state,
+                  },
+                }));
               }
-            )
-            .subscribe();
-
-          cleanup = () => {
-            supabase.removeChannel(channel);
-          };
+            }
+          );
+          channel.subscribe();
         }
       } catch (err) {
+        if (cancelled) return;
         setState((prev) => ({
           ...prev,
           error: err instanceof Error ? err : new Error('Unknown error'),
@@ -85,7 +84,8 @@ export function useDropState(couplDropId: string | null): DropState {
     fetchDrop();
 
     return () => {
-      if (cleanup) cleanup();
+      cancelled = true;
+      if (channel) supabase.removeChannel(channel);
     };
   }, [couplDropId]);
 

@@ -329,17 +329,15 @@ describe('useCouple Hook', () => {
 
     mockSupabase.from.mockReturnValue(mockQuery);
 
-    const mockChannelBuilder = {
+    // Realistic: .on() and .subscribe() both return the same channel object.
+    const mockChannel = {
       on: jest.fn(),
       subscribe: jest.fn(),
     };
+    mockChannel.on.mockReturnValue(mockChannel);
+    mockChannel.subscribe.mockReturnValue(mockChannel);
 
-    const mockChannelInstance = { id: 'couple-1' };
-
-    mockChannelBuilder.on.mockReturnValue(mockChannelBuilder);
-    mockChannelBuilder.subscribe.mockReturnValue(mockChannelInstance);
-
-    mockSupabase.channel.mockReturnValue(mockChannelBuilder);
+    mockSupabase.channel.mockReturnValue(mockChannel);
 
     function TestComponent() {
       useCouple();
@@ -360,6 +358,6 @@ describe('useCouple Hook', () => {
       (result as any).unmount?.();
     });
 
-    expect(mockSupabase.removeChannel).toHaveBeenCalledWith(mockChannelInstance);
+    expect(mockSupabase.removeChannel).toHaveBeenCalledWith(mockChannel);
   });
 });
