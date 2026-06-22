@@ -6,6 +6,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { useAppFonts } from '../src/design/fonts';
 import { queryClient } from '../src/lib/queryClient';
 import { usePurchases } from '../src/features/purchases/usePurchases';
+import { AppErrorBoundary } from '../src/components/AppErrorBoundary';
 
 export default function RootLayout() {
   const fontsLoaded = useAppFonts();
@@ -23,7 +24,9 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
-          <Stack screenOptions={{ headerShown: false }} />
+          <AppErrorBoundary>
+            <Stack screenOptions={{ headerShown: false }} />
+          </AppErrorBoundary>
         </QueryClientProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
