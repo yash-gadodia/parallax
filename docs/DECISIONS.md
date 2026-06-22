@@ -20,10 +20,10 @@ A running log of major **product / tech / design** decisions — the *why* behin
 - **Decision:** GitHub default → `main`; deleted `phase-0-foundation` / `phase-1-auth-pairing` (both fully merged).
 - **Why:** Single source of truth; the phase branches were historical scaffolding with 0 unique commits.
 
-### Realtime subscriptions must cancel in-flight async setup
-- **Decision:** `useCouple` / `useDropState` guard their async effect with a `cancelled` flag (checked after each `await`) and capture the channel from `.channel().on()` (not from `.subscribe()`'s return), removing it on cleanup.
-- **Why:** React's dev double-mount ran the async setup twice and created a *second* channel with the same topic → "cannot add `postgres_changes` callbacks after `subscribe()`" crash on login. The fix makes the first (cancelled) mount bail before subscribing.
-- **Learning:** never derive the channel ref from `subscribe()`; `.on()` already returns the channel. Don't subscribe to realtime inside an un-cancellable async effect.
+### Realtime channel topics must be unique per subscriber
+- **Decision:** `useCouple` / `useDropState` give every subscription a **unique channel topic** (`couple-<id>-<seq>`), guard the async effect with a `cancelled` flag, and capture the channel from `.channel().on()` (not `.subscribe()`'s return) for cleanup.
+- **Why (the real root cause):** `supabase.channel(topic)` **dedupes by topic** — a second caller gets back the *already-subscribed* channel, so `.on()` on it throws "cannot add `postgres_changes` callbacks after `subscribe()`". Several screens subscribe at once (mounted tabs + the root guard all call `useCouple`), so the fixed name `couple-<id>` collided and crashed right after login. The `cancelled` flag alone (for React's double-mount) was necessary but not sufficient — unique topics are what actually fix it.
+- **Learning:** with supabase-js, never reuse a channel topic across independent subscribers; verify library behavior in `node_modules` before assuming. Long term, a single shared subscription (store/context) would beat N per-screen channels.
 
 ## Architecture invariants (set early, still hold)
 

@@ -104,7 +104,7 @@ describe('useDropState', () => {
       await new Promise(resolve => setTimeout(resolve, 50));
     });
 
-    expect(mockSupabase.channel).toHaveBeenCalledWith('couple-drop-drop-1');
+    expect(mockSupabase.channel).toHaveBeenCalledWith(expect.stringContaining('couple-drop-drop-1'));
     expect(mockChannel.on).toHaveBeenCalledWith(
       'postgres_changes',
       {
@@ -236,7 +236,7 @@ describe('useDropState', () => {
     });
 
     // Verify channel was set up before unmount
-    expect(mockSupabase.channel).toHaveBeenCalledWith('couple-drop-drop-1');
+    expect(mockSupabase.channel).toHaveBeenCalledWith(expect.stringContaining('couple-drop-drop-1'));
 
     await act(async () => {
       (result as any).unmount?.();

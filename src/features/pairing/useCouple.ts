@@ -2,6 +2,12 @@ import { useEffect, useState } from 'react';
 import { supabase, Couple } from '../../lib/supabase';
 import { PostgrestMaybeSingleResponse } from '@supabase/supabase-js';
 
+// supabase.channel(topic) DEDUPES by topic — a second caller gets back the
+// already-subscribed channel, and .on() on it throws. Several screens (the
+// mounted tabs, the root guard) subscribe at once, so each instance needs a
+// unique topic. This counter guarantees that.
+let coupleChannelSeq = 0;
+
 interface UseCoupleReturn {
   couple: Couple | null;
   loading: boolean;
@@ -49,7 +55,7 @@ export function useCouple(): UseCoupleReturn {
       setLoading(false);
 
       if (data && !cancelled) {
-        channel = supabase.channel(`couple-${data.id}`).on(
+        channel = supabase.channel(`couple-${data.id}-${++coupleChannelSeq}`).on(
           'postgres_changes',
           {
             event: '*',

@@ -2,6 +2,10 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import type { CoupleDrop } from '../../types/db';
 
+// supabase.channel(topic) dedupes by topic, so concurrent subscribers must use
+// unique topics or .on() throws on the reused, already-subscribed channel.
+let dropChannelSeq = 0;
+
 interface DropState {
   coupleDrop: Pick<CoupleDrop, 'id' | 'state'> | null;
   loading: boolean;
@@ -48,7 +52,7 @@ export function useDropState(couplDropId: string | null): DropState {
         }));
 
         if (data && !cancelled) {
-          channel = supabase.channel(`couple-drop-${couplDropId}`).on(
+          channel = supabase.channel(`couple-drop-${couplDropId}-${++dropChannelSeq}`).on(
             'postgres_changes',
             {
               event: '*',
