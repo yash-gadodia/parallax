@@ -266,7 +266,7 @@ export default function MilestoneScreen() {
               }}
             >
               <Tok who={YOU} you size={40} ring />
-              <View style={{ marginLeft: -12 }}>
+              <View style={{ marginLeft: -18 }}>
                 <Tok who={PAR} size={40} ring />
               </View>
             </View>

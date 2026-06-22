@@ -141,7 +141,7 @@ export default function StreakScreen() {
         {/* Mutual accountability card (us-soft) */}
         <View
           style={{
-            backgroundColor: 'rgba(157,149,245,0.12)',
+            backgroundColor: colors.usSoft,
             borderWidth: 1,
             borderColor: 'rgba(157,149,245,0.25)',
             borderRadius: 22,
