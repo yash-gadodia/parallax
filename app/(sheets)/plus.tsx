@@ -4,6 +4,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import Sheet from '../../src/components/Sheet';
 import Btn from '../../src/components/Btn';
+import { presentPaywall } from '../../src/features/purchases/usePurchases';
+import { purchasesAvailable } from '../../src/features/purchases/client';
 import Press from '../../src/components/Press';
 import { Serif } from '../../src/components/Text';
 import { colors, space, radius, gradients } from '../../src/design/tokens';
@@ -30,7 +32,14 @@ const perks = [
 export default function PlusSheet() {
   const router = useRouter();
 
-  const handleStart = () => {
+  const handleStart = async () => {
+    // Real build: present RevenueCat's hosted paywall; on unlock → success.
+    // Expo Go / no SDK: fall back to the in-app Checkout screen.
+    if (purchasesAvailable()) {
+      const unlocked = await presentPaywall();
+      router.replace(unlocked ? '/plusSuccess' : '/checkout');
+      return;
+    }
     router.replace('/checkout');
   };
 

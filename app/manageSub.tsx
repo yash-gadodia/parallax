@@ -16,6 +16,8 @@ import Press from '../src/components/Press';
 import { Mark } from '../src/components/Mark';
 import { DawnBlobs } from '../src/components/DawnBlobs';
 import Toast from '../src/components/Toast';
+import { usePurchases, presentCustomerCenter } from '../src/features/purchases/usePurchases';
+import { purchasesAvailable } from '../src/features/purchases/client';
 
 // Status card with Mark icon
 function StatusCard() {
@@ -131,15 +133,24 @@ export default function ManageSubScreen() {
   const router = useRouter();
   const [switchToastMsg, setSwitchToastMsg] = useState<string | null>(null);
   const [cancelToastMsg, setCancelToastMsg] = useState<string | null>(null);
+  const setDemoPro = usePurchases((s) => s.setDemoPro);
 
   const handleSwitchPlan = () => {
-    // GATE: RevenueCat purchase / backend call to switch plan
+    // Real build: RevenueCat Customer Center handles plan changes. Demo: toast.
+    if (purchasesAvailable()) {
+      presentCustomerCenter();
+      return;
+    }
     setSwitchToastMsg('Plan switched to monthly');
     setTimeout(() => setSwitchToastMsg(null), 2000);
   };
 
   const handleCancelSubscription = () => {
-    // GATE: RevenueCat entitlement revocation / backend call to cancel
+    // Real build: Customer Center handles cancellation/refunds the compliant way.
+    if (purchasesAvailable()) {
+      presentCustomerCenter();
+      return;
+    }
     Alert.alert(
       'Cancel Parallax Plus?',
       "You'll lose access to Plus features at the end of your billing period.",
@@ -152,6 +163,7 @@ export default function ManageSubScreen() {
         {
           text: 'Cancel',
           onPress: () => {
+            setDemoPro(false);
             setCancelToastMsg('Subscription cancelled');
             setTimeout(() => setCancelToastMsg(null), 2000);
           },

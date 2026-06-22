@@ -158,6 +158,28 @@ jest.mock('expo-router', () => {
   };
 });
 
+// RevenueCat native modules — absent in jest. The app guards their require() at
+// runtime, but mock them so any code path that loads them stays inert in tests.
+jest.mock('react-native-purchases', () => ({
+  __esModule: true,
+  default: {
+    configure: jest.fn(),
+    getCustomerInfo: jest.fn(() => Promise.resolve({ entitlements: { active: {} } })),
+    getOfferings: jest.fn(() => Promise.resolve({ current: null })),
+    addCustomerInfoUpdateListener: jest.fn(),
+    purchasePackage: jest.fn(() => Promise.resolve({ customerInfo: { entitlements: { active: {} } } })),
+    restorePurchases: jest.fn(() => Promise.resolve({ entitlements: { active: {} } })),
+  },
+}));
+jest.mock('react-native-purchases-ui', () => ({
+  __esModule: true,
+  default: {
+    presentPaywall: jest.fn(() => Promise.resolve('NOT_PRESENTED')),
+    presentPaywallIfNeeded: jest.fn(() => Promise.resolve('NOT_PRESENTED')),
+    presentCustomerCenter: jest.fn(() => Promise.resolve()),
+  },
+}));
+
 // expo-blur's BlurView is native — render it as a plain View in jest so screens
 // that frost content (reveal, checkout, packDetail, wrapped, homeScreen, Sheet) test cleanly.
 jest.mock('expo-blur', () => {

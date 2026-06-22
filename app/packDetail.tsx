@@ -9,6 +9,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { usePurchases } from '../src/features/purchases/usePurchases';
 import { SafeAreaView, useSafeAreaInsets  } from 'react-native-safe-area-context';
 import { PACKS, PACK_SAMPLE } from '../src/content/extras';
 import { colors, gradients, radius, shadows, space } from '../src/design/tokens';
@@ -32,8 +33,7 @@ export default function PackDetailScreen() {
   const pack = PACKS.find((p) => p.id === packId);
   const samples = PACK_SAMPLE[packId] || [];
 
-  // TODO: Get actual plus status from global state (for now assume false for free pack, true for others to test locked state)
-  const plus = false;
+  const plus = usePurchases((s) => s.isPro);
   const locked = pack && pack.locked && !plus;
 
   const handleBack = () => {

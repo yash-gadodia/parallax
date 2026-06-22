@@ -15,11 +15,11 @@ import Btn from '../src/components/Btn';
 import TopBar from '../src/components/TopBar';
 import { Icon, ICONS } from '../src/components/Icon';
 import { DawnBlobs } from '../src/components/DawnBlobs';
-
-const plus = false; // Assume plus=false locally
+import { usePurchases } from '../src/features/purchases/usePurchases';
 
 export default function PacksScreen() {
   const router = useRouter();
+  const plus = usePurchases((s) => s.isPro);
   const insets = useSafeAreaInsets();
 
   const handlePackPress = (packId: string) => {

@@ -20,6 +20,7 @@ import Press from '../src/components/Press';
 import TopBar from '../src/components/TopBar';
 import { Mark } from '../src/components/Mark';
 import { PLANS, PERKS } from '../src/content/pay';
+import { usePurchases } from '../src/features/purchases/usePurchases';
 
 type PlanId = 'year' | 'month';
 type PaymentMethod = 'apple' | 'card';
@@ -29,6 +30,9 @@ export default function CheckoutScreen() {
   const [plan, setPlan] = useState<PlanId>('year');
   const [method, setMethod] = useState<PaymentMethod>('apple');
   const [confirming, setConfirming] = useState(false);
+  const offering = usePurchases((s) => s.offering);
+  const purchase = usePurchases((s) => s.purchase);
+  const setDemoPro = usePurchases((s) => s.setDemoPro);
   const spinValue = React.useRef(new Animated.Value(0)).current;
 
   const pl = PLANS[plan];
@@ -52,13 +56,24 @@ export default function CheckoutScreen() {
     outputRange: ['0deg', '360deg'],
   });
 
-  const handleStartFreeTrial = () => {
+  const handleStartFreeTrial = async () => {
     setConfirming(true);
-    // GATE: RevenueCat purchase — this is a UI stub.
-    // In production, call RevenueCat SDK here to process the subscription.
-    setTimeout(() => {
+    try {
+      const pkg = offering ? (plan === 'year' ? offering.annual : offering.monthly) : null;
+      if (pkg) {
+        const unlocked = await purchase(pkg);
+        if (!unlocked) {
+          setConfirming(false);
+          return; // cancelled or failed — stay on checkout
+        }
+      } else {
+        // Expo Go / no live offering → demo unlock so the flow still completes.
+        setDemoPro(true);
+      }
       router.replace('/plusSuccess');
-    }, 1500);
+    } catch {
+      setConfirming(false);
+    }
   };
 
   const handleBack = () => {
