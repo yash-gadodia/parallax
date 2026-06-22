@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -20,6 +20,7 @@ import Btn from '../src/components/Btn';
 import TopBar from '../src/components/TopBar';
 import { DawnBlobs } from '../src/components/DawnBlobs';
 import GradientText from '../src/components/GradientText';
+import Toast from '../src/components/Toast';
 
 const YOU = { initial: 'Y' };
 const PAR = { initial: 'D' };
@@ -186,6 +187,12 @@ function PingWidget({ onTap }: { onTap?: () => void }) {
 export default function WidgetSetupScreen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
+  const [pingToast, setPingToast] = useState<string | null>(null);
+
+  const handlePing = () => {
+    setPingToast('Dani felt that 💞');
+    setTimeout(() => setPingToast(null), 2200);
+  };
 
   return (
     <LinearGradient
@@ -255,7 +262,7 @@ export default function WidgetSetupScreen() {
                   <WaveWidget />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <PingWidget />
+                  <PingWidget onTap={handlePing} />
                 </View>
               </View>
             </LinearGradient>
@@ -283,6 +290,8 @@ export default function WidgetSetupScreen() {
             </View>
           </Btn>
         </View>
+
+        {pingToast && <Toast msg={pingToast} />}
       </SafeAreaView>
     </LinearGradient>
   );

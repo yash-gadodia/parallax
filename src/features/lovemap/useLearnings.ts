@@ -34,6 +34,7 @@ export function useLearnings(): UseLearningsReturn {
             origin: l.origin,
             mastery: l.mastery,
             became_prompt_id: l.becameQ ? 'prompt-' + l.id : null,
+            became_question: l.becameQ,
             created_at: new Date().toISOString(),
           }));
           setItems(sampleLearnings);
@@ -63,6 +64,7 @@ export function useLearnings(): UseLearningsReturn {
             origin: l.origin,
             mastery: l.mastery,
             became_prompt_id: l.becameQ ? 'prompt-' + l.id : null,
+            became_question: l.becameQ,
             created_at: new Date().toISOString(),
           }));
           setItems(sampleLearnings);
@@ -85,6 +87,7 @@ export function useLearnings(): UseLearningsReturn {
           origin: l.origin,
           mastery: l.mastery,
           became_prompt_id: l.becameQ ? 'prompt-' + l.id : null,
+          became_question: l.becameQ,
           created_at: new Date().toISOString(),
         }));
         setItems(sampleLearnings);

@@ -85,6 +85,8 @@ export interface Learning {
   origin: string | null;
   mastery: number;
   became_prompt_id: string | null;
+  // The daily-drop question this learning turned into, when available (display only).
+  became_question?: string | null;
   created_at: string;
 }
 

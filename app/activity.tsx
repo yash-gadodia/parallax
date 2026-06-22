@@ -63,6 +63,16 @@ export default function ActivityScreen() {
         read_by: [],
       }));
 
+  // PRD: opening the feed clears the unread dot. Auto-mark read shortly after open
+  // (silent — no toast; the manual button still confirms with one).
+  useEffect(() => {
+    if (!session || !couple) return;
+    const t = setTimeout(() => {
+      markAllReadDb().catch(() => {});
+    }, 900);
+    return () => clearTimeout(t);
+  }, [session, couple, markAllReadDb]);
+
   const handleMarkAllRead = async () => {
     if (session && couple) {
       try {

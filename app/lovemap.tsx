@@ -93,7 +93,7 @@ function WhoChip({ who }: { who: 'you' | 'dani' }) {
 function LearnCard({
   l,
 }: {
-  l: { emoji: string | null; need: string | null; detail: string | null; source: string; mastery: number; about: string; became_prompt_id: string | null };
+  l: { emoji: string | null; need: string | null; detail: string | null; source: string; mastery: number; about: string; became_prompt_id: string | null; became_question?: string | null };
 }) {
   const isYou = l.about === 'you';
   const fromFight = l.source === 'refocus';
@@ -221,7 +221,9 @@ function LearnCard({
                 lineHeight: 13.5 * 1.4,
               }}
             >
-              This learning is being woven into future prompts.
+              {l.became_question
+                ? `“${l.became_question}”`
+                : 'This learning is being woven into future prompts.'}
             </Text>
           </View>
         </LinearGradient>
