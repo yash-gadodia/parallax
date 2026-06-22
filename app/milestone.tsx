@@ -61,7 +61,7 @@ export default function MilestoneScreen() {
 
   useEffect(() => {
     // Each heart animates in with stagger: rise from bottom, fade out over 2s
-    hearts.forEach((_, i) => {
+    const timers = hearts.map((_, i) =>
       setTimeout(() => {
         Animated.sequence([
           Animated.timing(heartAnims[i], {
@@ -70,8 +70,9 @@ export default function MilestoneScreen() {
             useNativeDriver: true,
           }),
         ]).start();
-      }, hearts[i].delay * 1000);
-    });
+      }, hearts[i].delay * 1000)
+    );
+    return () => timers.forEach(clearTimeout);
   }, [heartAnims]);
 
   const handleBack = () => {
