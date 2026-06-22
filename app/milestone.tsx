@@ -9,6 +9,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { safeBack } from "../src/lib/nav";
 import { colors, gradients } from '../src/design/tokens';
 import { fontFamily } from '../src/design/typography';
 import { Kick, Serif } from '../src/components/Text';
@@ -74,7 +75,7 @@ export default function MilestoneScreen() {
   }, [heartAnims]);
 
   const handleBack = () => {
-    router.back();
+    safeBack(router);
   };
 
   const handleShare = () => {

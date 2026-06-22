@@ -7,6 +7,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { safeBack } from "../src/lib/nav";
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -114,7 +115,7 @@ export default function ActivityScreen() {
       <SafeAreaView style={styles.safe}>
         <TopBar
           title="activity"
-          onBack={() => router.back()}
+          onBack={() => safeBack(router)}
           right={
             <Press
               onPress={handleMarkAllRead}

@@ -9,6 +9,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { safeBack } from "../src/lib/nav";
 import { usePurchases } from '../src/features/purchases/usePurchases';
 import { SafeAreaView, useSafeAreaInsets  } from 'react-native-safe-area-context';
 import { PACKS, PACK_SAMPLE } from '../src/content/extras';
@@ -37,13 +38,13 @@ export default function PackDetailScreen() {
   const locked = pack && pack.locked && !plus;
 
   const handleBack = () => {
-    router.back();
+    safeBack(router);
   };
 
   const handleSendDrop = () => {
     setToastMsg('Sent to Dani 💌');
     setTimeout(() => {
-      router.back();
+      safeBack(router);
     }, 700);
   };
 

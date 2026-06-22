@@ -8,6 +8,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { safeBack } from "../src/lib/nav";
 import TopBar from '../src/components/TopBar';
 import Press from '../src/components/Press';
 import Tok from '../src/components/Tok';
@@ -47,7 +48,7 @@ export default function ThreadScreen() {
 
   return (
     <View style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, paddingTop: insets.top + 48, flexDirection: 'column' }}>
-      <TopBar title="talk about it" onBack={() => router.back()} />
+      <TopBar title="talk about it" onBack={() => safeBack(router)} />
 
       {/* Pinned prompt context card */}
       <View

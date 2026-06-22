@@ -7,6 +7,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import { safeBack } from "../src/lib/nav";
 import { colors, gradients, radius, shadows, space } from '../src/design/tokens';
 import { Kick } from '../src/components/Text';
 import TopBar from '../src/components/TopBar';
@@ -174,7 +175,7 @@ export default function ManageSubScreen() {
   };
 
   const handleBack = () => {
-    router.back();
+    safeBack(router);
   };
 
   return (

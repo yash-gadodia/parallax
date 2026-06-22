@@ -6,6 +6,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { safeBack } from "../src/lib/nav";
 import { LinearGradient } from 'expo-linear-gradient';
 import TopBar from '../src/components/TopBar';
 import Press from '../src/components/Press';
@@ -39,7 +40,7 @@ export default function StreakScreen() {
   const prevM = [0, ...MILES].reverse().find((m) => m <= streak) || 0;
   const prog = next === prevM ? 1 : Math.min(1, (streak - prevM) / (next - prevM));
 
-  const handleBack = () => router.back();
+  const handleBack = () => safeBack(router);
 
   const handleFreezePress = () => {
     if (!frozen) {

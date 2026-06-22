@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import { safeBack } from "../../src/lib/nav";
 import Sheet from '../../src/components/Sheet';
 import Btn from '../../src/components/Btn';
 import { presentPaywall } from '../../src/features/purchases/usePurchases';
@@ -44,7 +45,7 @@ export default function PlusSheet() {
   };
 
   const handleMaybeLater = () => {
-    router.back();
+    safeBack(router);
   };
 
   return (

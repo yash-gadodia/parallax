@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { safeBack } from "../src/lib/nav";
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, shadows, radius, space, gradients } from '../src/design/tokens';
@@ -310,7 +311,7 @@ export default function HomeScreen() {
   };
 
   const handleExitPill = () => {
-    router.back();
+    safeBack(router);
   };
 
   const handlePlayTap = () => {
@@ -318,7 +319,7 @@ export default function HomeScreen() {
   };
 
   const handleParallaxTap = () => {
-    router.back();
+    safeBack(router);
   };
 
   const iconColor = '#3A3340';

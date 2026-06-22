@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, useWindowDimensions, StyleSheet, Share } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { useRouter } from 'expo-router';
+import { safeBack } from "../../src/lib/nav";
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Defs, RadialGradient, Stop, Rect } from 'react-native-svg';
 import Sheet from '../../src/components/Sheet';
@@ -22,7 +23,7 @@ export default function ShareSheet() {
   const { width } = useWindowDimensions();
 
   const handleClose = () => {
-    router.back();
+    safeBack(router);
   };
 
   const shareMessage = `We're ${reveal.wave}% on the same wavelength 💞 — find yours on Parallax.`;

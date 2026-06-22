@@ -8,6 +8,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import { safeBack } from "../src/lib/nav";
 import { colors, gradients, shadows, space, radius } from '../src/design/tokens';
 import { fontFamily } from '../src/design/typography';
 import { Icon, ICONS } from '../src/components/Icon';
@@ -206,7 +207,7 @@ export default function WidgetSetupScreen() {
       <SafeAreaView style={{ flex: 1 }}>
         <TopBar
           title="home screen"
-          onBack={() => router.back()}
+          onBack={() => safeBack(router)}
         />
 
         <ScrollView

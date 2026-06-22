@@ -10,6 +10,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView, useSafeAreaInsets  } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { safeBack } from "../src/lib/nav";
 import { colors, gradients, radius, shadows, space } from '../src/design/tokens';
 import { fontFamily } from '../src/design/typography';
 import { Kick } from '../src/components/Text';
@@ -44,12 +45,12 @@ export default function EditProfileScreen(props: EditProfileScreenProps) {
     setShowSaveToast(true);
     setTimeout(() => {
       setShowSaveToast(false);
-      router.back();
+      safeBack(router);
     }, 2000);
   };
 
   const handleBack = () => {
-    router.back();
+    safeBack(router);
   };
 
   // Field component for editable text inputs

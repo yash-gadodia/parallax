@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { View, Text } from 'react-native';
 import { useRouter } from 'expo-router';
+import { safeBack } from "../../src/lib/nav";
 import Sheet from '../../src/components/Sheet';
 import Press from '../../src/components/Press';
 import Toast from '../../src/components/Toast';
@@ -26,13 +27,13 @@ export default function SpiceSheet() {
     setCurrent(level);
     setShowToast(true);
     setTimeout(() => {
-      router.back();
+      safeBack(router);
     }, 400);
   };
 
   return (
     <>
-      <Sheet title="spice level" onClose={() => router.back()}>
+      <Sheet title="spice level" onClose={() => safeBack(router)}>
         <Text
           allowFontScaling={false}
           style={{

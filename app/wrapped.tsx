@@ -8,6 +8,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import { safeBack } from "../src/lib/nav";
 import { BlurView } from 'expo-blur';
 import { colors, gradients, radius, space } from '../src/design/tokens';
 import { fontFamily } from '../src/design/typography';
@@ -61,7 +62,7 @@ export default function WrappedScreen() {
 
   const handleNext = () => {
     if (isLastSlide) {
-      router.back();
+      safeBack(router);
     } else {
       setSlideIdx(slideIdx + 1);
     }
@@ -74,7 +75,7 @@ export default function WrappedScreen() {
   };
 
   const handleClose = () => {
-    router.back();
+    safeBack(router);
   };
 
   const handleShare = () => {

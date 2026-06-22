@@ -8,6 +8,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { safeBack } from "../src/lib/nav";
 
 import TopBar from '../src/components/TopBar';
 import { Peek } from '../src/components/Peek';
@@ -253,7 +254,7 @@ export default function LovemapScreen() {
       {/* TopBar */}
       <TopBar
         title="love map"
-        onBack={() => router.back()}
+        onBack={() => safeBack(router)}
       />
 
       {/* Scrollable content */}

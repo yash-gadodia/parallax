@@ -8,6 +8,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { safeBack } from "../src/lib/nav";
 
 import TopBar from '../src/components/TopBar';
 import Press from '../src/components/Press';
@@ -221,7 +222,7 @@ export default function ProfileScreen() {
 
   return (
     <View style={containerStyle}>
-      <TopBar title="you & settings" onBack={() => router.back()} />
+      <TopBar title="you & settings" onBack={() => safeBack(router)} />
 
       <ScrollView contentContainerStyle={scrollContentStyle}>
         {/* Identity Card - editable */}

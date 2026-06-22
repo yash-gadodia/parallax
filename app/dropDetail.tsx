@@ -7,6 +7,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { safeBack } from "../src/lib/nav";
 import { ARCHIVE } from '../src/content/drop';
 import { colors, gradients, radius, shadows, space } from '../src/design/tokens';
 import { fontFamily } from '../src/design/typography';
@@ -27,7 +28,7 @@ export default function DropDetailScreen() {
   const d = drop || ARCHIVE[0];
 
   const handleBack = () => {
-    router.back();
+    safeBack(router);
   };
 
   return (

@@ -11,6 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { useRouter } from 'expo-router';
+import { safeBack } from "../src/lib/nav";
 import { colors, gradients, space, shadows, radius } from '../src/design/tokens';
 import { fontFamily } from '../src/design/typography';
 import { Icon, ICONS } from '../src/components/Icon';
@@ -81,7 +82,7 @@ export default function CheckoutScreen() {
   };
 
   const handleBack = () => {
-    router.back();
+    safeBack(router);
   };
 
   return (

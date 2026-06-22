@@ -7,6 +7,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView, useSafeAreaInsets  } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { safeBack } from "../src/lib/nav";
 import { PACKS } from '../src/content/extras';
 import { colors, gradients, radius, shadows, space } from '../src/design/tokens';
 import { Kick, Serif } from '../src/components/Text';
@@ -31,7 +32,7 @@ export default function PacksScreen() {
   };
 
   const handleBack = () => {
-    router.back();
+    safeBack(router);
   };
 
   return (

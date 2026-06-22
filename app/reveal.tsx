@@ -9,6 +9,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { useRouter } from 'expo-router';
+import { safeBack } from "../src/lib/nav";
 import { usePlayStore, computeReveal } from '../src/store/play';
 import { DROP } from '../src/content/drop';
 import { peekMoodForWave } from '../src/domain/wavelength';
@@ -65,11 +66,11 @@ export default function RevealScreen() {
   };
 
   const handleDone = () => {
-    router.back();
+    safeBack(router);
   };
 
   const handleClose = () => {
-    router.back();
+    safeBack(router);
   };
 
   const handleThreadOpen = (promptId: string) => {

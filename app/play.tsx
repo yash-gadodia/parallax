@@ -8,6 +8,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import { safeBack } from "../src/lib/nav";
 import { usePlayStore } from '../src/store/play';
 import { DROP } from '../src/content/drop';
 import { colors, gradients, shadows, space, radius } from '../src/design/tokens';
@@ -87,7 +88,7 @@ export default function PlayScreen() {
 
   const handleBack = () => {
     if (idx === 0 && isPick) {
-      router.back();
+      safeBack(router);
     } else if (isPick) {
       usePlayStore.setState({ idx: idx - 1, phase: 'hunch' });
     } else {
