@@ -1,5 +1,18 @@
 import '@testing-library/react-native/matchers';
 
+// jest-expo's preset lazily requires the native ExpoModulesCoreJSLogger module
+// (absent in jest) and warns about it asynchronously. On CI that warning can land
+// AFTER a test finishes, which jest treats as a fatal "Cannot log after tests are
+// done" (exit 1) even though every assertion passed. Filter only this known-benign
+// message so it never reaches jest's console guard. (Everything else still logs.)
+const __origWarn = console.warn.bind(console);
+console.warn = (...args: unknown[]) => {
+  if (typeof args[0] === 'string' && args[0].includes('ExpoModulesCoreJSLogger')) {
+    return;
+  }
+  __origWarn(...args);
+};
+
 // Default Supabase env so src/lib/supabase.ts constructs in tests (no real network is hit
 // in render-smoke tests). The env-missing-throw test deletes these itself.
 process.env.EXPO_PUBLIC_SUPABASE_URL =
