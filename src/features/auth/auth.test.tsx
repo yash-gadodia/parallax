@@ -7,6 +7,7 @@ import {
   signOut,
   signInWithApple,
   signInWithGoogle,
+  verifyEmailOtp,
 } from './authActions';
 import { useSession } from './useSession';
 
@@ -20,6 +21,7 @@ jest.mock('../../lib/supabase', () => ({
       signInWithIdToken: jest.fn(),
       signInWithOAuth: jest.fn(),
       exchangeCodeForSession: jest.fn(),
+      verifyOtp: jest.fn(),
       setSession: jest.fn(),
       onAuthStateChange: jest.fn(),
     },
@@ -79,6 +81,7 @@ describe('Auth Actions', () => {
           data: {
             display_name: 'John Doe',
           },
+          emailRedirectTo: 'parallax://auth-callback',
         },
       });
     });
@@ -93,6 +96,29 @@ describe('Auth Actions', () => {
       await expect(
         signUpWithEmail('existing@example.com', 'password123', 'Jane Doe')
       ).rejects.toThrow('Email already exists');
+    });
+  });
+
+  describe('verifyEmailOtp', () => {
+    it('verifies the confirmation token_hash as a signup OTP', async () => {
+      mockSupabase.auth.verifyOtp.mockResolvedValue({ error: null } as any);
+
+      await verifyEmailOtp('abc123hash');
+
+      expect(mockSupabase.auth.verifyOtp).toHaveBeenCalledWith({
+        token_hash: 'abc123hash',
+        type: 'signup',
+      });
+    });
+
+    it('throws when the token is invalid or expired', async () => {
+      mockSupabase.auth.verifyOtp.mockResolvedValue({
+        error: new Error('Token has expired or is invalid'),
+      } as any);
+
+      await expect(verifyEmailOtp('stale')).rejects.toThrow(
+        'Token has expired or is invalid'
+      );
     });
   });
 

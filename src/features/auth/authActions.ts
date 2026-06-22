@@ -19,6 +19,10 @@ export async function signUpWithEmail(
   password: string,
   displayName: string
 ): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const Linking = require('expo-linking');
+  const emailRedirectTo = Linking.createURL('auth-callback');
+
   const { error } = await supabase.auth.signUp({
     email,
     password,
@@ -26,7 +30,21 @@ export async function signUpWithEmail(
       data: {
         display_name: displayName,
       },
+      emailRedirectTo,
     },
+  });
+
+  if (error) {
+    throw error;
+  }
+}
+
+// Confirmation-email link deep-links back as parallax://auth-callback?token_hash=…
+// The auth-callback route exchanges that hash for a session.
+export async function verifyEmailOtp(tokenHash: string): Promise<void> {
+  const { error } = await supabase.auth.verifyOtp({
+    token_hash: tokenHash,
+    type: 'signup',
   });
 
   if (error) {

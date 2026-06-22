@@ -3,9 +3,12 @@ import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import OnboardingScreen from '../index';
 
 // Mock dependencies BEFORE importing the component
+const mockPush = jest.fn();
+const mockReplace = jest.fn();
 jest.mock('expo-router', () => ({
   useRouter: () => ({
-    replace: jest.fn(),
+    push: mockPush,
+    replace: mockReplace,
   }),
 }));
 
@@ -130,11 +133,12 @@ jest.mock('../../../src/lib/supabase', () => ({
   },
 }));
 
+let mockSessionValue: { session: unknown; loading: boolean } = {
+  session: null,
+  loading: false,
+};
 jest.mock('../../../src/features/auth/useSession', () => ({
-  useSession: () => ({
-    session: null,
-    loading: false,
-  }),
+  useSession: () => mockSessionValue,
 }));
 
 jest.mock('../../../src/features/pairing/useCouple', () => ({
@@ -174,6 +178,12 @@ jest.doMock('react-native', () => {
 }, { virtual: false });
 
 describe('Onboarding', () => {
+  beforeEach(() => {
+    mockSessionValue = { session: null, loading: false };
+    mockPush.mockClear();
+    mockReplace.mockClear();
+  });
+
   // Constants tests
   it('onboarding constants INTENTS has 5 items', () => {
     const { INTENTS } = require('../../../src/features/onboarding/constants');
@@ -263,50 +273,37 @@ describe('Onboarding', () => {
     });
   });
 
-  it('step 3 pair-up shows the invite code from mocked createCouple', async () => {
+  it('an unauthenticated user is routed to /signup before pairing', async () => {
     const { getByText } = await render(<OnboardingScreen />);
 
-    // Navigate to step 3 (through steps 0, 1, 2)
     fireEvent.press(getByText(/Get started/));
-
     await waitFor(() => {
       expect(getByText(/Makes sense/i)).toBeTruthy();
     });
-
     fireEvent.press(getByText(/Makes sense/));
-
     await waitFor(() => {
       expect(getByText(/What do you two want/i)).toBeTruthy();
     });
+    fireEvent.press(getByText(/Continue/));
 
-    // Continue should be enabled since 'know' is pre-selected
-    const continueBtn = getByText(/Continue/);
-    fireEvent.press(continueBtn);
+    await waitFor(() => {
+      expect(mockPush).toHaveBeenCalledWith('/signup');
+    });
+  });
 
-    // Wait for the pair-up step with invite code to appear
+  it('an authenticated user skips the intro straight to pair-up (invite code shown)', async () => {
+    mockSessionValue = { session: { user: { id: 'u1' } }, loading: false };
+    const { getByText } = await render(<OnboardingScreen />);
+
+    // The skip effect jumps a signed-in, unpaired user to the pairing step.
     await waitFor(() => {
       expect(getByText(/YASH-4827/)).toBeTruthy();
     });
   });
 
   it('step 3 pair-up button text is "Send Dani the link"', async () => {
+    mockSessionValue = { session: { user: { id: 'u1' } }, loading: false };
     const { getByText } = await render(<OnboardingScreen />);
-
-    // Navigate to step 3
-    fireEvent.press(getByText(/Get started/));
-
-    await waitFor(() => {
-      expect(getByText(/Makes sense/i)).toBeTruthy();
-    });
-
-    fireEvent.press(getByText(/Makes sense/));
-
-    await waitFor(() => {
-      expect(getByText(/What do you two want/i)).toBeTruthy();
-    });
-
-    const continueBtn = getByText(/Continue/);
-    fireEvent.press(continueBtn);
 
     await waitFor(() => {
       expect(getByText(/Send Dani the link/i)).toBeTruthy();

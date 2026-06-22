@@ -13,6 +13,32 @@ enabled = true
 
 [auth]
 enabled = true
+site_url = "parallax://"
+additional_redirect_urls = ["parallax://auth-callback"]
+
+[auth.email]
+enable_signup = true
+# Require a confirmed email before the account is usable (kills typo'd dead accounts).
+enable_confirmations = true
+
+# Confirmation email deep-links into the app (parallax://auth-callback?token_hash=…),
+# which calls verifyOtp to establish the session. Uses {{ .TokenHash }}, not the
+# default {{ .ConfirmationURL }}, so the link opens the native app.
+[auth.email.template.confirmation]
+subject = "Confirm your Parallax account"
+content_path = "./supabase/templates/confirmation.html"
+
+# Production email is sent via custom SMTP (Resend — 3k/mo free, MCP support).
+# Local dev needs NO SMTP here: confirmation mails land in Mailpit
+# (http://127.0.0.1:54324). For prod, set these in the Supabase Dashboard
+# (Auth → SMTP) or uncomment and provide the env vars before `supabase config push`.
+# [auth.email.smtp]
+# host = "smtp.resend.com"
+# port = 465
+# user = "resend"
+# pass = "env(RESEND_SMTP_PASSWORD)"
+# admin_email = "noreply@<your-sending-domain>"
+# sender_name = "Parallax"
 
 [storage]
 enabled = true

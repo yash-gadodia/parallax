@@ -764,9 +764,27 @@ export default function OnboardingScreen() {
   const [step, setStep] = useState(0);
   const router = useRouter();
   const { fireToast } = useUiStore();
+  const { session, loading: sessionLoading } = useSession();
+
+  // A signed-in but unpaired user (e.g. just confirmed their email) skips the
+  // intro and lands on pairing. Active couples never reach here (root guard).
+  useEffect(() => {
+    if (!sessionLoading && session && step === 0) {
+      setStep(3);
+    }
+  }, [sessionLoading, session, step]);
 
   const handleFinish = () => {
     router.replace('/(tabs)/today');
+  };
+
+  // Pairing needs a real account; new users create one first.
+  const handleIntentNext = () => {
+    if (session) {
+      setStep(3);
+    } else {
+      router.push('/signup');
+    }
   };
 
   const step0 = step === 0;
@@ -799,7 +817,7 @@ export default function OnboardingScreen() {
         <Step1HowItWorks onNext={() => setStep(2)} />
       )}
       {step2 && (
-        <Step2Intent onNext={() => setStep(3)} fireToast={fireToast} />
+        <Step2Intent onNext={handleIntentNext} fireToast={fireToast} />
       )}
       {step3 && (
         <Step3PairUp onNext={() => setStep(4)} fireToast={fireToast} />
