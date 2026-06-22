@@ -269,7 +269,7 @@ export default function LovemapScreen() {
         {/* Hero: Peek + heading + copy */}
         <View style={{ alignItems: 'center', marginBottom: 22 }}>
           <View style={{ marginBottom: 6, justifyContent: 'center', alignItems: 'center' }}>
-            <Float distance={7} duration={2600}>
+            <Float distance={7} duration={4000}>
               <Peek size={76} mood="focus" />
             </Float>
           </View>

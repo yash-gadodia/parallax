@@ -91,7 +91,7 @@ export default function StreakScreen() {
         {/* Hero flame + streak number */}
         <View style={{ alignItems: 'center', marginBottom: 24 }}>
           {/* Flame with glow */}
-          <Float distance={7} duration={2600}>
+          <Float distance={7} duration={4000}>
             <View
               style={{
                 position: 'relative',
