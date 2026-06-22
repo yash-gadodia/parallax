@@ -75,9 +75,12 @@ design_handoff_parallax/   the original design source of truth
 
 | Doc | Read it for |
 |---|---|
+| **[WORKING_WITH_CLAUDE.md](WORKING_WITH_CLAUDE.md)** | Non-technical guide to building here by talking to Claude (start here, Dani) |
 | **[docs/DEV_SETUP.md](docs/DEV_SETUP.md)** | Full local setup from a clean machine + troubleshooting |
 | **[docs/FLOWS.md](docs/FLOWS.md)** | Every user flow walked end-to-end → exact files/RPCs (for feature work + a better PRD) |
 | **[docs/HANDOFF.md](docs/HANDOFF.md)** | Taking ownership: how the AI-agent setup works, how to add features safely, go-live checklist |
+| **[docs/DECISIONS.md](docs/DECISIONS.md)** | The *why* behind major product/tech/design choices (blog material + context) |
+| **[docs/BUILD_LOG.md](docs/BUILD_LOG.md)** | How this app was built with Claude (workflow, agents, best practices) |
 | **[ARCHITECTURE.md](ARCHITECTURE.md)** | System map, data flow, module boundaries |
 | **[CLAUDE.md](CLAUDE.md)** | The rules Claude/agents follow in this repo |
 | **`.claude/rules/`** | Hard-won specifics: frontend fidelity, database/RLS, testing, workflow, git |
