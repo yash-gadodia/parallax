@@ -25,6 +25,7 @@ The shared task list. Plain-English, owner-tagged, and the Claude agent reads & 
 - [ ] **(Yash)** Privacy Policy + Terms of Service URLs (App Store requires a privacy policy; couples data is sensitive)
 - [ ] **(Yash)** App Store Connect: create the app record + enable **TestFlight** for the beta
 - [ ] **(Yash)** Cost monitoring/budgets for Anthropic + Supabase + EAS (so spend doesn't surprise)
+- [ ] **(Yash)** Set up a **staging environment** (separate Supabase project + EAS `preview` channel) to test before prod
 
 ### (Dani) — onboarding, product & design decisions
 - [ ] **(Dani)** Get set up locally + learn the stack — start with `WORKING_WITH_CLAUDE.md`, then `docs/DEV_SETUP.md` (run `npm run dev`), and skim `docs/FLOWS.md` for how the app works
