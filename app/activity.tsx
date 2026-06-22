@@ -40,8 +40,10 @@ export default function ActivityScreen() {
 
   const userId = session?.user?.id;
 
-  // Use real data if logged in with couple, else fallback to mock
-  const displayItems: DisplayActivity[] = session && couple && dbItems.length > 0
+  // A paired couple shows their real feed (which may legitimately be empty — see
+  // the empty state below). Only the unauthenticated demo falls back to samples.
+  const paired = !!(session && couple);
+  const displayItems: DisplayActivity[] = paired
     ? dbItems
         .map(a => {
           const mapped = mapActivityToDisplay(a);
@@ -250,7 +252,39 @@ export default function ActivityScreen() {
             })}
           </View>
 
-          <Text style={styles.footer}>that's everything · just you two</Text>
+          {displayItems.length === 0 ? (
+            <View style={{ alignItems: 'center', paddingVertical: 44, paddingHorizontal: 24 }}>
+              <Text allowFontScaling={false} style={{ fontSize: 30, marginBottom: 10 }}>
+                🫧
+              </Text>
+              <Text
+                allowFontScaling={false}
+                style={{
+                  fontSize: 15,
+                  fontWeight: '700',
+                  color: colors.ink,
+                  fontFamily: fontFamily.ui,
+                  marginBottom: 6,
+                }}
+              >
+                Nothing yet
+              </Text>
+              <Text
+                allowFontScaling={false}
+                style={{
+                  fontSize: 13.5,
+                  lineHeight: 13.5 * 1.45,
+                  color: colors.inkMute,
+                  textAlign: 'center',
+                  fontFamily: fontFamily.ui,
+                }}
+              >
+                When you and Dani play, nudge, or hit a milestone, it shows up here.
+              </Text>
+            </View>
+          ) : (
+            <Text style={styles.footer}>that's everything · just you two</Text>
+          )}
 
           <View style={styles.bottomSpacer} />
         </ScrollView>
