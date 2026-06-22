@@ -35,16 +35,12 @@ export default function UsScreen() {
   const done = true;
   const currentWave = history.length > 0 ? `${history[0].wavelength}` : '76';
 
-  // Wavelength bar chart: 7 bars total = last 6 drops + today's wavelength.
-  const hist: number[] = history.slice(0, 6).reverse().map(h => h.wavelength);
-  if (hist.length < 6) {
-    // Pad with archive history if there aren't 6 real drops yet
-    const archiveWaves = ARCHIVE.map(a => a.wave);
-    const combined = [...hist, ...archiveWaves.slice(hist.length)].slice(0, 6);
-    hist.length = 0;
-    hist.push(...combined);
-  }
-  hist.push(done ? parseInt(currentWave) : 83);
+  // Wavelength bar chart: always 7 bars = last 6 drops (oldest -> newest) + today.
+  // Pad with the prototype's demo sequence so the chart is never sparse.
+  const DEMO_WAVES = [62, 71, 58, 80, 74, 88];
+  const recent = history.slice(0, 6).reverse().map((h) => h.wavelength);
+  const sixth = DEMO_WAVES.slice(0, Math.max(0, 6 - recent.length));
+  const hist: number[] = [...sixth, ...recent, done ? parseInt(currentWave, 10) : 83];
 
   const handleProfilePress = () => {
     router.push('/profile');
