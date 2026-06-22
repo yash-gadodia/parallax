@@ -49,9 +49,16 @@ So you can just say "make this change" and trust it'll verify its own work.
 
 ## A few useful shortcuts (type them in the prompt)
 
+- **`/preview`** — opens the app on the phone simulator and shows you how it looks right now.
+- **`/fix <describe it>`** — Claude finds and fixes a bug or something that looks wrong, then proves it's fixed. (A screenshot helps a lot.)
+- **`/ship`** — saves your changes to GitHub (after checking everything still works). Say this when you're happy with a change.
 - **`/goal <what you want>`** — sets a target Claude must fully finish before it stops (e.g. `/goal make the Us screen match the design`). Great for "don't stop until it's actually done."
 - **`! <command>`** — runs a terminal command for you if Claude ever asks you to (rare).
 - Just talking normally works for everything else.
+
+## Your to-do list
+
+`docs/BACKLOG.md` is a plain-English list of what to build next. Add ideas to it in normal words, then say **"work on the backlog"** and Claude picks up the next thing.
 
 ## Where the deeper docs live (for Claude, or a technical helper)
 
