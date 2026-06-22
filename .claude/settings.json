@@ -10,6 +10,28 @@
           }
         ]
       }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=$(jq -r '.tool_input.file_path // empty' 2>/dev/null); [ -z \"$f\" ] && exit 0; case \"$f\" in *.ts|*.tsx) ;; *) exit 0;; esac; if grep -q '@ts-ignore' \"$f\" 2>/dev/null; then echo \"🚫 $f uses @ts-ignore — the repo bans it. Use one documented // @ts-expect-error only for the known supabase-js quirk.\" >&2; exit 2; fi; case \"$f\" in *.test.ts|*.test.tsx) if grep -q 'expect(<' \"$f\" 2>/dev/null; then echo \"🚫 $f looks like a hollow test (expect(<JSX/>) is always truthy). render() and assert real content — see .claude/rules/testing.md.\" >&2; exit 2; fi;; esac; exit 0"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "root=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0; cd \"$root\" || exit 0; git status --porcelain -- '*.ts' '*.tsx' 2>/dev/null | grep -q . || exit 0; out=$(npx tsc --noEmit --incremental --tsBuildInfoFile .tsbuildinfo 2>&1); if [ $? -ne 0 ]; then echo \"🚫 Typecheck failed — fix before finishing:\" >&2; echo \"$out\" | tail -15 >&2; exit 2; fi; exit 0"
+          }
+        ]
+      }
     ]
   }
 }

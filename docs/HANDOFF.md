@@ -22,6 +22,16 @@ For Dani (and her AI agents) taking over the codebase: how it's built to be work
 
 If you use a different agent tool, point it at `CLAUDE.md` + `.claude/rules/` — they're plain markdown.
 
+### Automated guardrails (`.claude/settings.json` hooks)
+
+These run automatically — no one has to remember them:
+
+- **PreToolUse** — blocks writes to secret files (`.env`, `*.key`, `*.pem`, credentials).
+- **PostToolUse** — on every `.ts/.tsx` edit, instantly rejects `@ts-ignore` and hollow tests (`expect(<JSX/>)`), the repo's two banned patterns. The agent gets the message and fixes it on the spot.
+- **Stop** — when a turn touched any `.ts/.tsx`, runs an incremental typecheck before the agent can finish; if it's red, the agent must fix it first. (Skips instantly on conversational turns, so there's no latency tax when no code changed.)
+
+Net effect: a turn can't end with a type error or a banned pattern, even from a vague prompt.
+
 ## Adding a feature safely (the non-negotiables)
 
 1. **Test-first.** Co-locate `*.test.ts(x)`. Assert exact values, render + assert real content (never `expect(<JSX/>).toBeTruthy()`). Pure logic → `src/domain` with unit tests.
