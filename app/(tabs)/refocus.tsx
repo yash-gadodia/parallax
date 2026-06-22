@@ -252,7 +252,7 @@ function IntroStep({ insets, onStart, onBack }: IntroStepProps) {
                   width: 38,
                   height: 38,
                   borderRadius: 11,
-                  backgroundColor: 'rgba(157,149,245,0.14)',
+                  backgroundColor: colors.usSoft,
                   alignItems: 'center',
                   justifyContent: 'center',
                   flexShrink: 0,
@@ -454,7 +454,7 @@ function ShareStep({
             paddingHorizontal: 13,
             paddingVertical: 10,
             borderRadius: 14,
-            backgroundColor: 'rgba(157,149,245,0.12)',
+            backgroundColor: colors.usSoft,
             borderWidth: 1,
             borderColor: 'rgba(157,149,245,0.22)',
           }}
@@ -755,7 +755,7 @@ function WaitingStep({ userText, daniText, onDone }: WaitingStepProps) {
               width: 120,
               height: 120,
               borderRadius: radius.pill,
-              backgroundColor: 'rgba(157,149,245,0.14)',
+              backgroundColor: colors.usSoft,
             }}
           />
         </Float>
@@ -1013,7 +1013,7 @@ function ResultStep({
             paddingHorizontal: 18,
             paddingVertical: 20,
             marginTop: 16,
-            backgroundColor: 'rgba(157,149,245,0.12)',
+            backgroundColor: colors.usSoft,
             borderWidth: 1,
             borderColor: 'rgba(157,149,245,0.25)',
           }}
@@ -1115,7 +1115,7 @@ function ResultStep({
             paddingHorizontal: 18,
             paddingVertical: 18,
             marginTop: 16,
-            backgroundColor: 'rgba(157,149,245,0.12)',
+            backgroundColor: colors.usSoft,
             borderWidth: 1,
             borderColor: 'rgba(157,149,245,0.25)',
           }}

@@ -20,6 +20,7 @@ import { Kick, Serif } from '../src/components/Text';
 import Press from '../src/components/Press';
 import Tok from '../src/components/Tok';
 import { Peek } from '../src/components/Peek';
+import { Float } from '../src/components/Float';
 import { Wordmark } from '../src/components/Wordmark';
 import { Ring } from '../src/components/Ring';
 import Stat from '../src/components/Stat';
@@ -98,9 +99,9 @@ export default function RevealScreen() {
           {/* Header section */}
           <View style={{ alignItems: 'center', marginBottom: 8 }}>
             {/* Peek animation */}
-            <View style={{ marginBottom: 8 }}>
+            <Float duration={4000} style={{ marginBottom: 8 }}>
               <Peek size={72} mood={peekMood} />
-            </View>
+            </Float>
 
             {/* Wordmark with animation */}
             <View style={{ marginBottom: 6 }}>

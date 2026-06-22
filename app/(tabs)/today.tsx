@@ -9,6 +9,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView, useSafeAreaInsets  } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { DawnBlobs } from '../../src/components/DawnBlobs';
+import { Float } from '../../src/components/Float';
 import { RadialGlow } from '../../src/components/RadialGlow';
 import { Wordmark } from '../../src/components/Wordmark';
 import { Peek } from '../../src/components/Peek';
@@ -275,7 +276,8 @@ export default function TodayScreen() {
               </View>
 
               {/* Floating emoji (letter at bottom-right) */}
-              <View
+              <Float
+                duration={5000}
                 style={{
                   position: 'absolute',
                   right: 14,
@@ -283,7 +285,7 @@ export default function TodayScreen() {
                 }}
               >
                 <Text style={{ fontSize: 74 }}>💌</Text>
-              </View>
+              </Float>
 
               {/* Title (serif italic) */}
               <View
