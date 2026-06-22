@@ -408,7 +408,7 @@ export default function WrappedScreen() {
 
               {/* Share preview card - frosted glass */}
               <BlurView
-                intensity={28}
+                intensity={14}
                 tint="light"
                 style={{
                   backgroundColor: 'rgba(255,255,255,0.16)',

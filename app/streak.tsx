@@ -206,16 +206,24 @@ export default function StreakScreen() {
                   width: 30,
                   height: 30,
                   borderRadius: radius.pill,
-                  backgroundColor: week[idx]
-                    ? colors.p2
-                    : colors.sunken,
+                  backgroundColor: week[idx] ? undefined : colors.sunken,
                   borderWidth: idx === 6 ? 1.5 : 0,
                   borderColor: idx === 6 ? colors.p1 : 'transparent',
                   borderStyle: idx === 6 ? 'dashed' : 'solid',
+                  overflow: 'hidden',
                   justifyContent: 'center',
                   alignItems: 'center',
                 }}
               >
+                {week[idx] && (
+                  <LinearGradient
+                    colors={gradients.us.colors}
+                    locations={gradients.us.locations}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={{ position: 'absolute', inset: 0 }}
+                  />
+                )}
                 {week[idx] ? (
                   <Icon d={ICONS.check} size={15} color="#fff" sw={2.4} />
                 ) : idx === 6 ? (
@@ -266,11 +274,14 @@ export default function StreakScreen() {
               marginBottom: 16,
             }}
           >
-            <View
+            <LinearGradient
+              colors={gradients.us.colors}
+              locations={gradients.us.locations}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
               style={{
                 height: '100%',
                 width: `${prog * 100}%`,
-                backgroundColor: '#9D95F5',
                 borderRadius: 999,
               }}
             />
@@ -302,17 +313,27 @@ export default function StreakScreen() {
                       height: 40,
                       borderRadius: 999,
                       backgroundColor: hit
-                        ? '#9D95F5'
+                        ? undefined
                         : isNext
                         ? colors.surface
                         : colors.sunken,
                       borderWidth: isNext ? 2 : 0,
                       borderColor: isNext ? colors.p2 : 'transparent',
+                      overflow: 'hidden',
                       justifyContent: 'center',
                       alignItems: 'center',
                       ...(hit ? shadows.shadowSoft : {}),
                     }}
                   >
+                    {hit && (
+                      <LinearGradient
+                        colors={gradients.us.colors}
+                        locations={gradients.us.locations}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={{ position: 'absolute', inset: 0 }}
+                      />
+                    )}
                     <Text style={{ fontSize: 16 }}>
                       {hit ? '🔥' : isNext ? '✨' : '🔒'}
                     </Text>

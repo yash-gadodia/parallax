@@ -38,7 +38,8 @@ The shared task list. Plain-English, owner-tagged, and the Claude agent reads & 
 - [ ] **(Dani)** Recruit a few **beta couples** to test via TestFlight
 
 ### (Claude) — buildable now
-- [ ] **(Claude)** Minor polish (low impact): streak day-cells / progress-bar / milestone-icons use solid `p2` instead of the `us` gradient; wrapped share-card blur slightly strong
+
+_(nothing queued — add a request and Claude will pick it up)_
 
 ## In progress
 
@@ -51,4 +52,5 @@ _(nothing right now)_
 - [x] **(Claude)** Full unit-test coverage (222 tests) + handoff docs
 - [x] **(Claude)** Core-screen design fidelity (logo/mascot bounce, us-soft colors)
 - [x] **(Claude)** Remaining-screen fidelity pass: pay screens already matched; fixed onboarding chip padding + invite-code spacing, streak us-soft card, milestone avatar overlap
+- [x] **(Claude)** Minor polish: streak day-cells / progress-bar / milestone-icons now use the `us` gradient; wrapped share-card blur softened
 - [x] **(Claude)** DX: doctor/dev scripts, CI + CD (EAS build/submit + OTA), hooks, error boundary
