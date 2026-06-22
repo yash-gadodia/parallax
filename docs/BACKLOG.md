@@ -1,27 +1,43 @@
 # Backlog
 
-Plain-English list of what to build or fix next. **Just write what you want in normal words** — Claude reads this file and can pick up a task when you say "work on the backlog" or "do the next thing."
+The shared task list. Plain-English, owner-tagged, and the Claude agent reads & updates it.
 
-How to use it:
-- Add ideas under **Up next** as a one-liner. No need for technical detail.
-- Move things to **Done** (or just delete them) once they're shipped.
-- A screenshot or example is always helpful — drop a note like "(see screenshot I sent)".
+**How it works**
+- Each task is a checkbox with an **owner**: `(Yash)` creds/infra · `(Dani)` product/design calls · `(Claude)` anything the agent can build.
+- Say **"work on the backlog"** and Claude picks the top unblocked **(Claude)** item, does it (test + verify), then checks it off and moves it to **Done** with the commit.
+- Claude can also **assign** (add a task with the right owner) and **reassign** (e.g. if a (Claude) task actually needs a cred → tag it (Yash) and note why).
+- Add anything you want in plain words under **To do** — Claude will route it to the right owner.
 
 ---
 
-## Up next
+## To do
 
-- _(add your next idea here, e.g. "make the daily prompt feel more personal")_
+### (Yash) — go-live credentials & infra  _(for later; full steps in docs/HANDOFF.md)_
+- [ ] **(Yash)** Real iOS `bundleIdentifier` in `app.json` (replace `com.anonymous.parallax`)
+- [ ] **(Yash)** Expo: run `npx eas init`, add `EXPO_TOKEN` repo secret (unlocks CI builds + OTA)
+- [ ] **(Yash)** Production Supabase project: link + push migrations + set auth redirect URLs (`parallax://auth-callback`)
+- [ ] **(Yash)** Apple Developer account → App Store Connect app + "Sign in with Apple" provider creds in Supabase
+- [ ] **(Yash)** Google OAuth client → Supabase Google provider
+- [ ] **(Yash)** Anthropic key → `supabase secrets set ANTHROPIC_API_KEY` (powers Refocus AI) + add rate-limit for prod
+- [ ] **(Yash)** RevenueCat public SDK keys (`appl_…`/`goog_…`) + products + "Parallax Pro" entitlement
+- [ ] **(Yash)** Resend: verify the Parallax sending domain + set `RESEND_SMTP_PASSWORD` (prod confirmation emails)
 
-## Ideas / someday
+### (Dani) — product & design decisions
+- [ ] **(Dani)** Decide: ship the **Wrapped** feature, or cut it?
+- [ ] **(Dani)** Decide: add **therapist escalation** in Refocus (offer a real couples therapist after repeated conflicts)?
+- [ ] **(Dani)** Review the daily **prompt quality** / write new prompt packs (the "voice" lives in `src/content/`)
 
-- Extend the design-fidelity pass to the remaining screens (pay, viral/share, settings, onboarding sub-steps, sheets).
-- Therapist-escalation in Refocus (offer a real couples therapist after repeated conflicts).
-- Decide whether to ship the Wrapped feature.
+### (Claude) — buildable now
+- [ ] **(Claude)** Design-fidelity pass on remaining screens: pay/checkout, share/viral sheets, settings/profile, onboarding sub-steps, milestone/wrapped
+
+## In progress
+
+_(nothing right now)_
 
 ## Done
-
-- Email/password signup + email confirmation (Resend) with Apple/Google.
-- Go-live signup flow verified; root redirect guard.
-- Full unit-test coverage (220 tests) + docs for handoff.
-- Core-screen design fidelity pass (logo/mascot bounce, us-soft colors).
+- [x] **(Claude)** Email/password signup + email confirmation (Resend) with Apple/Google
+- [x] **(Claude)** Realtime crash fix (unique channel topics) — verified on device
+- [x] **(Claude)** Go-live signup flow verified end-to-end + root redirect guard
+- [x] **(Claude)** Full unit-test coverage (222 tests) + handoff docs
+- [x] **(Claude)** Core-screen design fidelity (logo/mascot bounce, us-soft colors)
+- [x] **(Claude)** DX: doctor/dev scripts, CI + CD (EAS build/submit + OTA), hooks, error boundary

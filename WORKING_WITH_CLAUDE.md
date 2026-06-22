@@ -58,7 +58,11 @@ So you can just say "make this change" and trust it'll verify its own work.
 
 ## Your to-do list
 
-`docs/BACKLOG.md` is a plain-English list of what to build next. Add ideas to it in normal words, then say **"work on the backlog"** and Claude picks up the next thing.
+`docs/BACKLOG.md` is the shared task list. Each item is tagged with who owns it — **(Dani)** for product/design calls (that's you), **(Yash)** for accounts/credentials, **(Claude)** for things the agent builds.
+
+- Add anything you want in plain words — Claude files it under the right person.
+- Say **"work on the backlog"** and Claude builds the next **(Claude)** task and ticks it off.
+- Your **(Dani)** items are decisions only you can make (e.g. "ship the Wrapped feature?") — answer them in chat and Claude takes it from there.
 
 ## Where the deeper docs live (for Claude, or a technical helper)
 
