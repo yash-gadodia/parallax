@@ -146,32 +146,23 @@ export async function fetchReveal(coupleDropId: string) {
       throw answersError;
     }
 
-    // Get couple to map members to authors
-    const { data: couple, error: coupleError } = await supabase
-      .from('couples')
-      .select('member_a, member_b')
-      .eq('id', drop.couple_id)
-      .maybeSingle();
-
-    if (coupleError) {
-      throw coupleError;
-    }
+    // Identify the current user so "you" vs "them" is correct whether the caller
+    // is member_a or member_b (do NOT assume the caller is member_a).
+    const { data: userData } = await supabase.auth.getUser();
+    const myId = userData?.user?.id ?? null;
 
     // Build maps for quick lookup: prompt_id -> answer
     const myAnswers = new Map<string, { pick: number | null; hunch: number | null }>();
     const themAnswers = new Map<string, { pick: number | null; hunch: number | null }>();
 
     const answerList = (answers || []) as Array<{ prompt_id: string; author: string; pick: number | null; hunch: number | null }>;
-    const coupleData = couple as { member_a: string; member_b: string | null } | null;
 
-    if (coupleData) {
-      for (const ans of answerList) {
-        const ansObj = { pick: ans.pick, hunch: ans.hunch };
-        if (ans.author === coupleData.member_a) {
-          myAnswers.set(ans.prompt_id, ansObj);
-        } else {
-          themAnswers.set(ans.prompt_id, ansObj);
-        }
+    for (const ans of answerList) {
+      const ansObj = { pick: ans.pick, hunch: ans.hunch };
+      if (ans.author === myId) {
+        myAnswers.set(ans.prompt_id, ansObj);
+      } else {
+        themAnswers.set(ans.prompt_id, ansObj);
       }
     }
 

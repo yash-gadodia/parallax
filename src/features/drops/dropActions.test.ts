@@ -1,7 +1,11 @@
 import { ensureTodayDrop, submitMyAnswers, fetchReveal } from './dropActions';
 
 jest.mock('../../lib/supabase', () => ({
-  supabase: { rpc: jest.fn(), from: jest.fn() },
+  supabase: {
+    rpc: jest.fn(),
+    from: jest.fn(),
+    auth: { getUser: jest.fn(() => Promise.resolve({ data: { user: { id: 'me' } } })) },
+  },
 }));
 jest.mock('../engagement/engagementActions', () => ({
   completeDrop: jest.fn(() => Promise.resolve()),
@@ -13,7 +17,11 @@ jest.mock('../../store/ui', () => ({
 import { supabase } from '../../lib/supabase';
 import { completeDrop } from '../engagement/engagementActions';
 
-const mockSupabase = supabase as unknown as { rpc: jest.Mock; from: jest.Mock };
+const mockSupabase = supabase as unknown as {
+  rpc: jest.Mock;
+  from: jest.Mock;
+  auth: { getUser: jest.Mock };
+};
 
 // A thenable query builder: chainable methods return `self`, and `await`-ing it
 // (or maybeSingle()) resolves to the supplied result - covers every chain shape used.
@@ -107,6 +115,32 @@ describe('dropActions', () => {
       // p1: both picked 1 -> a twin moment
       expect(result.promptAnswers).toEqual([{ youPick: 1, youHunch: 2, themPick: 1, themHunch: 0 }]);
       expect(result.reveal.twins).toBe(1);
+    });
+
+    it('maps "you" to the CURRENT user even when they are member_b', async () => {
+      // The caller is "them" here — youPick must come from the 'them'-authored row.
+      mockSupabase.auth.getUser.mockResolvedValueOnce({ data: { user: { id: 'them' } } });
+      mockSupabase.from.mockImplementation((table: string) => {
+        if (table === 'couple_drops') {
+          return builder({ data: { id: 'cd-1', couple_id: 'c-1', state: 'revealed', drop_id: 'd-1' }, error: null });
+        }
+        if (table === 'drop_prompts') {
+          return builder({ data: [{ id: 'p1', position: 0 }], error: null });
+        }
+        if (table === 'answers') {
+          return builder({
+            data: [
+              { prompt_id: 'p1', author: 'me', pick: 3, hunch: 4 },
+              { prompt_id: 'p1', author: 'them', pick: 1, hunch: 2 },
+            ],
+            error: null,
+          });
+        }
+        return builder({ data: null, error: null });
+      });
+
+      const result = await fetchReveal('cd-1');
+      expect(result.promptAnswers).toEqual([{ youPick: 1, youHunch: 2, themPick: 3, themHunch: 4 }]);
     });
   });
 });
