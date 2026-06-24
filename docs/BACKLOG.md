@@ -29,6 +29,7 @@ The shared task list. Plain-English, owner-tagged, and the Claude agent reads & 
 - [ ] **(Yash)** Schedule `reset_stale_streaks()` to run **daily** (pg_cron or a scheduled edge function) — built + tested in `0007_streak_reset.sql`, but the shared streak won't reset/forgive in prod until something calls it once a day
 - [ ] **(Yash)** Before prod, gate the demo `sim_partner_submit` RPC out (or behind a flag) — it lets a user self-reveal solo; it's the intended local demo mechanism but shouldn't ship enabled to real users
 - [ ] **(Yash)** Refocus edge fn hardening for prod: set `verify_jwt = true` (config.toml) + add a per-user/IP rate limit (it currently spends Anthropic tokens on anonymous calls)
+- [ ] **(Yash)** Retire `phase-0-foundation`: `main` is now the complete superset (its only unique non-stale files — STRATEGY.md + research reports — were ported in `fce36df`). On GitHub: change the **default branch to `main`** (Settings → Branches), retarget/close any open PRs, then delete `phase-0-foundation`. (Couldn't do it here — `gh` is unauthenticated and GitHub blocks deleting the current default branch.)
 
 ### (Dani) — onboarding, product & design decisions
 - [ ] **(Dani)** Get set up locally + learn the stack — start with `WORKING_WITH_CLAUDE.md`, then `docs/DEV_SETUP.md` (run `npm run dev`), and skim `docs/FLOWS.md` for how the app works
