@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -27,6 +27,7 @@ import {
   signInWithApple,
   signInWithGoogle,
 } from '../src/features/auth/authActions';
+import { track, EVENTS } from '../src/lib/analytics';
 
 const labelStyle = {
   fontFamily: fontFamily.mono,
@@ -65,6 +66,10 @@ export default function SignupScreen() {
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
 
+  useEffect(() => {
+    track(EVENTS.SIGNUP_STARTED);
+  }, []);
+
   const handleSignUp = async () => {
     if (!name.trim()) {
       fireToast('What should we call you?');
@@ -82,6 +87,7 @@ export default function SignupScreen() {
     setLoading(true);
     try {
       await signUpWithEmail(email.trim(), password, name.trim());
+      track(EVENTS.SIGNUP_COMPLETED);
       setSent(true);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Sign up failed';

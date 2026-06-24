@@ -17,8 +17,9 @@ describe('AppErrorBoundary', () => {
   });
 
   it('shows the recovery screen when a child throws during render', async () => {
-    // componentDidCatch logs the error; silence it so test output stays clean.
+    // componentDidCatch logs the error + captureError warns (no key in test); silence both.
     const spy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
 
     const { getByText } = await render(
       <AppErrorBoundary>
@@ -30,5 +31,6 @@ describe('AppErrorBoundary', () => {
     expect(getByText('Try again')).toBeTruthy();
 
     spy.mockRestore();
+    warnSpy.mockRestore();
   });
 });

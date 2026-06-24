@@ -50,6 +50,7 @@ import { useCouple } from '../../src/features/pairing/useCouple';
 import { supabase } from '../../src/lib/supabase';
 import { addLearning } from '../../src/features/lovemap/addLearning';
 import { learningOrigin } from '../../src/domain/learningOrigin';
+import { track, EVENTS } from '../../src/lib/analytics';
 
 // Identity definitions
 const YOU = { name: 'you', initial: 'Y' };
@@ -142,6 +143,7 @@ export default function RefocusScreen() {
           userText={text || VOICE_TRANSCRIPT}
           daniText={DANI_SIDE}
           onDone={(res) => {
+            track(EVENTS.REFOCUS_COMPLETED);
             setResult(res);
             setStep('result');
           }}

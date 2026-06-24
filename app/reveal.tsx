@@ -33,6 +33,7 @@ import { useCouple } from '../src/features/pairing/useCouple';
 import { fetchReveal } from '../src/features/drops/dropActions';
 import type { RevealScore } from '../src/domain/reveal';
 import type { PromptAnswers } from '../src/domain/reveal';
+import { track, EVENTS } from '../src/lib/analytics';
 
 const YOU = { initial: 'Y' };
 const PAR = { initial: 'D' };
@@ -59,6 +60,7 @@ export default function RevealScreen() {
   const [aligned, setAligned] = useState(false);
 
   useEffect(() => {
+    track(EVENTS.REVEAL_VIEWED);
     const t = setTimeout(() => setShow(true), 80);
     const t2 = setTimeout(() => setAligned(true), 780);
     return () => {

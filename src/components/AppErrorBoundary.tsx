@@ -5,6 +5,7 @@ import { colors, gradients, space } from '../design/tokens';
 import { fontFamily } from '../design/typography';
 import { Serif } from './Text';
 import Btn from './Btn';
+import { captureError } from '../lib/analytics';
 
 interface Props {
   children: React.ReactNode;
@@ -24,8 +25,8 @@ export class AppErrorBoundary extends React.Component<Props, State> {
   }
 
   componentDidCatch(error: Error) {
-    // Surface for dev / future crash reporting (Sentry, etc.).
     console.error('App crashed:', error);
+    captureError(error, { screen: 'unknown' });
   }
 
   reset = () => this.setState({ error: null });

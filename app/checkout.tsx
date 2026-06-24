@@ -23,6 +23,7 @@ import { Mark } from '../src/components/Mark';
 import { PLANS, PERKS } from '../src/content/pay';
 import { usePurchases } from '../src/features/purchases/usePurchases';
 import Toast from '../src/components/Toast';
+import { track, EVENTS } from '../src/lib/analytics';
 
 type PlanId = 'year' | 'month';
 type PaymentMethod = 'apple' | 'card';
@@ -40,6 +41,10 @@ export default function CheckoutScreen() {
   const [restoring, setRestoring] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const spinValue = React.useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    track(EVENTS.PAYWALL_VIEWED);
+  }, []);
 
   const pl = PLANS[plan];
 
@@ -76,6 +81,7 @@ export default function CheckoutScreen() {
         // Expo Go / no live offering → demo unlock so the flow still completes.
         setDemoPro(true);
       }
+      track(EVENTS.PURCHASE_COMPLETED, { plan });
       router.replace('/plusSuccess');
     } catch {
       setConfirming(false);

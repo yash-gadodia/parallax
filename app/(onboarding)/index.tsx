@@ -30,6 +30,7 @@ import { useCouple } from '../../src/features/pairing/useCouple';
 import { createCouple, joinCouple } from '../../src/features/pairing/pairingActions';
 import { supabase } from '../../src/lib/supabase';
 import { requestPermissions, scheduleDailyNudge, registerPushToken } from '../../src/features/notifications';
+import { track, EVENTS } from '../../src/lib/analytics';
 
 const TAGLINE = 'mind the parallax error';
 
@@ -438,6 +439,7 @@ function Step3PairUp({
       await Share.share({
         message: `Join me on Parallax! Tap to join: ${deepLink}\n\nOr enter my code manually: ${inviteCode}`,
       });
+      track(EVENTS.COUPLE_PAIRED, { method: 'invite' });
       onNext();
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Share failed';
@@ -453,6 +455,7 @@ function Step3PairUp({
     setLoading(true);
     try {
       await joinCouple(joinCode);
+      track(EVENTS.COUPLE_PAIRED, { method: 'join' });
       onNext();
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Invalid code';

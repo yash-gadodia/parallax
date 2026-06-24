@@ -10,20 +10,35 @@ import { AppErrorBoundary } from '../src/components/AppErrorBoundary';
 import { flushQueue } from '../src/lib/offlineQueue';
 import { submitMyAnswers } from '../src/features/drops/dropActions';
 import { supabase } from '../src/lib/supabase';
+import { init as initAnalytics, identify, reset, track, EVENTS } from '../src/lib/analytics';
 
 export default function RootLayout() {
   const fontsLoaded = useAppFonts();
 
   useEffect(() => {
+    initAnalytics();
+    track(EVENTS.APP_OPEN);
+
     // Initialise RevenueCat once (real SDK in a dev build; no-op in Expo Go).
     usePurchases.getState().configure();
 
     // Flush any pending offline submissions on app start (fire-and-forget).
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) {
+        identify(data.session.user.id);
         flushQueue(submitMyAnswers);
       }
     });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session) {
+        identify(session.user.id);
+      } else if (event === 'SIGNED_OUT') {
+        reset();
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   if (!fontsLoaded) {

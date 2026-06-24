@@ -23,6 +23,7 @@ import { useCouple } from '../src/features/pairing/useCouple';
 import { submitMyAnswers } from '../src/features/drops/dropActions';
 import { enqueueSubmit } from '../src/lib/offlineQueue';
 import { useUiStore } from '../src/store/ui';
+import { track, EVENTS } from '../src/lib/analytics';
 
 const YOU = { initial: 'Y' };
 const PAR = { initial: 'D' };
@@ -73,6 +74,7 @@ export default function PlayScreen() {
               currentState.myPicks,
               currentState.myHunches
             );
+            track(EVENTS.DROP_SUBMITTED);
             usePlayStore.setState({ done: true, coupleDropId });
             setTimeout(() => {
               router.push('/waiting');
@@ -80,6 +82,7 @@ export default function PlayScreen() {
           } catch (_err) {
             setSubmitting(false);
             await enqueueSubmit(couple.id, currentState.myPicks, currentState.myHunches);
+            track(EVENTS.DROP_SUBMITTED, { offline: true });
             useUiStore.getState().fireToast("We'll send your answers when you're back online");
             usePlayStore.setState({ done: true });
             setTimeout(() => {
@@ -87,6 +90,7 @@ export default function PlayScreen() {
             }, 220);
           }
         } else {
+          track(EVENTS.DROP_SUBMITTED, { demo: true });
           usePlayStore.setState({ done: true });
           setTimeout(() => {
             router.push('/waiting');
