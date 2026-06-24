@@ -35,7 +35,10 @@ export default function CheckoutScreen() {
   const [failMsg, setFailMsg] = useState<string | null>(null);
   const offering = usePurchases((s) => s.offering);
   const purchase = usePurchases((s) => s.purchase);
+  const restore = usePurchases((s) => s.restore);
   const setDemoPro = usePurchases((s) => s.setDemoPro);
+  const [restoring, setRestoring] = useState(false);
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
   const spinValue = React.useRef(new Animated.Value(0)).current;
 
   const pl = PLANS[plan];
@@ -78,6 +81,21 @@ export default function CheckoutScreen() {
       setConfirming(false);
       setFailMsg("That didn't go through. No charge was made.");
       setTimeout(() => setFailMsg(null), 2600);
+    }
+  };
+
+  const handleRestore = async () => {
+    setRestoring(true);
+    try {
+      const pro = await restore();
+      if (pro) {
+        router.replace('/plusSuccess');
+      } else {
+        setToastMsg('No purchases to restore');
+        setTimeout(() => setToastMsg(null), 2200);
+      }
+    } finally {
+      setRestoring(false);
     }
   };
 
@@ -329,6 +347,23 @@ export default function CheckoutScreen() {
               </Text>
             </View>
           )}
+
+          {/* Restore purchases (App Store requirement) */}
+          <Press onPress={handleRestore} scale={false} style={{ marginTop: 18 }}>
+            <Text
+              allowFontScaling={false}
+              style={{
+                fontSize: 13,
+                fontWeight: '600',
+                color: colors.inkSoft,
+                fontFamily: fontFamily.ui,
+                textAlign: 'center',
+                textDecorationLine: 'underline',
+              }}
+            >
+              {restoring ? 'Restoring…' : 'Restore purchases'}
+            </Text>
+          </Press>
         </ScrollView>
 
         {/* Sticky CTA Footer */}
@@ -418,6 +453,7 @@ export default function CheckoutScreen() {
         )}
 
         {failMsg && <Toast msg={failMsg} />}
+        {toastMsg && <Toast msg={toastMsg} />}
       </SafeAreaView>
     </LinearGradient>
   );

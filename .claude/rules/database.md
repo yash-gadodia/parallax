@@ -4,11 +4,14 @@ paths: ["supabase/**", "src/lib/supabase.ts", "src/types/db.ts", "src/features/*
 
 # Supabase / data layer
 
-Backend is Supabase (Postgres + Auth + Realtime). Migrations `supabase/migrations/0001..0005`; the typed client is `src/lib/supabase.ts`; hand-written types in `src/types/db.ts`.
+Backend is Supabase (Postgres + Auth + Realtime). Migrations `supabase/migrations/0001..0006`; the typed client is `src/lib/supabase.ts`; hand-written types in `src/types/db.ts`.
+
+> Local dev runs on **colima**, not OrbStack. `supabase start` fails on the `vector` log container (colima can't mount its docker.sock) → start with `supabase start -x vector,analytics --ignore-health-check`, then `supabase db reset` + `supabase test db`.
 
 ## RLS is the security backbone (don't bypass)
 - Every intimate table carries `couple_id`; policy = "current user is a member of this couple."
-- **The reveal gate** (the core security property): a member can read the partner's `answers` ONLY when `couple_drops.state = 'revealed'` (both submitted). Enforced in RLS — never in the client. Proven by `supabase/tests/reveal_gate_*.sql`; keep those green.
+- **The reveal gate** (the core security property): a member can read the partner's `answers` ONLY when `couple_drops.state = 'revealed'` (both submitted). Enforced in RLS — never in the client. **Proven by `supabase/tests/rls_enforcement_test.sql`** — it switches into the `authenticated` role + sets `request.jwt.claims` and asserts real row counts (the `reveal_gate_*.sql` files only check that policies *exist*, running as the RLS-exempt owner). Keep the enforcement test green.
+- **Grants are NOT automatic.** This Postgres' default privileges grant `authenticated` only `Dxt`, NOT DML — a new table is invisible to logged-in users until you `grant select,insert,update,delete ... to authenticated` (see `0006_harden.sql`). RLS still gates rows. Every new migration adding a table MUST grant itself or the live app gets "permission denied".
 - **All cross-partner writes go through SECURITY DEFINER functions** (`create_couple`, `join_couple`, `submit_answers`, `sim_partner_submit`, `complete_streak`, `log_activity`, `nudge_partner`, `add_learning`, `ensure_today_drop`) — clients call them via `supabase.rpc(...)`, never raw table writes for cross-partner data.
 - `service_role` / secrets never ship in the client — only `EXPO_PUBLIC_SUPABASE_URL` + anon key (`.env`, gitignored).
 

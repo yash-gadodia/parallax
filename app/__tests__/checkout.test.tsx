@@ -14,5 +14,8 @@ describe('CheckoutScreen', () => {
 
     // Verify the payment section label
     expect(getByText('payment')).toBeDefined();
+
+    // App Store requires a visible Restore Purchases control on the paywall
+    expect(getByText('Restore purchases')).toBeDefined();
   });
 });

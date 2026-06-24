@@ -639,9 +639,11 @@ function Step5NotifyTime({
       const uid = data.user?.id;
       if (uid) {
         const moment = MOMENTS.find((m) => m[0] === selected);
-        const time = moment?.[3]; // 'HH:MM'
-        // @ts-expect-error supabase-js typed update arg resolves to never for this table
-        await supabase.from('profiles').update({ notify_time: time }).eq('id', uid);
+        const time = moment?.[4]; // 24h 'HH:MM' — valid for the Postgres `time` column
+        if (time) {
+          // @ts-expect-error supabase-js typed update arg resolves to never for this table
+          await supabase.from('profiles').update({ notify_time: time }).eq('id', uid);
+        }
       }
     } catch {
       // ignore - saved if/when signed in

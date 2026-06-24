@@ -35,5 +35,9 @@ describe('ProfileScreen', () => {
 
     // Check account section
     expect(getByText('account')).toBeTruthy();
+
+    // Account essentials: log out + unpair are both present
+    expect(getByText('Log out')).toBeTruthy();
+    expect(getByText('Unpair from Dani')).toBeTruthy();
   });
 });

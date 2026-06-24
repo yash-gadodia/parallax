@@ -23,6 +23,8 @@ import { colors, gradients, radius, shadows, space } from '../src/design/tokens'
 import { fontFamily } from '../src/design/typography';
 import { useCouple } from '../src/features/pairing/useCouple';
 import { nudge } from '../src/features/engagement/engagementActions';
+import { usePurchases } from '../src/features/purchases/usePurchases';
+import { signOut } from '../src/features/auth/authActions';
 
 const YOU = { initial: 'Y' };
 const DANI = { initial: 'D' };
@@ -30,7 +32,6 @@ const DANI = { initial: 'D' };
 interface ProfileState {
   name: string;
   spice: string;
-  plus: boolean;
 }
 
 interface RowProps {
@@ -130,13 +131,14 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const { couple } = useCouple();
+  const isPro = usePurchases((s) => s.isPro);
 
   // Mock profile state
   const state: ProfileState = {
     name: 'Yash',
     spice: 'Flirty',
-    plus: false,
   };
+  const plus = isPro;
 
   const showToast = (msg: string) => {
     setToastMsg(msg);
@@ -166,6 +168,15 @@ export default function ProfileScreen() {
 
   const handleUnpair = () => {
     showToast('Unpaired from Dani');
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      router.replace('/login');
+    } catch {
+      showToast('Could not log out');
+    }
   };
 
   const containerStyle: ViewStyle = {
@@ -308,7 +319,7 @@ export default function ProfileScreen() {
         </LinearGradient>
 
         {/* Plus Banner (conditional) */}
-        {state.plus && (
+        {plus && (
           <LinearGradient
             colors={gradients.us.colors}
             locations={gradients.us.locations}
@@ -415,13 +426,18 @@ export default function ProfileScreen() {
           <Row
             icon={ICONS.heart}
             label="Parallax Plus"
-            value={state.plus ? 'Active' : 'Upgrade'}
-            onPress={() => router.push('/checkout')}
+            value={plus ? 'Active' : 'Upgrade'}
+            onPress={() => router.push(plus ? '/manageSub' : '/checkout')}
           />
           <Row
             icon={ICONS.link}
             label="Manage pairing"
             onPress={handlePairing}
+          />
+          <Row
+            icon={ICONS.logout}
+            label="Log out"
+            onPress={handleSignOut}
           />
           <Row
             icon={ICONS.logout}
