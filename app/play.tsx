@@ -21,6 +21,8 @@ import { DawnBlobs } from '../src/components/DawnBlobs';
 import { useSession } from '../src/features/auth/useSession';
 import { useCouple } from '../src/features/pairing/useCouple';
 import { submitMyAnswers } from '../src/features/drops/dropActions';
+import { enqueueSubmit } from '../src/lib/offlineQueue';
+import { useUiStore } from '../src/store/ui';
 
 const YOU = { initial: 'Y' };
 const PAR = { initial: 'D' };
@@ -64,8 +66,8 @@ export default function PlayScreen() {
         // Final submit: either via Supabase (if session + couple) or local fallback
         if (session && couple) {
           setSubmitting(true);
+          const currentState = usePlayStore.getState();
           try {
-            const currentState = usePlayStore.getState();
             const coupleDropId = await submitMyAnswers(
               couple.id,
               currentState.myPicks,
@@ -76,7 +78,12 @@ export default function PlayScreen() {
               router.push('/waiting');
             }, 220);
           } catch (_err) {
-            setSubmitting(false);
+            await enqueueSubmit(couple.id, currentState.myPicks, currentState.myHunches);
+            useUiStore.getState().fireToast("We'll send your answers when you're back online");
+            usePlayStore.setState({ done: true });
+            setTimeout(() => {
+              router.push('/waiting');
+            }, 220);
           }
         } else {
           usePlayStore.setState({ done: true });
