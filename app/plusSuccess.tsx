@@ -239,6 +239,7 @@ function ConfettiHeart({
         allowFontScaling={false}
         style={{
           fontSize: 24,
+          color: colors.ink,
         }}
       >
         {heart.emoji}
