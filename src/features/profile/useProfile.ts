@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Profile } from '../../types/db';
 import { useCouple } from '../pairing/useCouple';
+import { normaliseSpiceLevel, SpiceLevel } from '../../domain/spice';
 
 export interface ProfileData {
   name: string;
@@ -25,6 +26,7 @@ const DEMO: ProfileData = {
 
 export function useProfile(): ProfileData & {
   updateProfile: (display_name: string, together_since?: string) => Promise<void>;
+  updateSpiceLevel: (level: SpiceLevel) => Promise<void>;
 } {
   const { couple } = useCouple();
   const [data, setData] = useState<ProfileData>({ ...DEMO, loading: true });
@@ -62,7 +64,7 @@ export function useProfile(): ProfileData & {
     setData({
       name: profile?.display_name || DEMO.name,
       partnerName,
-      spiceLevel: profile?.spice_level || DEMO.spiceLevel,
+      spiceLevel: normaliseSpiceLevel(profile?.spice_level) || DEMO.spiceLevel,
       notifyTime: profile?.notify_time ?? null,
       togetherSince: couple?.together_since ?? DEMO.togetherSince,
       streak: couple?.streak ?? DEMO.streak,
@@ -97,5 +99,16 @@ export function useProfile(): ProfileData & {
     [couple]
   );
 
-  return { ...data, updateProfile };
+  const updateSpiceLevel = useCallback(async (level: SpiceLevel) => {
+    const { data: userData } = await supabase.auth.getUser();
+    const uid = userData.user?.id;
+    if (!uid) return;
+
+    // @ts-expect-error supabase-js typed .update() resolves to never for partial profile updates
+    await supabase.from('profiles').update({ spice_level: level.toLowerCase() }).eq('id', uid);
+
+    setData((prev) => ({ ...prev, spiceLevel: level }));
+  }, []);
+
+  return { ...data, updateProfile, updateSpiceLevel };
 }

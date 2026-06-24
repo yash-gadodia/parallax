@@ -27,6 +27,9 @@ import { usePlayStore, computeReveal } from '../../src/store/play';
 import { useCouple } from '../../src/features/pairing/useCouple';
 import { useActivity } from '../../src/features/engagement/useActivity';
 import { useSession } from '../../src/features/auth/useSession';
+import { useProfile } from '../../src/features/profile/useProfile';
+import { selectDropForSpice, normaliseSpiceLevel } from '../../src/domain/spice';
+import type { SpiceLevel } from '../../src/domain/spice';
 
 // Identity definitions
 const YOU = { name: 'you', initial: 'Y' };
@@ -42,6 +45,8 @@ export default function TodayScreen() {
   const { session } = useSession();
   const { couple } = useCouple();
   const { items: dbActivity, unreadCount } = useActivity(couple?.id || null);
+  const { spiceLevel } = useProfile();
+  const activeDrop = selectDropForSpice(DROP, normaliseSpiceLevel(spiceLevel) as SpiceLevel);
 
   const streak = couple?.streak ?? 23;
   const wave = reveal?.wave ?? 76;
@@ -271,7 +276,7 @@ export default function TodayScreen() {
                     color: 'rgba(255,255,255,0.9)',
                   }}
                 >
-                  {DROP.code} · {DROP.day.toUpperCase()}
+                  {activeDrop.code} · {activeDrop.day.toUpperCase()}
                 </Text>
               </View>
 
@@ -296,7 +301,7 @@ export default function TodayScreen() {
                 }}
               >
                 <Serif s={40} italic c="#fff">
-                  {DROP.title}
+                  {activeDrop.title}
                 </Serif>
               </View>
             </LinearGradient>
@@ -313,7 +318,7 @@ export default function TodayScreen() {
                       fontFamily: fontFamily.ui,
                     }}
                   >
-                    {DROP.blurb}
+                    {activeDrop.blurb}
                   </Text>
 
                   {/* Prompt emoji tiles */}
@@ -325,7 +330,7 @@ export default function TodayScreen() {
                       marginBottom: 18,
                     }}
                   >
-                    {DROP.prompts.map((p, i) => (
+                    {activeDrop.prompts.map((p, i) => (
                       <View
                         key={i}
                         style={{

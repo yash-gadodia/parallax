@@ -5,12 +5,11 @@ import { safeBack } from "../../src/lib/nav";
 import Sheet from '../../src/components/Sheet';
 import Press from '../../src/components/Press';
 import Toast from '../../src/components/Toast';
-import { Kick } from '../../src/components/Text';
 import { Icon, ICONS } from '../../src/components/Icon';
 import { colors, radius, shadows } from '../../src/design/tokens';
 import { fontFamily } from '../../src/design/typography';
-
-type SpiceLevel = 'Sweet' | 'Flirty' | 'Spicy';
+import { useProfile } from '../../src/features/profile/useProfile';
+import type { SpiceLevel } from '../../src/domain/spice';
 
 const SPICE_OPTIONS: Array<{ level: SpiceLevel; emoji: string; desc: string }> = [
   { level: 'Sweet', emoji: '🍰', desc: 'Wholesome, no spice. Cozy and kind.' },
@@ -20,11 +19,14 @@ const SPICE_OPTIONS: Array<{ level: SpiceLevel; emoji: string; desc: string }> =
 
 export default function SpiceSheet() {
   const router = useRouter();
+  const { spiceLevel, updateSpiceLevel } = useProfile();
   const [showToast, setShowToast] = useState(false);
-  const [current, setCurrent] = useState<SpiceLevel>('Flirty');
+  const [current, setCurrent] = useState<SpiceLevel>((spiceLevel as SpiceLevel) || 'Flirty');
 
-  const handlePick = (level: SpiceLevel) => {
+  const handlePick = async (level: SpiceLevel) => {
     setCurrent(level);
+    // Persist to supabase when session exists; updateSpiceLevel is a no-op for no-session
+    await updateSpiceLevel(level);
     setShowToast(true);
     setTimeout(() => {
       safeBack(router);

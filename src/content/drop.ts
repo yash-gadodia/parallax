@@ -1,6 +1,8 @@
 // Parallax daily-loop content: today's DROP and past ARCHIVE
 // DROP is the daily 3-prompt structure; ARCHIVE is history for the Us tab and detail views
 
+export type PromptSpice = 'sweet' | 'flirty' | 'spicy';
+
 export interface Prompt {
   id: string;
   emoji: string;
@@ -14,6 +16,7 @@ export interface Prompt {
   youHunchDemo: number;
   note: [string, string, string];
   why: string;
+  spice: PromptSpice;
 }
 
 export interface Drop {
@@ -65,6 +68,7 @@ export const DROP: Drop = {
         'Wrong guess, so now you know. Go do that one tonight.',
       ],
       why: 'Feeling loved hinges on being cared for the way you need, not the way they\'d care. (Gottman, love maps)',
+      spice: 'sweet',
     },
     {
       id: 'low',
@@ -87,6 +91,7 @@ export const DROP: Drop = {
         'Missed, and this is the one worth getting right.',
       ],
       why: 'Couples misread each other\'s stress needs more than almost anything. Asking beats assuming.',
+      spice: 'sweet',
     },
     {
       id: 'unsaid',
@@ -109,6 +114,7 @@ export const DROP: Drop = {
         'You didn\'t see it coming, which is exactly why it matters.',
       ],
       why: 'Naming the unsaid is the quiet fast-track to closeness. (Aron, 36 questions)',
+      spice: 'flirty',
     },
   ],
 };
