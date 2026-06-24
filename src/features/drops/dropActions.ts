@@ -3,6 +3,7 @@ import { PromptAnswers, scoreReveal } from '../../domain/reveal';
 import { useUiStore } from '../../store/ui';
 import { completeDrop } from '../engagement/engagementActions';
 import { persistDropLearning } from './dropLearning';
+import { notifyPartner } from '../notifications';
 import type { CoupleDrop, Answer, DropPrompt, Couple, Json } from '../../types/db';
 
 /**
@@ -84,6 +85,14 @@ export async function submitMyAnswers(
       throw submitError;
     }
 
+    // Fire 'played' notification to the partner now that we've submitted our answers.
+    // Only when a real session exists (demo/unauthed path is a no-op inside notifyPartner).
+    const { data: sessionData } = await supabase.auth.getUser();
+    const hasSession = !!sessionData?.user?.id;
+    if (hasSession) {
+      notifyPartner(coupleDropId, 'played'); // fire-and-forget
+    }
+
     // Finally, auto-submit demo partner to flip state to 'revealed'
     // @ts-expect-error supabase-js RPC overload limitation with multiple function signatures
     const { error: simError } = await supabase.rpc('sim_partner_submit', {
@@ -96,6 +105,11 @@ export async function submitMyAnswers(
 
     // Complete the drop to increment streak
     await completeDrop(coupleDropId);
+
+    // Fire 'revealed' notification to both partners now that the reveal is ready.
+    if (hasSession) {
+      notifyPartner(coupleDropId, 'revealed'); // fire-and-forget
+    }
 
     return coupleDropId;
   } catch (err) {

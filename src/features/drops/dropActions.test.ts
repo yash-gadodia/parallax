@@ -16,9 +16,13 @@ jest.mock('../../store/ui', () => ({
 jest.mock('./dropLearning', () => ({
   persistDropLearning: jest.fn(() => Promise.resolve()),
 }));
+jest.mock('../notifications', () => ({
+  notifyPartner: jest.fn(() => Promise.resolve()),
+}));
 
 import { supabase } from '../../lib/supabase';
 import { completeDrop } from '../engagement/engagementActions';
+import { notifyPartner } from '../notifications';
 
 const mockSupabase = supabase as unknown as {
   rpc: jest.Mock;
@@ -82,6 +86,40 @@ describe('dropActions', () => {
       });
       expect(mockSupabase.rpc).toHaveBeenNthCalledWith(3, 'sim_partner_submit', { p_couple_drop: 'cd-9' });
       expect(completeDrop).toHaveBeenCalledWith('cd-9');
+    });
+
+    it('fires notifyPartner(played) then notifyPartner(revealed) when a session exists', async () => {
+      mockSupabase.rpc
+        .mockResolvedValueOnce({ data: 'cd-7', error: null }) // ensure_today_drop
+        .mockResolvedValueOnce({ error: null }) // submit_answers
+        .mockResolvedValueOnce({ error: null }); // sim_partner_submit
+      mockSupabase.from.mockReturnValue(
+        builder({ data: [{ id: 'p1' }], error: null })
+      );
+      // getUser returns a real user (session present) — use Once so it doesn't bleed into later tests
+      mockSupabase.auth.getUser.mockResolvedValueOnce({ data: { user: { id: 'me' } } });
+
+      await submitMyAnswers('couple-1', [0], [1]);
+
+      expect(notifyPartner).toHaveBeenCalledWith('cd-7', 'played');
+      expect(notifyPartner).toHaveBeenCalledWith('cd-7', 'revealed');
+      expect(notifyPartner).toHaveBeenCalledTimes(2);
+    });
+
+    it('does not call notifyPartner when there is no session', async () => {
+      mockSupabase.rpc
+        .mockResolvedValueOnce({ data: 'cd-8', error: null }) // ensure_today_drop
+        .mockResolvedValueOnce({ error: null }) // submit_answers
+        .mockResolvedValueOnce({ error: null }); // sim_partner_submit
+      mockSupabase.from.mockReturnValue(
+        builder({ data: [{ id: 'p1' }], error: null })
+      );
+      // No session — user is null — use Once so it doesn't bleed into later tests
+      mockSupabase.auth.getUser.mockResolvedValueOnce({ data: { user: null } });
+
+      await submitMyAnswers('couple-1', [0], [1]);
+
+      expect(notifyPartner).not.toHaveBeenCalled();
     });
 
     it('throws if there are no prompts', async () => {

@@ -71,6 +71,22 @@ export async function cancelDailyNudge(): Promise<void> {
   }
 }
 
+// Invoke the notify-partner edge function after a drop submission.
+// Fire-and-forget — errors are swallowed so they never interrupt the submit flow.
+// GATE: delivers only once Yash adds EAS/APNs creds + real push tokens.
+export async function notifyPartner(
+  coupleDropId: string,
+  event: 'played' | 'revealed'
+): Promise<void> {
+  try {
+    await supabase.functions.invoke('notify-partner', {
+      body: { couple_drop_id: coupleDropId, event },
+    });
+  } catch {
+    // No-op: network failure or missing edge-fn creds must never crash the app.
+  }
+}
+
 // Get the Expo push token and persist it to profiles.push_token.
 // GATE: only works with a real EAS project + APNs/FCM credentials.
 export async function registerPushToken(): Promise<void> {

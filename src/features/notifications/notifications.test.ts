@@ -1,7 +1,21 @@
 import * as Notifications from 'expo-notifications';
-import { requestPermissions, scheduleDailyNudge, cancelDailyNudge, registerPushToken } from './index';
+import { requestPermissions, scheduleDailyNudge, cancelDailyNudge, registerPushToken, notifyPartner } from './index';
 
 jest.mock('expo-notifications');
+// Stub supabase so notifyPartner tests control functions.invoke independently.
+jest.mock('../../lib/supabase', () => ({
+  supabase: {
+    functions: { invoke: jest.fn(() => Promise.resolve({ data: null, error: null })) },
+    auth: {
+      getUser: jest.fn(() => Promise.resolve({ data: { user: null } })),
+    },
+    from: jest.fn(() => ({
+      update: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+    })),
+  },
+}));
+import { supabase } from '../../lib/supabase';
 
 const mockNotifications = Notifications as jest.Mocked<typeof Notifications>;
 
@@ -172,5 +186,30 @@ describe('cancelDailyNudge', () => {
     mockNotifications.cancelScheduledNotificationAsync.mockRejectedValue(new Error('not found'));
 
     await expect(cancelDailyNudge()).resolves.toBeUndefined();
+  });
+});
+
+describe('notifyPartner', () => {
+  const mockInvoke = supabase.functions.invoke as jest.Mock;
+
+  beforeEach(() => mockInvoke.mockClear());
+
+  it('invokes notify-partner with event=played', async () => {
+    await notifyPartner('cd-1', 'played');
+    expect(mockInvoke).toHaveBeenCalledWith('notify-partner', {
+      body: { couple_drop_id: 'cd-1', event: 'played' },
+    });
+  });
+
+  it('invokes notify-partner with event=revealed', async () => {
+    await notifyPartner('cd-2', 'revealed');
+    expect(mockInvoke).toHaveBeenCalledWith('notify-partner', {
+      body: { couple_drop_id: 'cd-2', event: 'revealed' },
+    });
+  });
+
+  it('swallows errors so the submit flow is never interrupted', async () => {
+    mockInvoke.mockRejectedValueOnce(new Error('network failure'));
+    await expect(notifyPartner('cd-3', 'played')).resolves.toBeUndefined();
   });
 });

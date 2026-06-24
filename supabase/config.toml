@@ -48,3 +48,10 @@ file_size_limit = 52428800
 # this (auth or rate-limit) since it spends Anthropic tokens per call.
 [functions.refocus]
 verify_jwt = false
+
+# notify-partner: send push notifications when a partner plays or reveal is ready.
+# JWT off for local/demo serving (matches refocus). Production should enable JWT
+# verification (verify_jwt = true) to prevent unauthenticated callers spending
+# Expo push quota — harden before going live.
+[functions.notify-partner]
+verify_jwt = false
