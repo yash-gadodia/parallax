@@ -22,6 +22,7 @@ import { Mark } from '../src/components/Mark';
 import { colors, gradients, radius, shadows, space } from '../src/design/tokens';
 import { fontFamily } from '../src/design/typography';
 import { useCouple } from '../src/features/pairing/useCouple';
+import { unpairCouple } from '../src/features/pairing/pairingActions';
 import { nudge } from '../src/features/engagement/engagementActions';
 import { usePurchases } from '../src/features/purchases/usePurchases';
 import { signOut } from '../src/features/auth/authActions';
@@ -154,8 +155,17 @@ export default function ProfileScreen() {
     showToast('Pairing settings');
   };
 
-  const handleUnpair = () => {
-    showToast(`Unpaired from ${partnerName}`);
+  const handleUnpair = async () => {
+    if (!couple) {
+      showToast('Not paired');
+      return;
+    }
+    try {
+      await unpairCouple(couple.id);
+      router.replace('/login');
+    } catch {
+      showToast('Failed to unpair');
+    }
   };
 
   const handleSignOut = async () => {

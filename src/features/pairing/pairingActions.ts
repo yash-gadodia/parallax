@@ -1,6 +1,14 @@
 import { supabase, Couple } from '../../lib/supabase';
 import { normalizeInviteCode, isValidInviteCode } from '../../domain/inviteCode';
 
+export async function unpairCouple(coupleId: string): Promise<void> {
+  // @ts-expect-error supabase-js typed RPC resolves to never for void-returning functions
+  const { error } = await supabase.rpc('unpair', { p_couple: coupleId });
+  if (error) {
+    throw error;
+  }
+}
+
 export async function createCouple(): Promise<Couple> {
   const { data, error } = await supabase.rpc('create_couple');
 

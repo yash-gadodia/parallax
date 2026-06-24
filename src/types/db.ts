@@ -204,6 +204,10 @@ export interface Database {
         Args: { p_couple: string };
         Returns: CoupleHistoryRow[];
       };
+      unpair: {
+        Args: { p_couple: string };
+        Returns: void;
+      };
     };
   };
 }
