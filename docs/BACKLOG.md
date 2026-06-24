@@ -32,6 +32,10 @@ The shared task list. Plain-English, owner-tagged, and the Claude agent reads & 
 - [x] **(Yash/Claude)** ~~Retire `phase-0-foundation`~~ — done: branch deleted, `main` is the sole branch + default; its unique research docs were preserved on `main`.
 - [ ] **(Yash)** EAS push creds so notifications actually fire on device: add the EAS `projectId` to `app.json` + configure APNs/FCM in EAS, then pass `projectId` to `getExpoPushTokenAsync` in `src/features/notifications/index.ts`. (Daily *local* nudges already work once a user grants permission; remote push needs this.)
 - [ ] **(Yash)** Full auth-user deletion: `delete_my_account()` removes the user's profile/answers + dissolves the couple, but the Supabase **Auth** record needs a `service_role` admin step (an edge function) to be fully erased. Add that for complete App-Store-grade deletion.
+- [ ] **(Yash)** Deploy the `notify-partner` edge fn (`supabase functions deploy notify-partner`) + set `verify_jwt=true` for prod; with EAS push creds set, partner pushes fire on every submit.
+- [ ] **(Yash)** Turn on analytics: set `EXPO_PUBLIC_ANALYTICS_KEY` (PostHog project key) + optional `EXPO_PUBLIC_ANALYTICS_HOST`. Until then it no-ops. (To use Sentry instead, adapt `sendEvent` in `src/lib/analytics.ts` — ~20 lines.)
+- [ ] **(Yash)** Universal (https) invite links: host `apple-app-site-association`, add `associatedDomains: ["applinks:yourdomain"]` to `app.json`, swap the share URL to https. (Custom `parallax://` links already work in standalone builds.)
+- [ ] **(Dani/Yash)** Dynamic-type / font-scaling a11y: the app uses `allowFontScaling={false}` for fidelity — a future pass to respect user text-size needs a scaled-token decision.
 
 ### (Dani) — onboarding, product & design decisions
 - [ ] **(Dani)** Get set up locally + learn the stack — start with `WORKING_WITH_CLAUDE.md`, then `docs/DEV_SETUP.md` (run `npm run dev`), and skim `docs/FLOWS.md` for how the app works
@@ -71,3 +75,7 @@ _(nothing right now)_
 - [x] **(Claude)** Push notifications (build-to-gate): expo-notifications, daily local nudge at notify_time, push-token register (`246a12d`)
 - [x] **(Claude)** Offline submit-queue — failed submits enqueue + auto-flush on launch (`f341857`)
 - [x] **(Claude)** Account deletion + data export (App Store req): `delete_my_account` RPC + export sheet; null-member reveal-gate fix (`a143c63`, `9b144ef`)
+- [x] **(Claude)** Partner-played / reveal-ready push: `notify-partner` edge fn + client invoke, build-to-gate (`bc6b5ce`)
+- [x] **(Claude)** Invite deep-links: `parallax://join?code=` parsed + prefilled into join-by-code, survives sign-up (`82a5920`)
+- [x] **(Claude)** Analytics + crash scaffold: provider-agnostic, no-ops without a key, 9 funnel events + error-boundary capture (`66ba16d`)
+- [x] **(Claude)** Accessibility pass: roles/labels/state/hitSlop on atoms + core daily-loop screens (`d218f04`)
