@@ -64,7 +64,7 @@ export default function SpiceSheet() {
                       paddingVertical: 15,
                       paddingHorizontal: 16,
                       borderRadius: radius.tile,
-                      backgroundColor: isSelected ? 'rgba(157, 149, 245, 0.16)' : colors.surface,
+                      backgroundColor: isSelected ? colors.usSoft : colors.surface,
                       borderWidth: 1.5,
                       borderColor: isSelected ? colors.p2 : colors.line,
                     },

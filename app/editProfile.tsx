@@ -95,7 +95,7 @@ export default function EditProfileScreen() {
           backgroundColor: readOnly ? colors.sunken : colors.surface,
           borderWidth: 1,
           borderColor: colors.line,
-          ...(readOnly ? { shadowColor: 'transparent' } : shadows.shadowSoft),
+          ...(readOnly ? {} : shadows.shadowSoft),
         }}
       >
         <TextInput

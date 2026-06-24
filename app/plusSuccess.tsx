@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -35,13 +35,16 @@ export default function PlusSuccessScreen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
 
-  // Generate confetti hearts
-  const hearts: Confetti[] = Array.from({ length: 10 }, (_, i) => ({
-    id: i,
-    x: 6 + Math.random() * 88,
-    delay: Math.random() * 0.7,
-    emoji: ['💞', '💗', '🫶', '✨', '🎉'][i % 5],
-  }));
+  const hearts = useMemo<Confetti[]>(
+    () =>
+      Array.from({ length: 10 }, (_, i) => ({
+        id: i,
+        x: 6 + Math.random() * 88,
+        delay: Math.random() * 0.7,
+        emoji: ['💞', '💗', '🫶', '✨', '🎉'][i % 5],
+      })),
+    []
+  );
 
   // Circular check badge animation
   const checkOpacity = useSharedValue(0);

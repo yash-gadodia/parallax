@@ -30,6 +30,7 @@ export function Kick({
         {
           fontFamily: fontFamily.mono,
           fontSize: 10,
+          lineHeight: 10,
           letterSpacing: 1.8,
           textTransform: 'uppercase',
           color: c,

@@ -10,6 +10,7 @@ export const fontFamily = {
 export const kickStyle: TextStyle = {
   fontFamily: fontFamily.mono,
   fontSize: 10,
+  lineHeight: 10,
   letterSpacing: 1.8,
   textTransform: 'uppercase',
   color: colors.inkMute,
@@ -17,5 +18,4 @@ export const kickStyle: TextStyle = {
 
 export const serifStyle: TextStyle = {
   fontFamily: fontFamily.disp,
-  lineHeight: 1.09 * 34,
 };

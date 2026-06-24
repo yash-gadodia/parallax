@@ -9,6 +9,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { safeBack } from "../src/lib/nav";
 import { colors, gradients, radius, shadows, space } from '../src/design/tokens';
+import { fontFamily } from '../src/design/typography';
 import { Kick } from '../src/components/Text';
 import TopBar from '../src/components/TopBar';
 import Btn from '../src/components/Btn';
@@ -49,6 +50,7 @@ function StatusCard() {
             fontSize: 16,
             fontWeight: '700',
             color: colors.ink,
+            fontFamily: fontFamily.ui,
           }}
         >
           Parallax Plus

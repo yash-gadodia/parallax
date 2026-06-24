@@ -311,7 +311,7 @@ function Step2Intent({
                   style={[
                     styles.chipBase,
                     {
-                      backgroundColor: isSelected ? 'rgba(255,142,122,0.16)' : colors.surface,
+                      backgroundColor: isSelected ? colors.usSoft : colors.surface,
                       borderColor: isSelected ? colors.p2 : colors.line,
                     },
                     isSelected && shadows.shadow,
@@ -724,7 +724,7 @@ function Step5NotifyTime({
                   style={[
                     styles.chipBase,
                     {
-                      backgroundColor: isSelected ? 'rgba(255,142,122,0.16)' : colors.surface,
+                      backgroundColor: isSelected ? colors.usSoft : colors.surface,
                       borderColor: isSelected ? colors.p2 : colors.line,
                     },
                     isSelected && shadows.shadow,

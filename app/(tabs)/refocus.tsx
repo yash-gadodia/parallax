@@ -192,7 +192,7 @@ function IntroStep({ insets, onStart, onBack }: IntroStepProps) {
           }}
         >
           <Float distance={7} duration={4000}>
-            <Peek size={104} mood="search" />
+            <Peek size={104} mood="focus" />
           </Float>
         </View>
 
