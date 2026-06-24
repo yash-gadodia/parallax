@@ -24,6 +24,7 @@ import { Float } from '../../src/components/Float';
 import { Icon, ICONS } from '../../src/components/Icon';
 import { INTENTS, MOMENTS } from '../../src/features/onboarding/constants';
 import { useUiStore } from '../../src/store/ui';
+import { useOnboardingStore } from '../../src/store/onboarding';
 import { useSession } from '../../src/features/auth/useSession';
 import { useCouple } from '../../src/features/pairing/useCouple';
 import { createCouple, joinCouple } from '../../src/features/pairing/pairingActions';
@@ -247,6 +248,7 @@ function Step2Intent({
 }) {
   const [selected, setSelected] = useState<string[]>(['know']);
   const [loading, setLoading] = useState(false);
+  const { setPendingIntents } = useOnboardingStore();
 
   const toggleIntent = (id: string) => {
     setSelected((prev) =>
@@ -258,7 +260,10 @@ function Step2Intent({
     if (!selected.length) return;
 
     setLoading(true);
-    // Persist intents best-effort - never block advancing the flow on auth/network.
+    // Always stash in store so they survive the sign-up redirect.
+    setPendingIntents(selected);
+    // Flush to DB immediately if already signed in; otherwise the root guard will
+    // flush them once a session is available (idempotent).
     try {
       const { data } = await supabase.auth.getUser();
       const uid = data.user?.id;
@@ -267,7 +272,7 @@ function Step2Intent({
         await supabase.from('profiles').update({ intents: selected }).eq('id', uid);
       }
     } catch {
-      // ignore - intents are saved if/when signed in
+      // ignore - intents are flushed via the root guard once session exists
     } finally {
       setLoading(false);
       onNext();
@@ -577,8 +582,41 @@ function Step3PairUp({
   );
 }
 
-// Step 4: Joined celebration
-function Step4Joined({ onNext }: { onNext: () => void }) {
+// Step 4: Joined celebration (real) or waiting-for-partner state
+function Step4Joined({ onNext, hasSession }: { onNext: () => void; hasSession: boolean }) {
+  const { status } = useCouple();
+  // Demo path (no session): show scripted celebration immediately.
+  // Real path (session): wait for couple to become active via realtime/poll.
+  const isActive = !hasSession || status === 'active';
+
+  if (!isActive) {
+    return (
+      <SafeAreaViewContext style={styles.screenContainer}>
+        <View style={[styles.screenContent, styles.centeredContent]}>
+          <Float style={{ marginBottom: 16 }}>
+            <Peek size={88} mood="love" />
+          </Float>
+          <Serif s={34} italic style={{ marginBottom: 12, textAlign: 'center' }}>
+            Waiting for them…
+          </Serif>
+          <Text
+            allowFontScaling={false}
+            style={{
+              fontSize: 15,
+              color: colors.inkSoft,
+              lineHeight: 23,
+              maxWidth: 280,
+              textAlign: 'center',
+              fontFamily: fontFamily.ui,
+            }}
+          >
+            Send them the code. Once they join, you'll both be here together.
+          </Text>
+        </View>
+      </SafeAreaViewContext>
+    );
+  }
+
   return (
     <SafeAreaViewContext style={styles.screenContainer}>
       <View style={[styles.screenContent, styles.centeredContent]}>
@@ -825,7 +863,7 @@ export default function OnboardingScreen() {
         <Step3PairUp onNext={() => setStep(4)} fireToast={fireToast} />
       )}
       {step4 && (
-        <Step4Joined onNext={() => setStep(5)} />
+        <Step4Joined onNext={() => setStep(5)} hasSession={!!session} />
       )}
       {step5 && (
         <Step5NotifyTime onFinish={handleFinish} fireToast={fireToast} />
