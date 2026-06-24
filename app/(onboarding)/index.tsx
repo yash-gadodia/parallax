@@ -394,10 +394,22 @@ function Step3PairUp({
   fireToast: (msg: string) => void;
 }) {
   const [inviteCode, setInviteCode] = useState<string | null>(null);
-  const [showJoinInput, setShowJoinInput] = useState(false);
-  const [joinCode, setJoinCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [creatingCouple, setCreatingCouple] = useState(true);
+
+  const { pendingInviteCode, setPendingInviteCode } = useOnboardingStore();
+
+  // If the user arrived via a deep link (parallax://join?code=...), open the
+  // join input immediately with the code prefilled.
+  const [showJoinInput, setShowJoinInput] = useState(!!pendingInviteCode);
+  const [joinCode, setJoinCode] = useState(pendingInviteCode ?? '');
+
+  // Clear the pending code once consumed so a back-navigation doesn't re-apply it.
+  useEffect(() => {
+    if (pendingInviteCode) {
+      setPendingInviteCode(null);
+    }
+  }, []);
 
   useEffect(() => {
     const init = async () => {
@@ -418,8 +430,13 @@ function Step3PairUp({
   const handleShare = async () => {
     if (!inviteCode) return;
     try {
+      // Deep-link: tapping this opens the app straight into join-by-code with
+      // the code prefilled (parallax:// custom scheme, works in dev + standalone).
+      // TODO (Yash): replace the https URL with your real domain once you host
+      // the Apple App Site Association file + configure associatedDomains in app.json.
+      const deepLink = `parallax://join?code=${inviteCode}`;
       await Share.share({
-        message: `Join me on Parallax! Here's your invite code: ${inviteCode}`,
+        message: `Join me on Parallax! Tap to join: ${deepLink}\n\nOr enter my code manually: ${inviteCode}`,
       });
       onNext();
     } catch (err) {

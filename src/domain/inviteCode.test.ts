@@ -1,4 +1,4 @@
-import { isValidInviteCode, normalizeInviteCode, formatInviteCode } from './inviteCode';
+import { isValidInviteCode, normalizeInviteCode, formatInviteCode, extractInviteCodeFromLink } from './inviteCode';
 
 describe('invite code domain logic', () => {
   describe('isValidInviteCode', () => {
@@ -82,6 +82,37 @@ describe('invite code domain logic', () => {
       // Behavior: take first 8 chars if longer, or pad/use what we have
       expect(formatInviteCode('ABCD')).toBe('ABCD-');
       expect(formatInviteCode('ABCD123456')).toBe('ABCD-1234');
+    });
+  });
+
+  describe('extractInviteCodeFromLink', () => {
+    it('extracts and normalizes a valid code from the custom scheme URL', () => {
+      expect(extractInviteCodeFromLink('parallax://join?code=YASH-4827')).toBe('YASH-4827');
+      expect(extractInviteCodeFromLink('parallax://join?code=ABCD-1234')).toBe('ABCD-1234');
+    });
+
+    it('normalizes a lowercase code from the URL', () => {
+      expect(extractInviteCodeFromLink('parallax://join?code=yash-4827')).toBe('YASH-4827');
+      expect(extractInviteCodeFromLink('parallax://join?code=yash4827')).toBe('YASH-4827');
+    });
+
+    it('returns null when the code param is missing', () => {
+      expect(extractInviteCodeFromLink('parallax://join')).toBeNull();
+      expect(extractInviteCodeFromLink('parallax://join?')).toBeNull();
+    });
+
+    it('returns null for an invalid code', () => {
+      expect(extractInviteCodeFromLink('parallax://join?code=bad')).toBeNull();
+      expect(extractInviteCodeFromLink('parallax://join?code=AB-12')).toBeNull();
+    });
+
+    it('returns null for a completely unparseable URL', () => {
+      expect(extractInviteCodeFromLink('')).toBeNull();
+      expect(extractInviteCodeFromLink('not a url')).toBeNull();
+    });
+
+    it('works with https fallback URLs that include a code param', () => {
+      expect(extractInviteCodeFromLink('https://example.com/join?code=YASH-4827')).toBe('YASH-4827');
     });
   });
 });

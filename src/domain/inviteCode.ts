@@ -36,3 +36,17 @@ export function formatInviteCode(raw: string): string {
 
   return `${upper.slice(0, 4)}-${upper.slice(4)}`;
 }
+
+// Parses a parallax://join?code=XXXX-1234 deep-link URL and returns the
+// normalized, validated invite code, or null if the URL is invalid/missing.
+export function extractInviteCodeFromLink(url: string): string | null {
+  try {
+    const parsed = new URL(url);
+    const code = parsed.searchParams.get('code');
+    if (!code) return null;
+    const normalized = normalizeInviteCode(code);
+    return isValidInviteCode(normalized) ? normalized : null;
+  } catch {
+    return null;
+  }
+}
