@@ -41,6 +41,7 @@ interface IconProps {
   sw?: number;
   fill?: string;
   style?: object;
+  accessibilityLabel?: string;
 }
 
 export function Icon({
@@ -50,6 +51,7 @@ export function Icon({
   sw = 1.6,
   fill = 'none',
   style,
+  accessibilityLabel,
 }: IconProps) {
   return (
     <Svg
@@ -58,6 +60,8 @@ export function Icon({
       viewBox="0 0 20 20"
       fill={fill}
       style={style}
+      accessibilityLabel={accessibilityLabel}
+      accessible={!!accessibilityLabel}
     >
       <Path
         d={d}

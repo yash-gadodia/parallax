@@ -45,6 +45,9 @@ export default function Toast({ msg }: ToastProps) {
       }}
     >
       <AnimatedView
+        accessible={true}
+        accessibilityLiveRegion="polite"
+        accessibilityLabel={msg}
         style={[
           {
             backgroundColor: colors.ink,

@@ -5,6 +5,7 @@ import { fontFamily } from '../design/typography';
 
 interface Who {
   initial: string;
+  name?: string;
 }
 
 interface TokProps {
@@ -12,6 +13,7 @@ interface TokProps {
   size?: number;
   ring?: boolean;
   you?: boolean;
+  decorative?: boolean;
 }
 
 export default function Tok({
@@ -19,12 +21,18 @@ export default function Tok({
   size = 30,
   ring = false,
   you = false,
+  decorative = false,
 }: TokProps) {
   const bgColor = you ? colors.p1 : colors.p2;
   const ringBorderWidth = ring ? 3 : 0;
+  const label = who.name ? `${who.name}'s avatar` : who.initial;
 
   return (
     <View
+      accessible={!decorative}
+      accessibilityRole={decorative ? undefined : 'image'}
+      accessibilityLabel={decorative ? undefined : label}
+      importantForAccessibility={decorative ? 'no-hide-descendants' : undefined}
       style={{
         width: size,
         height: size,

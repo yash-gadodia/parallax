@@ -398,6 +398,8 @@ export default function RevealScreen() {
                       onPress={() => handleThreadOpen(prompt.id)}
                       scale={false}
                       style={{ width: 'auto' }}
+                      accessibilityLabel="Open discussion thread"
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                     >
                       <View
                         style={{
@@ -502,6 +504,8 @@ export default function RevealScreen() {
             zIndex: 30,
             width: 'auto',
           }}
+          accessibilityLabel="Close reveal"
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
           <BlurView intensity={40} style={{ borderRadius: radius.pill }}>
             <View

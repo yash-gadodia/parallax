@@ -32,6 +32,8 @@ export default function Sheet({ title, onClose, children }: SheetProps) {
       <Pressable
         testID="sheet-backdrop"
         onPress={onClose}
+        accessibilityRole="button"
+        accessibilityLabel="Close"
         style={{
           position: 'absolute',
           top: 0,

@@ -9,6 +9,10 @@ interface PressProps extends Omit<PressableProps, 'style'> {
   scale?: boolean;
   style?: ViewStyle;
   children: React.ReactNode;
+  accessibilityLabel?: string;
+  accessibilityHint?: string;
+  accessibilityRole?: PressableProps['accessibilityRole'];
+  accessibilityState?: PressableProps['accessibilityState'];
 }
 
 export default function Press({
@@ -17,6 +21,10 @@ export default function Press({
   scale = true,
   style,
   children,
+  accessibilityLabel,
+  accessibilityHint,
+  accessibilityRole,
+  accessibilityState,
   ...props
 }: PressProps) {
   const scaleValue = React.useRef(new Animated.Value(1)).current;
@@ -49,6 +57,11 @@ export default function Press({
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       disabled={disabled}
+      accessible={true}
+      accessibilityRole={accessibilityRole ?? (onPress ? 'button' : undefined)}
+      accessibilityLabel={accessibilityLabel}
+      accessibilityHint={accessibilityHint}
+      accessibilityState={{ disabled, ...accessibilityState }}
       style={[style, { transform: [{ scale: scaleValue }] }]}
       {...props}
     >

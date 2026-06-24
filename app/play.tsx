@@ -131,7 +131,13 @@ export default function PlayScreen() {
             gap: 12,
           }}
         >
-          <Press onPress={handleBack} scale={false} style={{ width: 'auto' }}>
+          <Press
+            onPress={handleBack}
+            scale={false}
+            style={{ width: 'auto' }}
+            accessibilityLabel="Back"
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
             <Icon d={ICONS.back} size={22} color={colors.inkSoft} />
           </Press>
           <View
@@ -222,11 +228,14 @@ export default function PlayScreen() {
           <View style={{ display: 'flex', gap: 11, flex: 1 }}>
             {prompt.opts.map((option, oi) => {
               const isSelected = selected === oi;
+              const phaseLabel = isPick ? 'Your pick' : 'Your hunch';
               return (
                 <Press
                   key={oi}
                   onPress={() => choose(oi)}
                   scale={true}
+                  accessibilityLabel={`${phaseLabel}: ${option}`}
+                  accessibilityState={{ selected: isSelected }}
                   style={{
                     flexDirection: 'row',
                     alignItems: 'center',

@@ -15,6 +15,7 @@ interface BtnProps {
   disabled?: boolean;
   style?: ViewStyle;
   testID?: string;
+  accessibilityLabel?: string;
 }
 
 const palettes: Record<
@@ -35,6 +36,7 @@ export default function Btn({
   disabled = false,
   style,
   testID,
+  accessibilityLabel,
 }: BtnProps) {
   const palette = palettes[kind];
   const isGradient = palette.gradient && kind === 'us';
@@ -115,8 +117,19 @@ export default function Btn({
     innerContent
   );
 
+  const derivedLabel = accessibilityLabel
+    ?? [typeof children === 'string' ? children : '', sub].filter(Boolean).join(', ');
+
   return (
-    <Press onPress={onPress} disabled={disabled} style={style} testID={testID}>
+    <Press
+      onPress={onPress}
+      disabled={disabled}
+      style={style}
+      testID={testID}
+      accessibilityRole="button"
+      accessibilityLabel={derivedLabel}
+      accessibilityState={{ disabled }}
+    >
       {content}
     </Press>
   );

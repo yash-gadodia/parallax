@@ -52,6 +52,9 @@ export default function TabBar({ active, go }: TabBarProps) {
             onPress={() => go(tabName)}
             scale={false}
             style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}
+            accessibilityRole="tab"
+            accessibilityLabel={label}
+            accessibilityState={{ selected: isActive }}
           >
             <View
               style={{

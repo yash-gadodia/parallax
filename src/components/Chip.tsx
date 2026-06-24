@@ -7,9 +7,12 @@ interface ChipProps {
   children: React.ReactNode;
   you?: boolean;
   soft?: boolean;
+  selected?: boolean;
+  onPress?: () => void;
+  accessibilityLabel?: string;
 }
 
-export default function Chip({ children, you = false, soft = false }: ChipProps) {
+export default function Chip({ children, you = false, soft = false, selected, onPress, accessibilityLabel }: ChipProps) {
   const color = you ? colors.p1Deep : colors.p2Deep;
   const bgColor = soft
     ? you
@@ -18,8 +21,14 @@ export default function Chip({ children, you = false, soft = false }: ChipProps)
     : color;
   const textColor = soft ? color : '#fff';
 
+  const isInteractive = typeof onPress === 'function' || selected !== undefined;
+
   return (
     <View
+      accessible={isInteractive}
+      accessibilityRole={isInteractive ? 'button' : undefined}
+      accessibilityLabel={accessibilityLabel}
+      accessibilityState={selected !== undefined ? { selected } : undefined}
       style={{
         flexDirection: 'row',
         alignItems: 'center',

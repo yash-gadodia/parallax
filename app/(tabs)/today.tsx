@@ -111,6 +111,9 @@ export default function TodayScreen() {
                 onPress={handleStreakPress}
                 scale={false}
                 style={{ width: 'auto' }}
+                accessibilityLabel={`${streak} day streak`}
+                accessibilityHint="View streak details"
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
                 <View
                   style={{
@@ -150,6 +153,9 @@ export default function TodayScreen() {
                 onPress={handleActivityPress}
                 scale={false}
                 style={{ width: 'auto' }}
+                accessibilityLabel={hasUnreadActivity ? 'Activity, unread notifications' : 'Activity'}
+                accessibilityHint="View recent activity"
+                hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
               >
                 <View
                   style={{
@@ -188,8 +194,11 @@ export default function TodayScreen() {
                 onPress={handleProfilePress}
                 scale={false}
                 style={{ width: 'auto' }}
+                accessibilityLabel="Your profile"
+                accessibilityHint="View and edit your profile"
+                hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
               >
-                <Tok who={YOU} you size={36} />
+                <Tok who={YOU} you size={36} decorative />
               </Press>
             </View>
           </View>

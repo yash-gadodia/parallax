@@ -83,6 +83,8 @@ export default function UsScreen() {
               onPress={handleProfilePress}
               scale={false}
               style={{ width: 'auto' }}
+              accessibilityLabel="Profile and settings"
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
               <View
                 style={{
@@ -134,6 +136,7 @@ export default function UsScreen() {
               onPress={handleStreakPress}
               scale={false}
               style={{ width: 'auto', marginTop: 8 }}
+              accessibilityLabel={`${streak} day streak, view details`}
             >
               <Kick>
                 {`${togetherSince ? `together since ${togetherSince.toLowerCase().split(' ')[0]} · ` : ''}${streak} day streak 🔥`}
@@ -142,7 +145,7 @@ export default function UsScreen() {
           </View>
 
           {/* Wrapped hero card */}
-          <Press onPress={handleWrappedPress}>
+          <Press onPress={handleWrappedPress} accessibilityLabel="Your month, wrapped — June recap">
             <View
               style={{
                 borderRadius: 26,
@@ -199,7 +202,7 @@ export default function UsScreen() {
           </Press>
 
           {/* Love Map card */}
-          <Press onPress={handleLoveMapPress}>
+          <Press onPress={handleLoveMapPress} accessibilityLabel="Your Love Map">
             <Card
               style={{
                 borderRadius: 26,
