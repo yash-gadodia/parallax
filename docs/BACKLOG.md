@@ -29,7 +29,9 @@ The shared task list. Plain-English, owner-tagged, and the Claude agent reads & 
 - [ ] **(Yash)** Schedule `reset_stale_streaks()` to run **daily** (pg_cron or a scheduled edge function) — built + tested in `0007_streak_reset.sql`, but the shared streak won't reset/forgive in prod until something calls it once a day
 - [ ] **(Yash)** Before prod, gate the demo `sim_partner_submit` RPC out (or behind a flag) — it lets a user self-reveal solo; it's the intended local demo mechanism but shouldn't ship enabled to real users
 - [ ] **(Yash)** Refocus edge fn hardening for prod: set `verify_jwt = true` (config.toml) + add a per-user/IP rate limit (it currently spends Anthropic tokens on anonymous calls)
-- [ ] **(Yash)** Retire `phase-0-foundation`: `main` is now the complete superset (its only unique non-stale files — STRATEGY.md + research reports — were ported in `fce36df`). On GitHub: change the **default branch to `main`** (Settings → Branches), retarget/close any open PRs, then delete `phase-0-foundation`. (Couldn't do it here — `gh` is unauthenticated and GitHub blocks deleting the current default branch.)
+- [x] **(Yash/Claude)** ~~Retire `phase-0-foundation`~~ — done: branch deleted, `main` is the sole branch + default; its unique research docs were preserved on `main`.
+- [ ] **(Yash)** EAS push creds so notifications actually fire on device: add the EAS `projectId` to `app.json` + configure APNs/FCM in EAS, then pass `projectId` to `getExpoPushTokenAsync` in `src/features/notifications/index.ts`. (Daily *local* nudges already work once a user grants permission; remote push needs this.)
+- [ ] **(Yash)** Full auth-user deletion: `delete_my_account()` removes the user's profile/answers + dissolves the couple, but the Supabase **Auth** record needs a `service_role` admin step (an edge function) to be fully erased. Add that for complete App-Store-grade deletion.
 
 ### (Dani) — onboarding, product & design decisions
 - [ ] **(Dani)** Get set up locally + learn the stack — start with `WORKING_WITH_CLAUDE.md`, then `docs/DEV_SETUP.md` (run `npm run dev`), and skim `docs/FLOWS.md` for how the app works
@@ -42,17 +44,7 @@ The shared task list. Plain-English, owner-tagged, and the Claude agent reads & 
 - [ ] **(Dani)** Recruit a few **beta couples** to test via TestFlight
 
 ### (Claude) — buildable now
-_(from the deep audit, 2026-06-24 — ordered by value. The app runs as a single-player demo; these wire the real two-player paths + close product gaps. Several need prod creds (Yash) to fully verify live.)_
-- [ ] **(Claude)** Wire the reveal loop to the server when signed in: `reveal.tsx` calls `fetchReveal(coupleDropId)`, `waiting.tsx` uses real `useDropState` (not the 2.6s demo timer), persist/pass `coupleDropId` play→waiting→reveal. (Demo path stays as-is. Needs two real accounts to verify end-to-end.)
-- [x] **(Claude)** "From a drop" Love Map learnings: create a `source:'drop'` learning on reveal so the Love Map loop isn't fight-only. (`452e17b`)
-- [ ] **(Claude)** Load real identity: a `useProfile` hook (display_name, partner name, together_since) → drive `profile`, `editProfile`, `manageSub`, `us` (today they show hardcoded Yash/Dani/23).
-- [ ] **(Claude)** Edit Profile "Save changes" persists `display_name` (+ couples `together_since`) — currently a toast-only stub.
-- [ ] **(Claude)** Spice level: persist `profiles.spice_level` on pick AND gate prompt/pack selection by spice (today it's cosmetic end-to-end; also normalize case to lowercase).
-- [ ] **(Claude)** Real Unpair: a SECURITY DEFINER `unpair` RPC + wire it (today `handleUnpair` only toasts; no backend).
-- [ ] **(Claude)** ManageSub: drive plan/renewal/shared-with rows from real RevenueCat `customerInfo` (currently hardcoded Annual/$39.99/Jun 15).
-- [ ] **(Claude)** Onboarding loose ends: persist selected intents for brand-new users (stash → flush to `profiles` after signup); make the "Dani joined!" step wait for a real `status==='active'` before celebrating.
-- [ ] **(Claude)** Push notifications (the habit trigger): add `expo-notifications`, request perms + schedule the daily local nudge at `notify_time` in onboarding finish; register `push_token`. Build-to-gate (needs a dev build to verify on device).
-- [ ] **(Claude)** Polish: Play progress bar uses the `us` gradient (not flat p2); reveal verdict anaglyph; Wrapped story-fill animation; Us-tab live stats.
+_All deep-audit + phase-2 items shipped (2026-06-24, commits `cbe4434`…`9b144ef`). The only remaining account-deletion piece needs admin creds → reassigned to Yash below. Add a new request and Claude will pick it up._
 
 ## In progress
 
@@ -71,3 +63,11 @@ _(nothing right now)_
 - [x] **(Claude)** Deep-audit fixes batch 2 — security: fixed latent `authenticated` grant bug (every logged-in query was failing), dropped the couples tamper UPDATE policy, validated `submit_answers` inputs, idempotent `add_learning`, and **proved the reveal gate** with real role-impersonation pgTAP (`e055954`)
 - [x] **(Claude)** Deep-audit fixes batch 3 — account: Log out, Restore Purchases (App Store req), RevenueCat-driven Plus state, valid 24h `notify_time` (`21a759f`)
 - [x] **(Claude)** Deep-audit fixes batch 4 — streak: gap-aware increment + `reset_stale_streaks()` (freeze forgiveness then reset), pgTAP-proven (`54cd3d2`)
+- [x] **(Claude)** Async reveal wired to server (`fetchReveal` + real `useDropState`, coupleDropId threaded; demo path intact) (`89b568e`, `488f708`)
+- [x] **(Claude)** Real identity via `useProfile` (name/partner/spice across profile/editProfile/us/manageSub); Edit Profile persists (`6dd9b0c`)
+- [x] **(Claude)** Real Unpair RPC + wired (`7d9c243`); Spice persists + gates content (`45acc51`)
+- [x] **(Claude)** Onboarding: intents persisted pre-auth + real couple-join gate (`16c6d70`)
+- [x] **(Claude)** UI/UX polish passes — daily-loop, us-cluster, entry/account vs design; review fixes (`9f83d17`, `5f9accb`, `87f6e60`, `9e6f6d9`)
+- [x] **(Claude)** Push notifications (build-to-gate): expo-notifications, daily local nudge at notify_time, push-token register (`246a12d`)
+- [x] **(Claude)** Offline submit-queue — failed submits enqueue + auto-flush on launch (`f341857`)
+- [x] **(Claude)** Account deletion + data export (App Store req): `delete_my_account` RPC + export sheet; null-member reveal-gate fix (`a143c63`, `9b144ef`)
