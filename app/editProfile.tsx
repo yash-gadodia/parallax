@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -21,27 +21,29 @@ import Press from '../src/components/Press';
 import Toast from '../src/components/Toast';
 import { Icon, ICONS } from '../src/components/Icon';
 import { DawnBlobs } from '../src/components/DawnBlobs';
+import { useProfile } from '../src/features/profile/useProfile';
 
-interface EditProfileScreenProps {
-  initialName?: string;
-  initialSince?: string;
-}
-
-export default function EditProfileScreen(props: EditProfileScreenProps) {
+export default function EditProfileScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const [name, setName] = useState(props.initialName || 'Yash');
-  const [since, setSince] = useState(props.initialSince || 'February 2024');
+  const { name: profileName, partnerName, togetherSince, updateProfile } = useProfile();
+  const [name, setName] = useState('');
+  const [since, setSince] = useState('');
   const [showCameraToast, setShowCameraToast] = useState(false);
   const [showSaveToast, setShowSaveToast] = useState(false);
+
+  useEffect(() => {
+    setName(profileName);
+    setSince(togetherSince || 'February 2024');
+  }, [profileName, togetherSince]);
 
   const handleCameraPress = () => {
     setShowCameraToast(true);
     setTimeout(() => setShowCameraToast(false), 2000);
   };
 
-  const handleSaveChanges = () => {
-    // GATE: Supabase auth / update user profile endpoint
+  const handleSaveChanges = async () => {
+    await updateProfile(name, since);
     setShowSaveToast(true);
     setTimeout(() => {
       setShowSaveToast(false);
@@ -251,7 +253,7 @@ export default function EditProfileScreen(props: EditProfileScreenProps) {
               }}
             >
               {/* Partner avatar */}
-              <Tok who={{ initial: 'D' }} size={32} />
+              <Tok who={{ initial: (partnerName[0] || 'D').toUpperCase() }} size={32} />
 
               {/* Partner info */}
               <View style={{ flex: 1 }}>
@@ -263,7 +265,7 @@ export default function EditProfileScreen(props: EditProfileScreenProps) {
                     color: colors.ink,
                   }}
                 >
-                  Dani
+                  {partnerName}
                 </Text>
                 <Text
                   allowFontScaling={false}
@@ -274,7 +276,7 @@ export default function EditProfileScreen(props: EditProfileScreenProps) {
                     marginTop: 2,
                   }}
                 >
-                  paired · Feb 2024
+                  {`paired · ${togetherSince || 'Feb 2024'}`}
                 </Text>
               </View>
 

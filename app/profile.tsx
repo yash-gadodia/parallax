@@ -25,14 +25,7 @@ import { useCouple } from '../src/features/pairing/useCouple';
 import { nudge } from '../src/features/engagement/engagementActions';
 import { usePurchases } from '../src/features/purchases/usePurchases';
 import { signOut } from '../src/features/auth/authActions';
-
-const YOU = { initial: 'Y' };
-const DANI = { initial: 'D' };
-
-interface ProfileState {
-  name: string;
-  spice: string;
-}
+import { useProfile } from '../src/features/profile/useProfile';
 
 interface RowProps {
   icon: string;
@@ -132,12 +125,7 @@ export default function ProfileScreen() {
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const { couple } = useCouple();
   const isPro = usePurchases((s) => s.isPro);
-
-  // Mock profile state
-  const state: ProfileState = {
-    name: 'Yash',
-    spice: 'Flirty',
-  };
+  const { name, partnerName, spiceLevel } = useProfile();
   const plus = isPro;
 
   const showToast = (msg: string) => {
@@ -152,7 +140,7 @@ export default function ProfileScreen() {
     }
     try {
       await nudge(couple.id);
-      showToast('Nudge sent to Dani 👋');
+      showToast(`Nudge sent to ${partnerName} 👋`);
     } catch {
       showToast('Failed to send nudge');
     }
@@ -167,7 +155,7 @@ export default function ProfileScreen() {
   };
 
   const handleUnpair = () => {
-    showToast('Unpaired from Dani');
+    showToast(`Unpaired from ${partnerName}`);
   };
 
   const handleSignOut = async () => {
@@ -240,14 +228,14 @@ export default function ProfileScreen() {
         <Press onPress={() => router.push('/editProfile')} scale={false}>
           <View style={identityCardStyle}>
             <View style={{ position: 'relative' }}>
-              <Tok who={YOU} size={64} ring you />
+              <Tok who={{ initial: (name[0] || 'Y').toUpperCase() }} size={64} ring you />
               <View style={tokEditButtonStyle}>
                 <Icon d={ICONS.pencil} size={12} color="#fff" />
               </View>
             </View>
             <View style={identityContentStyle}>
               <Serif s={28} c={colors.ink}>
-                {state.name}
+                {name}
               </Serif>
               <View style={pairedWithStyle}>
                 <Text
@@ -259,7 +247,7 @@ export default function ProfileScreen() {
                 >
                   paired with
                 </Text>
-                <Tok who={DANI} size={18} />
+                <Tok who={{ initial: (partnerName[0] || 'D').toUpperCase() }} size={18} />
                 <Text
                   style={{
                     fontSize: 13,
@@ -268,7 +256,7 @@ export default function ProfileScreen() {
                     fontFamily: fontFamily.ui,
                   }}
                 >
-                  Dani
+                  {partnerName}
                 </Text>
               </View>
             </View>
@@ -304,7 +292,7 @@ export default function ProfileScreen() {
                   fontFamily: fontFamily.ui,
                 }}
               >
-                Give Dani a nudge
+                {`Give ${partnerName} a nudge`}
               </Text>
               <Kick c={colors.p2Deep} style={{ marginTop: 2 }}>
                 they haven't opened today's reveal
@@ -359,7 +347,7 @@ export default function ProfileScreen() {
                   textTransform: 'uppercase',
                 }}
               >
-                SHARED WITH DANI
+                {`SHARED WITH ${partnerName.toUpperCase()}`}
               </Text>
             </View>
             <Press
@@ -403,7 +391,7 @@ export default function ProfileScreen() {
           <Row
             icon={ICONS.flame}
             label="Spice level"
-            value={state.spice}
+            value={spiceLevel}
             onPress={() => router.push('/(sheets)/spice')}
           />
           <Row
@@ -441,7 +429,7 @@ export default function ProfileScreen() {
           />
           <Row
             icon={ICONS.logout}
-            label="Unpair from Dani"
+            label={`Unpair from ${partnerName}`}
             danger
             onPress={handleUnpair}
           />

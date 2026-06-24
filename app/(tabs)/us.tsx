@@ -20,18 +20,14 @@ import { LEARNINGS } from '../../src/content/us';
 import { ARCHIVE } from '../../src/content/drop';
 import { useLearnings } from '../../src/features/lovemap/useLearnings';
 import { useCoupleHistory } from '../../src/features/lovemap/useCoupleHistory';
-
-// Identity definitions
-const YOU = { name: 'you', initial: 'Y' };
-const PAR = { name: 'Dani', initial: 'D' };
+import { useProfile } from '../../src/features/profile/useProfile';
 
 export default function UsScreen() {
   const router = useRouter();
   const { items: learningItems, isSample: learningsSample } = useLearnings();
   const { history, isSample: historySample } = useCoupleHistory();
+  const { name, partnerName, streak, togetherSince } = useProfile();
 
-  // Mock state for demonstration
-  const streak = 23;
   const done = true;
   const currentWave = history.length > 0 ? `${history[0].wavelength}` : '76';
 
@@ -122,15 +118,15 @@ export default function UsScreen() {
                 alignItems: 'center',
               }}
             >
-              <Tok who={YOU} you size={62} ring />
+              <Tok who={{ initial: (name[0] || 'Y').toUpperCase() }} you size={62} ring />
               <View style={{ marginLeft: -18 }}>
-                <Tok who={PAR} size={62} ring />
+                <Tok who={{ initial: (partnerName[0] || 'D').toUpperCase() }} size={62} ring />
               </View>
             </View>
 
             {/* Couple name (serif italic) */}
             <Serif s={34} italic>
-              Yash & Dani
+              {`${name} & ${partnerName}`}
             </Serif>
 
             {/* Together since + streak */}
@@ -140,7 +136,7 @@ export default function UsScreen() {
               style={{ width: 'auto', marginTop: 8 }}
             >
               <Kick>
-                together since feb · {streak} day streak 🔥
+                {`${togetherSince ? `together since ${togetherSince.toLowerCase().split(' ')[0]} · ` : ''}${streak} day streak 🔥`}
               </Kick>
             </Press>
           </View>

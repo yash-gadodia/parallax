@@ -19,6 +19,7 @@ import { DawnBlobs } from '../src/components/DawnBlobs';
 import Toast from '../src/components/Toast';
 import { usePurchases, presentCustomerCenter } from '../src/features/purchases/usePurchases';
 import { purchasesAvailable } from '../src/features/purchases/client';
+import { useProfile } from '../src/features/profile/useProfile';
 
 // Status card with Mark icon
 function StatusCard() {
@@ -82,12 +83,12 @@ function StatusCard() {
 }
 
 // Plan details row
-function PlanDetailsCard() {
+function PlanDetailsCard({ partnerName }: { partnerName: string }) {
   const rows = [
     ['Plan', 'Annual · $39.99/yr'],
     ['Free trial ends', 'in 7 days'],
     ['Renews', 'Jun 15, 2026'],
-    ['Shared with', 'Dani'],
+    ['Shared with', partnerName],
   ];
 
   return (
@@ -135,6 +136,7 @@ export default function ManageSubScreen() {
   const [switchToastMsg, setSwitchToastMsg] = useState<string | null>(null);
   const [cancelToastMsg, setCancelToastMsg] = useState<string | null>(null);
   const setDemoPro = usePurchases((s) => s.setDemoPro);
+  const { partnerName } = useProfile();
 
   const handleSwitchPlan = () => {
     // Real build: RevenueCat Customer Center handles plan changes. Demo: toast.
@@ -205,7 +207,7 @@ export default function ManageSubScreen() {
         <StatusCard />
 
         {/* Plan Details */}
-        <PlanDetailsCard />
+        <PlanDetailsCard partnerName={partnerName} />
 
         {/* Action Buttons */}
         <View

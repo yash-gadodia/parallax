@@ -16,28 +16,43 @@ jest.mock('../../src/features/engagement/engagementActions', () => ({
   nudge: jest.fn(() => Promise.resolve()),
 }));
 
+jest.mock('../../src/features/profile/useProfile', () => ({
+  useProfile: jest.fn(() => ({
+    name: 'Alex',
+    partnerName: 'Jordan',
+    spiceLevel: 'Spicy',
+    notifyTime: null,
+    togetherSince: 'March 2023',
+    streak: 42,
+    loading: false,
+    updateProfile: jest.fn(),
+  })),
+}));
+
 describe('ProfileScreen', () => {
-  it('renders the profile screen with key sections', async () => {
+  it('renders real identity from useProfile', async () => {
     const { getByText } = await render(<ProfileScreen />);
 
-    // Check identity card
-    expect(getByText('Yash')).toBeTruthy();
+    expect(getByText('Alex')).toBeTruthy();
     expect(getByText('paired with')).toBeTruthy();
-    expect(getByText('Dani')).toBeTruthy();
+    expect(getByText('Jordan')).toBeTruthy();
+    expect(getByText('Spicy')).toBeTruthy();
+  });
 
-    // Check nudge banner
-    expect(getByText('Give Dani a nudge')).toBeTruthy();
+  it('renders nudge banner with real partner name', async () => {
+    const { getByText } = await render(<ProfileScreen />);
+
+    expect(getByText('Give Jordan a nudge')).toBeTruthy();
     expect(getByText('Send a nudge')).toBeTruthy();
+  });
 
-    // Check preferences section
+  it('renders preferences and account sections', async () => {
+    const { getByText } = await render(<ProfileScreen />);
+
     expect(getByText('preferences')).toBeTruthy();
     expect(getByText('Notifications')).toBeTruthy();
-
-    // Check account section
     expect(getByText('account')).toBeTruthy();
-
-    // Account essentials: log out + unpair are both present
     expect(getByText('Log out')).toBeTruthy();
-    expect(getByText('Unpair from Dani')).toBeTruthy();
+    expect(getByText('Unpair from Jordan')).toBeTruthy();
   });
 });

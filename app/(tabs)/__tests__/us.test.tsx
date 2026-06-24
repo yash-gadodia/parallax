@@ -16,10 +16,28 @@ jest.mock('../../../src/features/lovemap/useCoupleHistory', () => ({
   })),
 }));
 
+jest.mock('../../../src/features/profile/useProfile', () => ({
+  useProfile: jest.fn(() => ({
+    name: 'Alex',
+    partnerName: 'Jordan',
+    spiceLevel: 'Spicy',
+    notifyTime: null,
+    togetherSince: 'March 2023',
+    streak: 7,
+    loading: false,
+    updateProfile: jest.fn(),
+  })),
+}));
+
 describe('UsScreen', () => {
-  it('renders the couple name', async () => {
+  it('renders real couple name from useProfile', async () => {
     const { getByText } = await render(<UsScreen />);
-    expect(getByText('Yash & Dani')).toBeTruthy();
+    expect(getByText('Alex & Jordan')).toBeTruthy();
+  });
+
+  it('renders real streak count from useProfile', async () => {
+    const { getByText } = await render(<UsScreen />);
+    expect(getByText('together since march · 7 day streak 🔥')).toBeTruthy();
   });
 
   it('renders the love map card title', async () => {
