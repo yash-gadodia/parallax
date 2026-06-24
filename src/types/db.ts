@@ -15,7 +15,7 @@ export interface Couple {
   member_a: string;
   member_b: string | null;
   invite_code: string;
-  status: 'pending' | 'active';
+  status: 'pending' | 'active' | 'dissolved';
   together_since: string | null;
   streak: number;
   longest_streak: number;
@@ -206,6 +206,10 @@ export interface Database {
       };
       unpair: {
         Args: { p_couple: string };
+        Returns: void;
+      };
+      delete_my_account: {
+        Args: object;
         Returns: void;
       };
     };

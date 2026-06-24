@@ -28,6 +28,8 @@ import { usePurchases } from '../src/features/purchases/usePurchases';
 import { signOut } from '../src/features/auth/authActions';
 import { useProfile } from '../src/features/profile/useProfile';
 import { requestPermissions, scheduleDailyNudge } from '../src/features/notifications';
+import { deleteMyAccount, exportMyData } from '../src/features/account/accountActions';
+import Sheet from '../src/components/Sheet';
 
 interface RowProps {
   icon: string;
@@ -125,6 +127,8 @@ export default function ProfileScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const { couple } = useCouple();
   const isPro = usePurchases((s) => s.isPro);
   const { name, partnerName, spiceLevel, notifyTime } = useProfile();
@@ -197,6 +201,27 @@ export default function ProfileScreen() {
       router.replace('/login');
     } catch {
       showToast('Could not log out');
+    }
+  };
+
+  const handleExportData = async () => {
+    try {
+      await exportMyData();
+    } catch {
+      showToast('Could not export data');
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setDeleting(true);
+    try {
+      await deleteMyAccount();
+      await signOut();
+      router.replace('/login');
+    } catch {
+      setDeleting(false);
+      setShowDeleteConfirm(false);
+      showToast('Could not delete account');
     }
   };
 
@@ -466,6 +491,17 @@ export default function ProfileScreen() {
             danger
             onPress={handleUnpair}
           />
+          <Row
+            icon={ICONS.share}
+            label="Export my data"
+            onPress={handleExportData}
+          />
+          <Row
+            icon={ICONS.cross}
+            label="Delete account"
+            danger
+            onPress={() => setShowDeleteConfirm(true)}
+          />
         </Group>
 
         {/* Version Footer */}
@@ -475,6 +511,34 @@ export default function ProfileScreen() {
       </ScrollView>
 
       {toastMsg && <Toast msg={toastMsg} />}
+
+      {showDeleteConfirm && (
+        <Sheet title="Delete account?" onClose={() => setShowDeleteConfirm(false)}>
+          <Text
+            style={{
+              fontSize: 14,
+              color: colors.inkSoft,
+              fontFamily: fontFamily.ui,
+              lineHeight: 20,
+              textAlign: 'center',
+              marginBottom: 20,
+            }}
+          >
+            This will permanently delete your profile and answers. Your partner's account and shared history are not affected.
+          </Text>
+          <Btn
+            kind="coral"
+            onPress={handleDeleteAccount}
+            style={{ marginBottom: 10 }}
+            disabled={deleting}
+          >
+            {deleting ? 'Deleting…' : 'Yes, delete my account'}
+          </Btn>
+          <Btn kind="soft" onPress={() => setShowDeleteConfirm(false)} disabled={deleting}>
+            Cancel
+          </Btn>
+        </Sheet>
+      )}
     </View>
   );
 }

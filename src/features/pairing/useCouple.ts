@@ -11,7 +11,7 @@ let coupleChannelSeq = 0;
 interface UseCoupleReturn {
   couple: Couple | null;
   loading: boolean;
-  status: 'none' | 'pending' | 'active';
+  status: 'none' | 'pending' | 'active' | 'dissolved';
 }
 
 export function useCouple(): UseCoupleReturn {
@@ -83,7 +83,7 @@ export function useCouple(): UseCoupleReturn {
     };
   }, []);
 
-  const status: 'none' | 'pending' | 'active' = couple
+  const status: 'none' | 'pending' | 'active' | 'dissolved' = couple
     ? couple.status
     : 'none';
 
