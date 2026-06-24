@@ -66,12 +66,12 @@ export default function PlayScreen() {
           setSubmitting(true);
           try {
             const currentState = usePlayStore.getState();
-            await submitMyAnswers(
+            const coupleDropId = await submitMyAnswers(
               couple.id,
               currentState.myPicks,
               currentState.myHunches
             );
-            usePlayStore.setState({ done: true });
+            usePlayStore.setState({ done: true, coupleDropId });
             setTimeout(() => {
               router.push('/waiting');
             }, 220);

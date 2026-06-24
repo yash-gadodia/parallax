@@ -53,7 +53,7 @@ describe('dropActions', () => {
   });
 
   describe('submitMyAnswers', () => {
-    it('submits one answer per prompt, then sims the partner and completes the drop', async () => {
+    it('submits one answer per prompt, then sims the partner and completes the drop, returning coupleDropId', async () => {
       // rpc call order: ensure_today_drop -> submit_answers -> sim_partner_submit
       mockSupabase.rpc
         .mockResolvedValueOnce({ data: 'cd-9', error: null }) // ensure_today_drop
@@ -63,7 +63,10 @@ describe('dropActions', () => {
         builder({ data: [{ id: 'p1' }, { id: 'p2' }, { id: 'p3' }], error: null })
       );
 
-      await submitMyAnswers('couple-1', [0, 1, 2], [2, 1, 0]);
+      const returnedId = await submitMyAnswers('couple-1', [0, 1, 2], [2, 1, 0]);
+
+      // Must return the coupleDropId so callers can thread it to waiting/reveal
+      expect(returnedId).toBe('cd-9');
 
       // submit_answers got the picks/hunches mapped onto the ordered prompt ids
       expect(mockSupabase.rpc).toHaveBeenNthCalledWith(2, 'submit_answers', {

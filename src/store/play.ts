@@ -8,6 +8,7 @@ export interface PlayState {
   idx: number;
   phase: 'pick' | 'hunch';
   done: boolean;
+  coupleDropId: string | null;
   reset: () => void;
   setPick: (promptIdx: number, optionIdx: number | null) => void;
   setHunch: (promptIdx: number, optionIdx: number | null) => void;
@@ -19,6 +20,7 @@ export const usePlayStore = create<PlayState>((set) => ({
   idx: 0,
   phase: 'pick',
   done: false,
+  coupleDropId: null,
 
   reset: () =>
     set({
@@ -27,6 +29,7 @@ export const usePlayStore = create<PlayState>((set) => ({
       idx: 0,
       phase: 'pick',
       done: false,
+      coupleDropId: null,
     }),
 
   setPick: (promptIdx: number, optionIdx: number | null) =>

@@ -30,6 +30,9 @@ import GradientText from '../src/components/GradientText';
 import { DawnBlobs } from '../src/components/DawnBlobs';
 import { useSession } from '../src/features/auth/useSession';
 import { useCouple } from '../src/features/pairing/useCouple';
+import { fetchReveal } from '../src/features/drops/dropActions';
+import type { RevealScore } from '../src/domain/reveal';
+import type { PromptAnswers } from '../src/domain/reveal';
 
 const YOU = { initial: 'Y' };
 const PAR = { initial: 'D' };
@@ -39,7 +42,18 @@ export default function RevealScreen() {
   const { session } = useSession();
   const { couple } = useCouple();
   const playState = usePlayStore();
-  const reveal = computeReveal(playState);
+  const coupleDropId = playState.coupleDropId;
+
+  // Server reveal data (populated when session+couple+coupleDropId)
+  const [serverReveal, setServerReveal] = useState<{
+    reveal: RevealScore;
+    promptAnswers: PromptAnswers[];
+  } | null>(null);
+
+  // Computed from local store (demo fallback)
+  const localReveal = computeReveal(playState);
+
+  const reveal = serverReveal?.reveal ?? localReveal;
 
   const [show, setShow] = useState(false);
   const [aligned, setAligned] = useState(false);
@@ -52,6 +66,15 @@ export default function RevealScreen() {
       clearTimeout(t2);
     };
   }, []);
+
+  useEffect(() => {
+    if (!session || !couple || !coupleDropId) return;
+    fetchReveal(coupleDropId).then((result) => {
+      setServerReveal({ reveal: result.reveal, promptAnswers: result.promptAnswers });
+    }).catch(() => {
+      // fall through to local demo reveal on error
+    });
+  }, [session, couple, coupleDropId]);
 
   const verdict =
     reveal.wave >= 80
@@ -187,10 +210,12 @@ export default function RevealScreen() {
           {/* Per-prompt compare cards */}
           <View style={{ marginTop: 26, gap: 12 }}>
             {DROP.prompts.map((prompt, i) => {
-              const myChoice = playState.myPicks[i] ?? prompt.youDemo;
-              const theirChoice = prompt.remy;
-              const myHunch = playState.myHunches[i] ?? prompt.youHunchDemo;
-              const theirHunch = prompt.remyHunch;
+              // Server path: use promptAnswers from fetchReveal (index-aligned to DROP.prompts)
+              const serverAnswers = serverReveal?.promptAnswers[i];
+              const myChoice = serverAnswers?.youPick ?? playState.myPicks[i] ?? prompt.youDemo;
+              const theirChoice = serverAnswers?.themPick ?? prompt.remy;
+              const myHunch = serverAnswers?.youHunch ?? playState.myHunches[i] ?? prompt.youHunchDemo;
+              const theirHunch = serverAnswers?.themHunch ?? prompt.remyHunch;
 
               const isTwin = myChoice === theirChoice;
               const hunchOk = myHunch === theirChoice;

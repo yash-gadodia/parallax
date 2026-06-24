@@ -45,7 +45,7 @@ export async function submitMyAnswers(
   coupleId: string,
   picks: (number | null)[],
   hunches: (number | null)[]
-): Promise<void> {
+): Promise<string> {
   try {
     // First, ensure today's drop exists
     const coupleDropId = await ensureTodayDrop(coupleId);
@@ -95,6 +95,8 @@ export async function submitMyAnswers(
 
     // Complete the drop to increment streak
     await completeDrop(coupleDropId);
+
+    return coupleDropId;
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Failed to submit answers';
     useUiStore.getState().fireToast(`Error: ${msg}`);

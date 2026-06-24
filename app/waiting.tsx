@@ -11,12 +11,14 @@ import { colors, gradients, space } from '../src/design/tokens';
 import { useSession } from '../src/features/auth/useSession';
 import { useCouple } from '../src/features/pairing/useCouple';
 import { useDropState } from '../src/features/drops/useDropState';
+import { usePlayStore } from '../src/store/play';
 
 export default function WaitingScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { session } = useSession();
   const { couple } = useCouple();
+  const coupleDropId = usePlayStore((s) => s.coupleDropId);
   const blobAnim = React.useRef(new Animated.Value(0)).current;
   const dotAnims = React.useRef([
     new Animated.Value(0),
@@ -24,10 +26,12 @@ export default function WaitingScreen() {
     new Animated.Value(0),
   ]).current;
 
-  // If we have session + couple, use real-time polling for couple_drop state
-  // We store couplDropId from session/couple context if available
-  // For now, pass null to useDropState to fall back to timer
-  const { coupleDrop } = useDropState(null);
+  // When session+couple exists, pass the real coupleDropId so we subscribe to
+  // real-time state changes and advance only when state becomes 'revealed'.
+  // In demo mode (no session) coupleDropId is null — useDropState returns null state.
+  const { coupleDrop } = useDropState(session && couple ? coupleDropId : null);
+
+  const isLive = !!(session && couple);
 
   useEffect(() => {
     // Animate blob (pxfloat 3.5s)
@@ -66,19 +70,22 @@ export default function WaitingScreen() {
       }, i * 180);
     });
 
-    // If supabase connected and couple_drop revealed, go to reveal immediately
-    if (session && coupleDrop?.state === 'revealed') {
-      router.replace('/reveal');
+    // Live path: advance only when couple_drops.state flips to 'revealed'.
+    // No timer — we wait for the real partner (or sim_partner_submit to flip state).
+    if (isLive) {
+      if (coupleDrop?.state === 'revealed') {
+        router.replace('/reveal');
+      }
       return;
     }
 
-    // Otherwise fall back to timer (2.6s for demo)
+    // Demo path (no session): fall back to a 2.6s timer so the demo still works.
     const timer = setTimeout(() => {
       router.replace('/reveal');
     }, 2600);
 
     return () => clearTimeout(timer);
-  }, [router, blobAnim, dotAnims, session, coupleDrop?.state]);
+  }, [router, blobAnim, dotAnims, isLive, coupleDrop?.state]);
 
   return (
     <LinearGradient
