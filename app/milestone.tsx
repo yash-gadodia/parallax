@@ -34,18 +34,22 @@ export default function MilestoneScreen() {
       ? 'A year of choosing\neach other.'
       : days >= 100
         ? 'Triple digits.\nThe real deal.'
-        : days >= 30
-          ? "You're officially\na streak couple."
-          : 'One week strong.';
+        : days >= 50
+          ? 'Fifty days of\nstaying in focus.'
+          : days >= 30
+            ? "You're officially\na streak couple."
+            : 'One week strong.';
 
   const sub =
     days >= 365
       ? '365 tiny moments of showing up. That\'s a love story.'
       : days >= 100
         ? 'A hundred days in a row. Most couples never get close.'
-        : days >= 30
-          ? 'A whole month of showing up for each other. That\'s rarer than you think.'
-          : 'Seven days in a row. This is how rituals are born.';
+        : days >= 50
+          ? 'Fifty days straight. You\'ve made this a habit, together.'
+          : days >= 30
+            ? 'A whole month of showing up for each other. That\'s rarer than you think.'
+            : 'Seven days in a row. This is how rituals are born.';
 
   // Confetti emoji hearts - 12 scattered across top, rising animation
   const hearts = Array.from({ length: 12 }, (_, i) => ({

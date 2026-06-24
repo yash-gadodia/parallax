@@ -49,6 +49,7 @@ import { useSession } from '../../src/features/auth/useSession';
 import { useCouple } from '../../src/features/pairing/useCouple';
 import { supabase } from '../../src/lib/supabase';
 import { addLearning } from '../../src/features/lovemap/addLearning';
+import { learningOrigin } from '../../src/domain/learningOrigin';
 
 // Identity definitions
 const YOU = { name: 'you', initial: 'Y' };
@@ -1168,6 +1169,11 @@ function ResultStep({
                     ? couple.member_b
                     : couple.member_a;
 
+                  // Stable origin derived from this resolution's content, so
+                  // re-tapping "Open your Love Map" upserts the same two learnings
+                  // instead of creating duplicates each time.
+                  const origin = 'refocus-' + learningOrigin(result.agree, result.wayback);
+
                   // Add learning for "you" (about your needs)
                   if (result.underneath.you) {
                     await addLearning({
@@ -1177,7 +1183,7 @@ function ResultStep({
                       need: result.underneath.you.split('\n')[0] || 'Underlying need',
                       detail: result.underneath.you,
                       source: 'refocus',
-                      origin: 'refocus-' + Date.now(),
+                      origin,
                     });
                   }
 
@@ -1190,7 +1196,7 @@ function ResultStep({
                       need: result.underneath.dani.split('\n')[0] || 'Underlying need',
                       detail: result.underneath.dani,
                       source: 'refocus',
-                      origin: 'refocus-' + Date.now(),
+                      origin,
                     });
                   }
 

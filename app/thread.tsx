@@ -7,7 +7,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { safeBack } from "../src/lib/nav";
 import TopBar from '../src/components/TopBar';
 import Press from '../src/components/Press';
@@ -27,7 +27,15 @@ interface ThreadMessage {
 export default function ThreadScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const [msgs, setMsgs] = useState<ThreadMessage[]>(THREAD.msgs);
+  const { promptId } = useLocalSearchParams<{ promptId?: string }>();
+  // A thread is anchored to one answer. If we arrived from a specific reveal card,
+  // show that prompt's context and start a fresh conversation; otherwise fall back
+  // to the seeded demo thread.
+  const prompt = promptId ? DROP.prompts.find((p) => p.id === promptId) : undefined;
+  const context = prompt
+    ? { emoji: prompt.emoji, q: prompt.q }
+    : { emoji: THREAD.emoji, q: THREAD.q };
+  const [msgs, setMsgs] = useState<ThreadMessage[]>(prompt ? [] : THREAD.msgs);
   const [text, setText] = useState('');
   const scrollViewRef = useRef<ScrollView>(null);
 
@@ -68,7 +76,7 @@ export default function ThreadScreen() {
           gap: 11,
         }}
       >
-        <Text style={{ fontSize: 22 }}>{THREAD.emoji}</Text>
+        <Text style={{ fontSize: 22 }}>{context.emoji}</Text>
         <View style={{ flex: 1 }}>
           <Kick>{DROP.code} · the answer you're on</Kick>
           <Text
@@ -81,7 +89,7 @@ export default function ThreadScreen() {
               lineHeight: Math.round(14.5 * 1.4),
             }}
           >
-            {THREAD.q}
+            {context.q}
           </Text>
         </View>
       </View>

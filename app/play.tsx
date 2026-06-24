@@ -71,6 +71,7 @@ export default function PlayScreen() {
               currentState.myPicks,
               currentState.myHunches
             );
+            usePlayStore.setState({ done: true });
             setTimeout(() => {
               router.push('/waiting');
             }, 220);
@@ -78,6 +79,7 @@ export default function PlayScreen() {
             setSubmitting(false);
           }
         } else {
+          usePlayStore.setState({ done: true });
           setTimeout(() => {
             router.push('/waiting');
           }, 220);

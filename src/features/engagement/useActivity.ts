@@ -2,6 +2,11 @@ import { useEffect, useState } from 'react';
 import { supabase, Activity } from '../../lib/supabase';
 import { useUiStore } from '../../store/ui';
 
+// supabase.channel(topic) dedupes by topic; a unique suffix per subscriber keeps
+// two simultaneous mounts (Today's bell + the Activity screen) from sharing one
+// channel and throwing "cannot add callbacks after subscribe()".
+let activityChannelSeq = 0;
+
 interface UseActivityReturn {
   items: Activity[];
   unreadCount: number;
@@ -29,7 +34,10 @@ export function useActivity(coupleId: string | null): UseActivityReturn {
       return;
     }
 
-    let cleanup: (() => void) | null = null;
+    // cancelled bails the in-flight fetch on unmount (incl. React's dev
+    // double-mount) before it subscribes, so we never leak a second channel.
+    let cancelled = false;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
 
     const fetchActivity = async () => {
       try {
@@ -39,6 +47,8 @@ export function useActivity(coupleId: string | null): UseActivityReturn {
           .eq('couple_id', coupleId)
           .order('created_at', { ascending: false });
 
+        if (cancelled) return;
+
         if (error) {
           throw error;
         }
@@ -46,8 +56,8 @@ export function useActivity(coupleId: string | null): UseActivityReturn {
         setItems((data || []) as Activity[]);
         setLoading(false);
 
-        const channel = supabase
-          .channel(`activity-${coupleId}`)
+        channel = supabase
+          .channel(`activity-${coupleId}-${++activityChannelSeq}`)
           .on(
             'postgres_changes',
             {
@@ -63,11 +73,8 @@ export function useActivity(coupleId: string | null): UseActivityReturn {
             }
           )
           .subscribe();
-
-        cleanup = () => {
-          supabase.removeChannel(channel);
-        };
       } catch (err) {
+        if (cancelled) return;
         const msg = err instanceof Error ? err.message : 'Failed to fetch activity';
         fireToast(`Error: ${msg}`);
         setLoading(false);
@@ -77,8 +84,9 @@ export function useActivity(coupleId: string | null): UseActivityReturn {
     fetchActivity();
 
     return () => {
-      if (cleanup) {
-        cleanup();
+      cancelled = true;
+      if (channel) {
+        supabase.removeChannel(channel);
       }
     };
   }, [coupleId, fireToast]);
