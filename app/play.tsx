@@ -131,11 +131,14 @@ export default function PlayScreen() {
               overflow: 'hidden',
             }}
           >
-            <View
+            <LinearGradient
+              colors={gradients.us.colors}
+              locations={gradients.us.locations}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
               style={{
                 height: '100%',
                 width: `${(step / total) * 100}%`,
-                backgroundColor: colors.p2,
                 borderRadius: radius.pill,
               }}
             />
@@ -194,6 +197,7 @@ export default function PlayScreen() {
               style={{
                 fontSize: 13,
                 fontWeight: '700',
+                lineHeight: 18,
                 color: deepColor,
                 fontFamily: fontFamily.ui,
               }}

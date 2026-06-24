@@ -84,6 +84,7 @@ export default function Btn({
           allowFontScaling={false}
           style={{
             fontSize: 9.5,
+            lineHeight: 12,
             fontFamily: fontFamily.mono,
             letterSpacing: 1.2,
             textTransform: 'uppercase',

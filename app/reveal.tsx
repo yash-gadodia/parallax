@@ -169,10 +169,31 @@ export default function RevealScreen() {
               </View>
             </View>
 
-            {/* Verdict text with anaglyph effect */}
-            <Serif s={32} italic style={{ marginTop: 6, marginBottom: 4 }}>
-              {verdict}
-            </Serif>
+            {/* Verdict text with anaglyph effect — coral ghost left, periwinkle right */}
+            <View style={{ marginTop: 6, marginBottom: 4, alignSelf: 'stretch' }}>
+              <Serif s={32} italic style={{ opacity: 0 }}>
+                {verdict}
+              </Serif>
+              <Serif
+                s={32}
+                italic
+                c="rgba(255,142,122,0.45)"
+                style={{ position: 'absolute', top: 0, bottom: 0, left: -1, right: 1 }}
+              >
+                {verdict}
+              </Serif>
+              <Serif
+                s={32}
+                italic
+                c="rgba(157,149,245,0.45)"
+                style={{ position: 'absolute', top: 0, bottom: 0, left: 1, right: -1 }}
+              >
+                {verdict}
+              </Serif>
+              <Serif s={32} italic style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0 }}>
+                {verdict}
+              </Serif>
+            </View>
 
             <Text
               allowFontScaling={false}
@@ -251,6 +272,7 @@ export default function RevealScreen() {
                       style={{
                         fontSize: 14.5,
                         fontWeight: '700',
+                        lineHeight: 20,
                         color: colors.ink,
                         fontFamily: fontFamily.ui,
                         flex: 1,
@@ -426,6 +448,7 @@ export default function RevealScreen() {
                       style={{
                         fontSize: 8.5,
                         fontWeight: '700',
+                        lineHeight: 11,
                         letterSpacing: 2.2,
                         color: colors.inkMute,
                         fontFamily: fontFamily.mono,

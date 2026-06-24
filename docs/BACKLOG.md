@@ -44,7 +44,7 @@ The shared task list. Plain-English, owner-tagged, and the Claude agent reads & 
 ### (Claude) — buildable now
 _(from the deep audit, 2026-06-24 — ordered by value. The app runs as a single-player demo; these wire the real two-player paths + close product gaps. Several need prod creds (Yash) to fully verify live.)_
 - [ ] **(Claude)** Wire the reveal loop to the server when signed in: `reveal.tsx` calls `fetchReveal(coupleDropId)`, `waiting.tsx` uses real `useDropState` (not the 2.6s demo timer), persist/pass `coupleDropId` play→waiting→reveal. (Demo path stays as-is. Needs two real accounts to verify end-to-end.)
-- [ ] **(Claude)** "From a drop" Love Map learnings: create a `source:'drop'` learning on reveal so the Love Map loop isn't fight-only.
+- [x] **(Claude)** "From a drop" Love Map learnings: create a `source:'drop'` learning on reveal so the Love Map loop isn't fight-only. (`452e17b`)
 - [ ] **(Claude)** Load real identity: a `useProfile` hook (display_name, partner name, together_since) → drive `profile`, `editProfile`, `manageSub`, `us` (today they show hardcoded Yash/Dani/23).
 - [ ] **(Claude)** Edit Profile "Save changes" persists `display_name` (+ couples `together_since`) — currently a toast-only stub.
 - [ ] **(Claude)** Spice level: persist `profiles.spice_level` on pick AND gate prompt/pack selection by spice (today it's cosmetic end-to-end; also normalize case to lowercase).
