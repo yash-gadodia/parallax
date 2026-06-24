@@ -12,7 +12,7 @@ export interface Profile {
 
 export interface Couple {
   id: string;
-  member_a: string;
+  member_a: string | null;
   member_b: string | null;
   invite_code: string;
   status: 'pending' | 'active' | 'dissolved';

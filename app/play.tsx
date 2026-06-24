@@ -78,6 +78,7 @@ export default function PlayScreen() {
               router.push('/waiting');
             }, 220);
           } catch (_err) {
+            setSubmitting(false);
             await enqueueSubmit(couple.id, currentState.myPicks, currentState.myHunches);
             useUiStore.getState().fireToast("We'll send your answers when you're back online");
             usePlayStore.setState({ done: true });

@@ -216,13 +216,15 @@ export default function ProfileScreen() {
     setDeleting(true);
     try {
       await deleteMyAccount();
-      await signOut();
-      router.replace('/login');
     } catch {
       setDeleting(false);
       setShowDeleteConfirm(false);
       showToast('Could not delete account');
+      return;
     }
+    // Account is gone — sign out best-effort and leave regardless of a signOut hiccup.
+    signOut().catch(() => {});
+    router.replace('/login');
   };
 
   const containerStyle: ViewStyle = {

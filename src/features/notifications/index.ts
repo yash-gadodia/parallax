@@ -2,6 +2,8 @@ import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import { supabase } from '../../lib/supabase';
 
+const DAILY_NUDGE_ID = 'parallax-daily-nudge';
+
 // GATE: fully fires only once EAS/APNs creds are added by Yash.
 // All functions no-op gracefully when:
 //   - running in Expo Go (no push entitlement)
@@ -92,5 +94,3 @@ export async function registerPushToken(): Promise<void> {
     // No-op so the demo never crashes.
   }
 }
-
-const DAILY_NUDGE_ID = 'parallax-daily-nudge';

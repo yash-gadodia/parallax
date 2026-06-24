@@ -10,7 +10,7 @@
 -- ============================================================================
 begin;
   create extension if not exists pgtap;
-  select plan(7);
+  select plan(8);
 
   -- ---- SETUP (as superuser) -------------------------------------------------
   insert into auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at)
@@ -43,9 +43,9 @@ begin;
           current_date, 'open')
   on conflict do nothing;
 
-  insert into public.drop_prompts (id, drop_id, position)
+  insert into public.drop_prompts (id, drop_id, position, options)
   values ('da000005-0000-0000-0000-000000000001'::uuid,
-          'da000003-0000-0000-0000-000000000001'::uuid, 1)
+          'da000003-0000-0000-0000-000000000001'::uuid, 1, array['A','B'])
   on conflict do nothing;
 
   -- Alice has 1 answer; Bob has 1 answer
@@ -65,6 +65,7 @@ begin;
   -- (no role switch = postgres superuser, but auth.uid() returns null)
   select throws_ok(
     $$ select public.delete_my_account() $$,
+    'P0001',
     'Not authenticated',
     'delete_my_account() raises when called without a session'
   );
@@ -120,6 +121,26 @@ begin;
      where id = 'da000001-0000-0000-0000-000000000002'::uuid),
     1,
     'Partner profile is untouched'
+  );
+
+  -- REGRESSION GUARD (0010): with member_a now NULL, the surviving partner (Bob)
+  -- can still submit and reach 'revealed' — the NULL slot counts as done, instead
+  -- of poisoning the completion check and freezing the drop forever.
+  set local role authenticated;
+  select set_config('request.jwt.claims',
+    json_build_object('sub','da000001-0000-0000-0000-000000000002','role','authenticated')::text,
+    true);
+  select public.submit_answers(
+    'da000004-0000-0000-0000-000000000001'::uuid,
+    '[{"prompt_id":"da000005-0000-0000-0000-000000000001","pick":0,"hunch":1}]'::jsonb
+  );
+  reset role;
+
+  select is(
+    (select state from public.couple_drops
+     where id = 'da000004-0000-0000-0000-000000000001'::uuid),
+    'revealed',
+    'Surviving partner reaches revealed after dissolution (NULL member treated as done)'
   );
 
   select * from finish();
