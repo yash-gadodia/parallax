@@ -38,7 +38,7 @@ function WaveWidget({ onTap, big }: { onTap?: () => void; big?: boolean }) {
           paddingHorizontal: 16,
           paddingVertical: 15,
           justifyContent: 'flex-start',
-          ...shadows.shadowPop,
+          ...shadows.shadow,
           position: 'relative',
         }}
       >
@@ -148,7 +148,7 @@ function PingWidget({ onTap }: { onTap?: () => void }) {
           justifyContent: 'center',
           alignItems: 'center',
           overflow: 'hidden',
-          ...shadows.shadowPop,
+          ...shadows.shadow,
           position: 'relative',
         }}
       >

@@ -146,15 +146,11 @@ export default function ActivityScreen() {
                   disabled={!tappable}
                 >
                   {isUnread ? (
-                    <LinearGradient
-                      colors={gradients.usSoft.colors}
-                      locations={gradients.usSoft.locations}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
+                    <View
                       style={[
                         styles.card,
                         {
-                          overflow: 'hidden',
+                          backgroundColor: colors.usSoft,
                           borderColor: 'rgba(157,149,245,0.28)',
                         },
                       ]}
@@ -198,7 +194,7 @@ export default function ActivityScreen() {
 
                       {/* Unread dot or chevron */}
                       <View style={styles.unreadDot} />
-                    </LinearGradient>
+                    </View>
                   ) : (
                     <View
                       style={[

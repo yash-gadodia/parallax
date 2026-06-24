@@ -47,7 +47,7 @@ function Mastery({ level }: { level: 0 | 1 | 2 | 3 }) {
         style={{
           fontFamily: fontFamily.mono,
           fontSize: 10,
-          letterSpacing: 1.44,
+          letterSpacing: 0.8,
           textTransform: 'uppercase',
           color: level >= 2 ? colors.matchDeep : colors.inkMute,
           fontWeight: '700',

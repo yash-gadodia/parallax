@@ -356,18 +356,33 @@ export default function UsScreen() {
                 height: 90,
               }}
             >
-              {hist.map((h, i) => (
-                <View
-                  key={i}
-                  style={{
-                    flex: 1,
-                    height: `${h}%`,
-                    borderRadius: 8,
-                    backgroundColor:
-                      i === hist.length - 1 ? colors.p1 : colors.sunken,
-                  }}
-                />
-              ))}
+              {hist.map((h, i) => {
+                const isLast = i === hist.length - 1;
+                return isLast ? (
+                  <LinearGradient
+                    key={i}
+                    colors={gradients.us.colors}
+                    locations={gradients.us.locations}
+                    start={{ x: 0, y: 1 }}
+                    end={{ x: 0, y: 0 }}
+                    style={{
+                      flex: 1,
+                      height: `${h}%`,
+                      borderRadius: 8,
+                    }}
+                  />
+                ) : (
+                  <View
+                    key={i}
+                    style={{
+                      flex: 1,
+                      height: `${h}%`,
+                      borderRadius: 8,
+                      backgroundColor: colors.sunken,
+                    }}
+                  />
+                );
+              })}
             </View>
 
             {/* Chart label */}
@@ -387,12 +402,12 @@ export default function UsScreen() {
             </Text>
           </Card>
 
-          {/* Stats trio */}
+          {/* Stats trio — answered = history * 3 prompts; twins = sum of twins_count */}
           <View style={{ flexDirection: 'row', gap: 12, marginTop: 14 }}>
             {[
-              { big: '142', label: 'answered' },
-              { big: '38', label: 'twin moments' },
-              { big: '12', label: 'packs played' },
+              { big: String(history.length * 3), label: 'answered' },
+              { big: String(history.reduce((acc, h) => acc + (h.twins_count || 0), 0)), label: 'twin moments' },
+              { big: String(history.length), label: 'drops played' },
             ].map((stat, i) => (
               <Card
                 key={i}

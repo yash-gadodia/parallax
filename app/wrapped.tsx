@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -26,6 +26,16 @@ export default function WrappedScreen() {
   const router = useRouter();
   const [slideIdx, setSlideIdx] = useState(0);
   const { height: screenHeight } = useWindowDimensions();
+  const barAnim = useRef(new RNAnimated.Value(0)).current;
+
+  useEffect(() => {
+    barAnim.setValue(0);
+    RNAnimated.timing(barAnim, {
+      toValue: 1,
+      duration: 700,
+      useNativeDriver: false,
+    }).start();
+  }, [slideIdx, barAnim]);
 
   const slide = WRAP[slideIdx];
   const isLastSlide = slideIdx === WRAP.length - 1;
@@ -120,6 +130,11 @@ export default function WrappedScreen() {
           {WRAP.map((_, k) => {
             const isCurrent = k === slideIdx;
             const isPassed = k < slideIdx;
+            const fillWidth = isCurrent
+              ? barAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] })
+              : isPassed
+              ? '100%'
+              : '0%';
 
             return (
               <View
@@ -137,7 +152,7 @@ export default function WrappedScreen() {
                     height: 3.5,
                     borderRadius: 3,
                     backgroundColor: '#fff',
-                    width: `${(isPassed ? 100 : isCurrent ? 100 : 0)}%`,
+                    width: fillWidth,
                   }}
                 />
               </View>
