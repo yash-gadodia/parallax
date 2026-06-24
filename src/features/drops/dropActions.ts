@@ -2,6 +2,7 @@ import { supabase } from '../../lib/supabase';
 import { PromptAnswers, scoreReveal } from '../../domain/reveal';
 import { useUiStore } from '../../store/ui';
 import { completeDrop } from '../engagement/engagementActions';
+import { persistDropLearning } from './dropLearning';
 import type { CoupleDrop, Answer, DropPrompt, Couple, Json } from '../../types/db';
 
 /**
@@ -159,17 +160,20 @@ export async function fetchReveal(coupleDropId: string) {
 
     const answerList = (answers || []) as Array<{ prompt_id: string; author: string; pick: number | null; hunch: number | null }>;
 
+    let themId: string | null = null;
     for (const ans of answerList) {
       const ansObj = { pick: ans.pick, hunch: ans.hunch };
       if (ans.author === myId) {
         myAnswers.set(ans.prompt_id, ansObj);
       } else {
         themAnswers.set(ans.prompt_id, ansObj);
+        themId = ans.author;
       }
     }
 
     // Map to PromptAnswers and call scoreReveal
-    const promptList = (prompts || []) as Array<{ id: string }>;
+    type FullPrompt = { id: string; emoji: string | null; question: string | null; options: string[] };
+    const promptList = (prompts || []) as Array<FullPrompt>;
     const promptAnswers: PromptAnswers[] = promptList.map((prompt) => ({
       youPick: myAnswers.get(prompt.id)?.pick ?? -1,
       youHunch: myAnswers.get(prompt.id)?.hunch ?? -1,
@@ -178,6 +182,22 @@ export async function fetchReveal(coupleDropId: string) {
     }));
 
     const reveal = scoreReveal(promptAnswers);
+
+    // Persist a 'drop' learning from this reveal when we have a real partner.
+    // Non-blocking — errors are swallowed inside persistDropLearning.
+    if (myId && themId) {
+      const pairs = promptList.map((p) => ({
+        youHunch: myAnswers.get(p.id)?.hunch ?? -1,
+        themPick: themAnswers.get(p.id)?.pick ?? -1,
+      }));
+      persistDropLearning({
+        coupleId: drop.couple_id,
+        aboutId: themId,
+        coupleDropId,
+        prompts: promptList,
+        pairs,
+      });
+    }
 
     return {
       state: drop.state,

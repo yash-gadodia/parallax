@@ -13,6 +13,9 @@ jest.mock('../engagement/engagementActions', () => ({
 jest.mock('../../store/ui', () => ({
   useUiStore: { getState: () => ({ fireToast: jest.fn() }) },
 }));
+jest.mock('./dropLearning', () => ({
+  persistDropLearning: jest.fn(() => Promise.resolve()),
+}));
 
 import { supabase } from '../../lib/supabase';
 import { completeDrop } from '../engagement/engagementActions';
