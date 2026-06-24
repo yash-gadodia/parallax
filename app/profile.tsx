@@ -27,6 +27,7 @@ import { nudge } from '../src/features/engagement/engagementActions';
 import { usePurchases } from '../src/features/purchases/usePurchases';
 import { signOut } from '../src/features/auth/authActions';
 import { useProfile } from '../src/features/profile/useProfile';
+import { requestPermissions, scheduleDailyNudge } from '../src/features/notifications';
 
 interface RowProps {
   icon: string;
@@ -126,8 +127,20 @@ export default function ProfileScreen() {
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const { couple } = useCouple();
   const isPro = usePurchases((s) => s.isPro);
-  const { name, partnerName, spiceLevel } = useProfile();
+  const { name, partnerName, spiceLevel, notifyTime } = useProfile();
   const plus = isPro;
+
+  // Format HH:MM (24h) to a display string like "8:00 PM"
+  function formatNotifyTime(t: string | null): string {
+    if (!t) return 'Off';
+    const [hhStr, mmStr] = t.split(':');
+    const h = parseInt(hhStr, 10);
+    const m = parseInt(mmStr, 10);
+    if (isNaN(h) || isNaN(m)) return 'Off';
+    const period = h >= 12 ? 'PM' : 'AM';
+    const h12 = h % 12 === 0 ? 12 : h % 12;
+    return `Daily ${h12}:${mmStr} ${period}`;
+  }
 
   const showToast = (msg: string) => {
     setToastMsg(msg);
@@ -147,8 +160,18 @@ export default function ProfileScreen() {
     }
   };
 
-  const handleNotifications = () => {
-    showToast('Notification settings');
+  const handleNotifications = async () => {
+    const granted = await requestPermissions();
+    if (!granted) {
+      showToast('Enable notifications in Settings');
+      return;
+    }
+    if (notifyTime) {
+      await scheduleDailyNudge(notifyTime);
+      showToast(`Daily nudge set for ${formatNotifyTime(notifyTime)}`);
+    } else {
+      showToast('Set a notify time in onboarding');
+    }
   };
 
   const handlePairing = () => {
@@ -395,7 +418,7 @@ export default function ProfileScreen() {
           <Row
             icon={ICONS.bell}
             label="Notifications"
-            value="Daily 8pm"
+            value={formatNotifyTime(notifyTime)}
             onPress={handleNotifications}
           />
           <Row

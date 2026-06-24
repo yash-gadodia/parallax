@@ -29,6 +29,7 @@ import { useSession } from '../../src/features/auth/useSession';
 import { useCouple } from '../../src/features/pairing/useCouple';
 import { createCouple, joinCouple } from '../../src/features/pairing/pairingActions';
 import { supabase } from '../../src/lib/supabase';
+import { requestPermissions, scheduleDailyNudge, registerPushToken } from '../../src/features/notifications';
 
 const TAGLINE = 'mind the parallax error';
 
@@ -673,15 +674,24 @@ function Step5NotifyTime({
     setLoading(true);
     // Persist best-effort - never block finishing onboarding on auth/network.
     try {
+      const moment = MOMENTS.find((m) => m[0] === selected);
+      const time = moment?.[4]; // 24h 'HH:MM' — valid for the Postgres `time` column
+
+      // Request permission + schedule local daily nudge (no-ops gracefully in Expo Go).
+      if (time) {
+        await requestPermissions();
+        await scheduleDailyNudge(time);
+      }
+
       const { data } = await supabase.auth.getUser();
       const uid = data.user?.id;
       if (uid) {
-        const moment = MOMENTS.find((m) => m[0] === selected);
-        const time = moment?.[4]; // 24h 'HH:MM' — valid for the Postgres `time` column
         if (time) {
           // @ts-expect-error supabase-js typed update arg resolves to never for this table
           await supabase.from('profiles').update({ notify_time: time }).eq('id', uid);
         }
+        // GATE: registerPushToken no-ops in Expo Go without EAS project ID.
+        await registerPushToken();
       }
     } catch {
       // ignore - saved if/when signed in

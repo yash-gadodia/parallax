@@ -237,3 +237,16 @@ jest.mock('expo-blur', () => {
     BlurView: ({ children, ...props }: any) => React.createElement(View, props, children),
   };
 });
+
+// expo-notifications is native — stub so screens and notification tests run in jest.
+// Individual test files that need specific behavior override with jest.mock locally.
+jest.mock('expo-notifications', () => ({
+  __esModule: true,
+  getPermissionsAsync: jest.fn(() => Promise.resolve({ status: 'undetermined', granted: false, canAskAgain: true, expires: 'never' })),
+  requestPermissionsAsync: jest.fn(() => Promise.resolve({ status: 'granted', granted: true, canAskAgain: false, expires: 'never' })),
+  scheduleNotificationAsync: jest.fn(() => Promise.resolve('parallax-daily-nudge')),
+  cancelScheduledNotificationAsync: jest.fn(() => Promise.resolve()),
+  getExpoPushTokenAsync: jest.fn(() => Promise.resolve({ data: 'ExponentPushToken[test-token]', type: 'expo' })),
+  SchedulableTriggerInputTypes: { DAILY: 'daily' },
+  setNotificationHandler: jest.fn(),
+}));
