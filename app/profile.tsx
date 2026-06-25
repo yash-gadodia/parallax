@@ -178,10 +178,6 @@ export default function ProfileScreen() {
     }
   };
 
-  const handlePairing = () => {
-    showToast('Pairing settings');
-  };
-
   const handleUnpair = async () => {
     if (!couple) {
       showToast('Not paired');
@@ -476,11 +472,6 @@ export default function ProfileScreen() {
             label="Parallax Plus"
             value={plus ? 'Active' : 'Upgrade'}
             onPress={() => router.push(plus ? '/manageSub' : '/checkout')}
-          />
-          <Row
-            icon={ICONS.link}
-            label="Manage pairing"
-            onPress={handlePairing}
           />
           <Row
             icon={ICONS.logout}

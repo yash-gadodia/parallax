@@ -5,6 +5,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Peek } from '../src/components/Peek';
 import { Float } from '../src/components/Float';
+import Press from '../src/components/Press';
+import { Icon, ICONS } from '../src/components/Icon';
 import { Kick, Serif } from '../src/components/Text';
 import { DawnBlobs } from '../src/components/DawnBlobs';
 import { colors, gradients, space } from '../src/design/tokens';
@@ -96,6 +98,28 @@ export default function WaitingScreen() {
       style={{ flex: 1 }}
     >
       <DawnBlobs />
+
+      {/* Back to Today — your answers are already saved; don't trap the user here. */}
+      <Press
+        onPress={() => router.replace('/(tabs)/today')}
+        scale={false}
+        style={{
+          position: 'absolute',
+          top: insets.top + 8,
+          left: 18,
+          zIndex: 30,
+          width: 38,
+          height: 38,
+          borderRadius: 999,
+          backgroundColor: colors.surfaceSoft,
+          borderWidth: 1,
+          borderColor: colors.line,
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
+        <Icon d={ICONS.back} size={20} color={colors.ink} />
+      </Press>
 
       <View
         style={{
