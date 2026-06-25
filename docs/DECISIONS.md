@@ -4,6 +4,17 @@ A running log of major **product / tech / design** decisions — the *why* behin
 
 ---
 
+## 2026-06 — Solo answer-ahead (let users in before pairing)
+
+### Pairing is no longer a wall — pending users enter the app and answer ahead
+- **Decision:** A signed-up user whose partner hasn't joined (`status='pending'`) now lands in the app and can answer their own half of today's drop. The root guard (`app/index.tsx`) gates on `session && (active||pending)`; the onboarding "Waiting for them…" screen became a "You're in → answer today's drop" doorway; Today shows an invite-ahead banner + a held-reveal state. The reveal stays server-held until the partner joins **and** answers.
+- **Why:** Blocking at signup — peak intent, zero investment — handed activation hostage to a partner not even in the app, with a dead-end wait they couldn't action and no taste of the product to recruit *with*. Classic two-sided cold-start mistake.
+- **Gotcha (non-obvious, cost real thought):** `0010` treated **any** null member slot as "done" so a *dissolved* couple (partner deleted their account) wouldn't strand the survivor. That same shortcut would flip a *pending* solo answer straight to `revealed` against an empty partner. `0011` makes it status-aware: a null member counts as done **only when `status <> 'pending'`** — `pending` holds, `dissolved` releases. The discriminator is `couples.status`. Proven in `supabase/tests/pending_hold_test.sql`.
+- **Alternatives:** Browse-only (let them in but can't answer) — simpler, but no aha. Frontend-only gate flip — broken: fires the empty reveal.
+- **Follow-up:** Pending empty-states for `us`/`refocus` tabs (currently demo-data null-safe, not pending-aware); stale held-drop expiry if the partner joins days later.
+
+---
+
 ## 2026-06 — Build & launch hardening
 
 ### Email confirmation via Resend + deep-link `token_hash`

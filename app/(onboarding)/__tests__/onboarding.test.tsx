@@ -331,11 +331,11 @@ describe('Onboarding', () => {
     });
   });
 
-  it('step 4 (with session, pending couple): shows waiting-for-partner state', async () => {
+  it('step 4 (with session, pending couple): shows the answer-ahead doorway, not a wall', async () => {
     mockSessionValue = { session: { user: { id: 'u1' } }, loading: false };
     mockCoupleStatus = 'pending';
 
-    const { getByText, queryByText } = await render(<OnboardingScreen />);
+    const { getByText, getAllByText, queryByText } = await render(<OnboardingScreen />);
 
     // Advance to step 4 by reaching the pair-up step and simulating the share
     const { Share } = require('react-native');
@@ -343,8 +343,10 @@ describe('Onboarding', () => {
     fireEvent.press(getByText(/Send Dani the link/i));
 
     await waitFor(() => {
-      expect(getByText(/Waiting for them/i)).toBeTruthy();
+      expect(getByText(/You're in/i)).toBeTruthy();
     });
+    // It's a doorway into the app (answer ahead), not a dead-end wait.
+    expect(getAllByText(/Answer today's drop/i).length).toBeGreaterThan(0);
     expect(queryByText(/Dani joined!/i)).toBeNull();
   });
 
@@ -362,26 +364,20 @@ describe('Onboarding', () => {
     });
   });
 
-  it('step 4 (no session, demo): shows celebration even when couple status is none', async () => {
-    // Demo path: a session-less user somehow reaches step 4 (e.g. via createCouple fallback).
-    // isActive = !hasSession, so no-session always shows celebration regardless of couple status.
-    mockCoupleStatus = 'none';
-    // Use a session so we can reach step 3 (pair-up), then advance via Share.
-    // But set hasSession=false at step4 by having no session on the component while step3 was
-    // reached via the createCouple fallback path. The simplest proxy: session exists for step3
-    // but we assert that when status=active the celebration shows — covered above.
-    // Here we verify the rendering guard: when status='none' AND no session, celebration shows.
+  it('step 4 (with session, not-yet-active couple): shows the answer-ahead doorway', async () => {
+    // A signed-in user who has shared their invite but isn't active yet (status not
+    // 'active') gets the doorway into the app, not the celebration.
     mockSessionValue = { session: { user: { id: 'u1' } }, loading: false };
-    mockCoupleStatus = 'none'; // status=none simulates no couple yet
+    mockCoupleStatus = 'none'; // not 'active' → isActive false (with a session)
 
-    const { getByText, queryByText } = await render(<OnboardingScreen />);
+    const { getByText, getAllByText, queryByText } = await render(<OnboardingScreen />);
     await waitFor(() => expect(getByText(/Send Dani the link/i)).toBeTruthy());
     fireEvent.press(getByText(/Send Dani the link/i));
 
-    // status='none' with hasSession=true → isActive = false → waiting state shown
     await waitFor(() => {
-      expect(getByText(/Waiting for them/i)).toBeTruthy();
+      expect(getByText(/You're in/i)).toBeTruthy();
     });
+    expect(getAllByText(/Answer today's drop/i).length).toBeGreaterThan(0);
     expect(queryByText(/Dani joined!/i)).toBeNull();
   });
 });

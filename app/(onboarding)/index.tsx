@@ -605,12 +605,16 @@ function Step3PairUp({
 
 // Step 4: Joined celebration (real) or waiting-for-partner state
 function Step4Joined({ onNext, hasSession }: { onNext: () => void; hasSession: boolean }) {
+  const router = useRouter();
   const { status } = useCouple();
   // Demo path (no session): show scripted celebration immediately.
   // Real path (session): wait for couple to become active via realtime/poll.
   const isActive = !hasSession || status === 'active';
 
   if (!isActive) {
+    // Pending: invite sent, partner not in yet. Not a wall — a doorway. Let them
+    // into the app to answer ahead; the reveal stays held until the partner joins
+    // (realtime here also flips to the celebration below the moment they do).
     return (
       <SafeAreaViewContext style={styles.screenContainer}>
         <View style={[styles.screenContent, styles.centeredContent]}>
@@ -618,7 +622,7 @@ function Step4Joined({ onNext, hasSession }: { onNext: () => void; hasSession: b
             <Peek size={88} mood="love" />
           </Float>
           <Serif s={34} italic style={{ marginBottom: 12, textAlign: 'center' }}>
-            Waiting for them…
+            You're in.
           </Serif>
           <Text
             allowFontScaling={false}
@@ -626,13 +630,19 @@ function Step4Joined({ onNext, hasSession }: { onNext: () => void; hasSession: b
               fontSize: 15,
               color: colors.inkSoft,
               lineHeight: 23,
-              maxWidth: 280,
+              maxWidth: 290,
               textAlign: 'center',
               fontFamily: fontFamily.ui,
             }}
           >
-            Send them the code. Once they join, you'll both be here together.
+            Their invite's on its way. Answer today's drop now — they'll see your
+            hunches the moment they join.
           </Text>
+          <View style={{ marginTop: 30, width: '100%' }}>
+            <Btn kind="us" onPress={() => router.replace('/(tabs)/today')}>
+              Answer today's drop →
+            </Btn>
+          </View>
         </View>
       </SafeAreaViewContext>
     );

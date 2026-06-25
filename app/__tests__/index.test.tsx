@@ -54,9 +54,18 @@ describe('root index routing guard', () => {
     expect(mockRedirect).toHaveBeenCalledWith('/(tabs)/today');
   });
 
-  it('keeps a logged-in but unpaired user in onboarding', async () => {
+  it('lets a pairing-pending user into the app to answer ahead', async () => {
     mockUseSession.mockReturnValue({ session: { user: { id: 'u1' } }, loading: false });
-    mockUseCouple.mockReturnValue({ couple: null, status: 'pending', loading: false });
+    mockUseCouple.mockReturnValue({ couple: { id: 'c1' }, status: 'pending', loading: false });
+
+    await render(<HomeScreen />);
+
+    expect(mockRedirect).toHaveBeenCalledWith('/(tabs)/today');
+  });
+
+  it('sends a logged-in user with no couple yet to onboarding', async () => {
+    mockUseSession.mockReturnValue({ session: { user: { id: 'u1' } }, loading: false });
+    mockUseCouple.mockReturnValue({ couple: null, status: 'none', loading: false });
 
     await render(<HomeScreen />);
 

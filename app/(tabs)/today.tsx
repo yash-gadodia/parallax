@@ -3,6 +3,7 @@ import {
   View,
   ScrollView,
   Text,
+  Share,
   useWindowDimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -51,6 +52,21 @@ export default function TodayScreen() {
   const streak = couple?.streak ?? 23;
   const wave = reveal?.wave ?? 76;
   const hasUnreadActivity = unreadCount > 0;
+  // Pairing pending: user is in, partner hasn't joined. They can answer ahead;
+  // the reveal stays server-held (migration 0011) until the partner joins + answers.
+  const isPending = couple?.status === 'pending';
+
+  const handleInvite = async () => {
+    const code = couple?.invite_code;
+    if (!code) return;
+    try {
+      await Share.share({
+        message: `Join me on Parallax! Here's your invite code: ${code}`,
+      });
+    } catch {
+      // user dismissed the share sheet — nothing to do
+    }
+  };
 
   const handlePlay = () => {
     router.push('/play');
@@ -203,9 +219,9 @@ export default function TodayScreen() {
             </View>
           </View>
 
-          {/* Partner ping banner (show when not done) */}
+          {/* Partner ping banner (show when not done) — invite CTA while pending */}
           {!done && (
-            <Press onPress={handlePlay}>
+            <Press onPress={isPending ? handleInvite : handlePlay}>
               <LinearGradient
                 colors={gradients.usSoft.colors}
                 locations={gradients.usSoft.locations}
@@ -238,10 +254,14 @@ export default function TodayScreen() {
                         fontFamily: fontFamily.ui,
                       }}
                     >
-                      Dani already played today
+                      {isPending
+                        ? 'Invite your partner to pair'
+                        : 'Dani already played today'}
                     </Text>
                     <Kick c={colors.p2Deep} style={{ marginTop: 2 }}>
-                      your turn · no peeking at theirs
+                      {isPending
+                        ? "answer ahead · they'll see it when they join"
+                        : 'your turn · no peeking at theirs'}
                     </Kick>
                   </View>
                   <Icon d={ICONS.chevR} size={18} color={colors.p2Deep} />
@@ -364,6 +384,28 @@ export default function TodayScreen() {
                   >
                     Play today's three
                   </Btn>
+                </>
+              ) : isPending ? (
+                <>
+                  <Kick c={colors.p2Deep}>your answers are in · held</Kick>
+                  <Text
+                    style={{
+                      fontSize: 16,
+                      lineHeight: 23,
+                      fontWeight: '600',
+                      color: colors.ink,
+                      fontFamily: fontFamily.ui,
+                      marginTop: 8,
+                      marginBottom: 4,
+                    }}
+                  >
+                    🔒 We'll score your wavelength the moment your partner joins.
+                  </Text>
+                  <View style={{ marginTop: 16 }}>
+                    <Btn kind="us" onPress={handleInvite} sub="share your invite">
+                      Invite your partner →
+                    </Btn>
+                  </View>
                 </>
               ) : (
                 <>
