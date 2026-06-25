@@ -14,7 +14,7 @@ Owner legend: most of this is **infra/creds (Yash)**; a few are one-time edits y
 
 ## 2. Production backend (turns the demo into the real app)
 - [ ] Create a prod **Supabase** project. `supabase link` to it.
-- [ ] `supabase db push` to apply migrations `0001`→`0010`.
+- [ ] `supabase db push` to apply migrations `0001`→`0011`.
 - [ ] Set the auth redirect URL: `parallax://auth-callback`.
 - [ ] `supabase functions deploy refocus` and `supabase functions deploy notify-partner`.
 - [ ] In `supabase/config.toml`, set `verify_jwt = true` for both functions (prod hardening) + add a per-user/IP rate limit on `refocus` (it spends Anthropic tokens).
