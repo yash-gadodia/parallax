@@ -38,6 +38,12 @@
         "projectId": "5404ebf0-ec43-4fa6-80af-c1912b8e9a21"
       }
     },
-    "owner": "mcbebu"
+    "owner": "mcbebu",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/5404ebf0-ec43-4fa6-80af-c1912b8e9a21"
+    }
   }
 }
