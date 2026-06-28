@@ -474,20 +474,20 @@ export default function ProfileScreen() {
             onPress={() => router.push(plus ? '/manageSub' : '/checkout')}
           />
           <Row
+            icon={ICONS.share}
+            label="Export my data"
+            onPress={handleExportData}
+          />
+          <Row
             icon={ICONS.logout}
             label="Log out"
             onPress={handleSignOut}
           />
           <Row
-            icon={ICONS.logout}
+            icon={ICONS.link}
             label={`Unpair from ${partnerName}`}
             danger
             onPress={handleUnpair}
-          />
-          <Row
-            icon={ICONS.share}
-            label="Export my data"
-            onPress={handleExportData}
           />
           <Row
             icon={ICONS.cross}
