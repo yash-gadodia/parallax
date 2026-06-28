@@ -2,7 +2,9 @@ import { Share } from 'react-native';
 import { supabase } from '../../lib/supabase';
 
 export async function deleteMyAccount(): Promise<void> {
-  const { error } = await supabase.rpc('delete_my_account');
+  // Edge function erases app data (via delete_my_account) AND the Supabase Auth
+  // record — full, App-Store-grade deletion the client RPC alone can't do.
+  const { error } = await supabase.functions.invoke('delete-account');
   if (error) {
     throw error;
   }

@@ -44,7 +44,7 @@ Owner legend: most of this is **infra/creds (Yash)**; a few are one-time edits y
 
 ## 6. Compliance & safety (App Store will check)
 - [~] **Privacy Policy + Terms of Service** — drafts in `docs/PRIVACY.md` + `docs/TERMS.md`; **need hosting** (a public URL) + a legal review before launch.
-- [ ] **Full account deletion**: `delete_my_account()` erases profile/answers + dissolves the couple; add a `service_role` edge step to also delete the Supabase **Auth** record for complete deletion.
+- [x] **Full account deletion** (App-Store-grade): `delete-account` edge fn runs `delete_my_account()` then `auth.admin.deleteUser` → erases the Supabase **Auth** record too. JWT-gated (unauth → 401), deployed to prod.
 - [ ] Cost budgets/alerts for Anthropic + Supabase + EAS.
 
 ## 7. Nice-to-have before public launch

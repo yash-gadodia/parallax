@@ -55,3 +55,6 @@ verify_jwt = true
 # Expo push quota — harden before going live.
 [functions.notify-partner]
 verify_jwt = true
+
+[functions.delete-account]
+verify_jwt = true

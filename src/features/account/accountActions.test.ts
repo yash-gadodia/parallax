@@ -8,6 +8,7 @@ jest.mock('../../lib/supabase', () => ({
     },
     rpc: jest.fn(),
     from: jest.fn(),
+    functions: { invoke: jest.fn() },
   },
 }));
 
@@ -20,15 +21,15 @@ const mockShare = jest.spyOn(Share, 'share').mockResolvedValue({ action: Share.s
 describe('deleteMyAccount', () => {
   beforeEach(() => jest.clearAllMocks());
 
-  it('calls delete_my_account RPC', async () => {
-    mockSupabase.rpc.mockResolvedValue({ error: null });
+  it('calls the delete-account edge function (full auth-record deletion)', async () => {
+    mockSupabase.functions.invoke.mockResolvedValue({ error: null });
     await deleteMyAccount();
-    expect(mockSupabase.rpc).toHaveBeenCalledWith('delete_my_account');
+    expect(mockSupabase.functions.invoke).toHaveBeenCalledWith('delete-account');
   });
 
-  it('throws when RPC returns an error', async () => {
-    mockSupabase.rpc.mockResolvedValue({ error: new Error('rpc failed') });
-    await expect(deleteMyAccount()).rejects.toThrow('rpc failed');
+  it('throws when the edge function returns an error', async () => {
+    mockSupabase.functions.invoke.mockResolvedValue({ error: new Error('delete failed') });
+    await expect(deleteMyAccount()).rejects.toThrow('delete failed');
   });
 });
 
