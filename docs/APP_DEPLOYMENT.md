@@ -60,5 +60,13 @@ eas update --branch production --message "fix X"
 ```
 (Without `expo-updates`, a build profile's `channel` is inert — that's the harmless warning on the first build.)
 
+## Build troubleshooting — diagnose LOCALLY, don't burn cloud builds
+EAS builds are limited/metered — don't blindly re-kick. Before (re)building:
+```bash
+npx expo-doctor      # catches missing peer deps + SDK version mismatches that fail the native build
+```
+- A generic **`EAS_BUILD_UNKNOWN_GRADLE_ERROR`** (Android) usually traces to something `expo-doctor` flags. We hit a **missing `expo-constants`** peer dep (required by `expo-router`, "may crash outside Expo Go") — fixed with `npx expo install expo-constants`. Run doctor *first*, fix locally, then build once.
+- Android can wait — prove iOS (the launch target) first; don't spend builds on Android until it matters.
+
 ## Verify before submitting
 `npm run typecheck` (0) · `npx jest` (green) · `npx expo export -p ios` (bundles) · EAS build succeeds · `eas env:list production` shows the prod vars · **Privacy Policy + Terms URLs ready** (App Store requires them — see `docs/GO_LIVE.md`).
