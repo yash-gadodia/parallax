@@ -36,4 +36,5 @@ Read ARCHITECTURE.md before planning or structural changes. Claude auto-follows 
 
 ## Workflow / Do NOT
 - After 2 failed attempts, stop and rethink. **Verify before claiming done** (run it, show output) — `npm test` + `npm run typecheck` + `npx expo export`. Delegate verbose runs to subagents.
-- Don't commit secrets (a hook blocks `.env`/keys). Don't `npm install` stray deps in fixes. Don't leave `ios/`/`android/` or `.env` uncommitted-but-tracked (gitignored).
+- **This repo is PUBLIC / open source — never commit credentials** (DB passwords, API keys, `service_role`/`sb_secret_…`, connection strings with passwords). Creds live only in `.env` (gitignored, local) or **EAS secrets** (prod builds). A hook blocks `.env`/keys; if a secret leaks, rotate it. Prod-backend setup: `docs/PROD_SETUP.md`.
+- Don't `npm install` stray deps in fixes. Don't leave `ios/`/`android/` or `.env` uncommitted-but-tracked (gitignored).

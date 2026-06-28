@@ -13,8 +13,10 @@ Owner legend: most of this is **infra/creds (Yash)**; a few are one-time edits y
 - [ ] Apple Developer account → App Store Connect app record → enable **TestFlight**. *Unlocks the beta.*
 
 ## 2. Production backend (turns the demo into the real app)
-- [ ] Create a prod **Supabase** project. `supabase link` to it.
-- [ ] `supabase db push` to apply migrations `0001`→`0011`.
+> 📘 Full step-by-step (region is permanent, IPv6→Session-pooler, EAS env wiring, **never-commit-creds** rules) → **`docs/PROD_SETUP.md`**.
+- [x] Create a prod **Supabase** project — **region: Singapore / ap-southeast-1** (can't be changed later).
+- [x] `supabase db push` (via the **Session pooler** `--db-url`; the direct host is IPv6-only) — migrations `0001`→`0011` applied + RLS verified on prod.
+- [ ] Set the auth redirect URL: `parallax://auth-callback`.
 - [ ] Set the auth redirect URL: `parallax://auth-callback`.
 - [ ] `supabase functions deploy refocus` and `supabase functions deploy notify-partner`.
 - [ ] In `supabase/config.toml`, set `verify_jwt = true` for both functions (prod hardening) + add a per-user/IP rate limit on `refocus` (it spends Anthropic tokens).
