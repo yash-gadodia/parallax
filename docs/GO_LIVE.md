@@ -25,7 +25,7 @@ Owner legend: most of this is **infra/creds (Yash)**; a few are one-time edits y
 - [x] Auth redirect URL `parallax://auth-callback` added.
 - [x] Prod URL + publishable key wired into **EAS env vars** (preview + production) — *not* committed (see `docs/CREDENTIALS.md`).
 - [x] `refocus` **deployed** to prod (Anthropic-powered) with `verify_jwt = true` (unauth calls → 401). `notify-partner` pending push creds (§4).
-- [ ] Add a per-user/IP **rate limit** on `refocus` (verify_jwt blocks no-auth, but a valid anon key could still call → token spend).
+- [x] Per-user **rate limit** on `refocus` — `claim_refocus_slot` (12/hr/user) caps Anthropic spend; null-uid/anon calls rejected. Migration `0012` + pgTAP.
 
 ## 3. Keys / providers
 - [x] **Anthropic**: `ANTHROPIC_API_KEY` set as a Supabase secret + `refocus` deployed → **Refocus AI live in prod**.

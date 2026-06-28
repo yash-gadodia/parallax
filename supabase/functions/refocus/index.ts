@@ -124,6 +124,25 @@ Deno.serve(async (req: Request) => {
 
   if (!userText) return json({ error: "missing_userText" }, 400);
 
+  // Per-user rate limit (refocus spends Anthropic tokens). claim_refocus_slot()
+  // runs as the caller (forwarded JWT); a null uid / over-limit returns false.
+  try {
+    const rl = await fetch(`${Deno.env.get("SUPABASE_URL")}/rest/v1/rpc/claim_refocus_slot`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+        "Authorization": req.headers.get("Authorization") ?? "",
+      },
+      body: "{}",
+    });
+    if (rl.ok && (await rl.json()) === false) {
+      return json({ error: "rate_limited" }, 429);
+    }
+  } catch {
+    // fail open: a rate-check failure must not block legit mediation
+  }
+
   const userMsg = `Partner A (${youName}) shared their side:
 """
 ${userText}
