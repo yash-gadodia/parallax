@@ -39,13 +39,15 @@ export function Slashes({ h = 25, offset = false, light = false }: SlashesProps)
   const barWidth = h * 0.1;
   const barHeight = h * 0.72;
   const borderRadius = h * 0.05;
-  const marginLeft = h * 0.045;
+  // Even rhythm: the gap BETWEEN the two slashes matches the gap to the letters
+  // (set on the row's marginHorizontal below), so `//` reads as equally spaced.
+  const marginLeft = h * 0.03;
 
   const bar1Color = light ? '#fff' : colors.p1;
   const bar2Color = light ? 'rgba(255,255,255,0.82)' : colors.p2;
 
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'flex-end', marginHorizontal: h * 0.025, marginBottom: h * 0.2 }}>
+    <View style={{ flexDirection: 'row', alignItems: 'flex-end', marginHorizontal: h * 0.03, marginBottom: h * 0.2 }}>
       <View
         style={{
           width: barWidth,
