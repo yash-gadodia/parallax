@@ -24,11 +24,11 @@ Owner legend: most of this is **infra/creds (Yash)**; a few are one-time edits y
 - [x] `supabase db push` (Session-pooler `--db-url`; direct host is IPv6-only) — migrations `0001`→`0011` + RLS verified on prod.
 - [x] Auth redirect URL `parallax://auth-callback` added.
 - [x] Prod URL + publishable key wired into **EAS env vars** (preview + production) — *not* committed (see `docs/CREDENTIALS.md`).
-- [ ] `supabase functions deploy refocus` and `supabase functions deploy notify-partner` (needs the keys in §3 first to be useful).
-- [ ] In `supabase/config.toml`, set `verify_jwt = true` for both functions + a per-user/IP rate limit on `refocus`.
+- [x] `refocus` **deployed** to prod (Anthropic-powered) with `verify_jwt = true` (unauth calls → 401). `notify-partner` pending push creds (§4).
+- [ ] Add a per-user/IP **rate limit** on `refocus` (verify_jwt blocks no-auth, but a valid anon key could still call → token spend).
 
 ## 3. Keys / providers
-- [ ] **Anthropic**: `supabase secrets set ANTHROPIC_API_KEY=...` (powers Refocus AI; falls back to the scripted exemplar without it).
+- [x] **Anthropic**: `ANTHROPIC_API_KEY` set as a Supabase secret + `refocus` deployed → **Refocus AI live in prod**.
 - [ ] **RevenueCat**: public SDK keys (`appl_…`/`goog_…`) + products + the **"Parallax Pro"** entitlement. Set Pro pricing.
 - [ ] **Google OAuth** client → Supabase Google provider. **Apple Sign In** creds → Supabase Apple provider.
 - [ ] **Resend**: verify the sending domain + set `RESEND_SMTP_PASSWORD` (prod confirmation emails).

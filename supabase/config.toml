@@ -47,11 +47,11 @@ file_size_limit = 52428800
 # Refocus AI mediation — JWT off for local/demo serving. Production should gate
 # this (auth or rate-limit) since it spends Anthropic tokens per call.
 [functions.refocus]
-verify_jwt = false
+verify_jwt = true
 
 # notify-partner: send push notifications when a partner plays or reveal is ready.
 # JWT off for local/demo serving (matches refocus). Production should enable JWT
 # verification (verify_jwt = true) to prevent unauthenticated callers spending
 # Expo push quota — harden before going live.
 [functions.notify-partner]
-verify_jwt = false
+verify_jwt = true
