@@ -8,7 +8,7 @@ Owner legend: most of this is **infra/creds (Yash)**; a few are one-time edits y
 
 ---
 
-> 🚀 Full build+ship runbook (EAS, the `.npmrc` gotcha, Individual-vs-org, API key) → **`docs/APP_DEPLOYMENT.md`**.
+> 🚀 Build+ship runbook → **`docs/APP_DEPLOYMENT.md`**.  ·  📝 App Store submission playbook (privacy labels, reviewer demo, rejection defenses) → **`docs/SUBMISSION.md`**.
 
 ## 1. Identity & build pipeline (nothing ships without this)
 - [x] Real iOS `bundleIdentifier` in `app.json` → `com.yashgadodia.parallax` (+ Android package).
@@ -36,11 +36,15 @@ Owner legend: most of this is **infra/creds (Yash)**; a few are one-time edits y
 
 ## 4. Push notifications (the habit loop + retention)
 - [ ] In EAS, add **APNs** (iOS) and **FCM** (Android) credentials (`eas credentials`).
-- [ ] (If not done by `eas init`) pass the `projectId` to `getExpoPushTokenAsync` in `src/features/notifications/index.ts`.
+- [x] `projectId` passed to `getExpoPushTokenAsync` (standalone builds need it to mint a push token).
 - [x] **OTA updates** (`expo-updates`) configured — ship JS-only fixes without a rebuild (`eas update --branch production`).
 
 ## 5. Recurring jobs
 - [x] **`reset_stale_streaks()`** scheduled daily on prod (pg_cron `reset-stale-streaks-daily`, 00:00 SGT). Streaks now reset/forgive in prod.
+
+## 5b. Assets needed for submission (design)
+- [ ] **App icon** (1024×1024 PNG, no alpha) — `app.json` has none; build uses a placeholder. **Hard App Store requirement** → needs a real designed icon.
+- [ ] **Screenshots** (6.7" + 6.5" iPhone) for the listing.
 
 ## 6. Compliance & safety (App Store will check)
 - [~] **Privacy Policy + Terms of Service** — drafts in `docs/PRIVACY.md` + `docs/TERMS.md`; **need hosting** (a public URL) + a legal review before launch.

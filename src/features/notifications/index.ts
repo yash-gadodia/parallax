@@ -1,4 +1,5 @@
 import * as Notifications from 'expo-notifications';
+import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 import { supabase } from '../../lib/supabase';
 
@@ -95,7 +96,14 @@ export async function registerPushToken(): Promise<void> {
     const granted = await requestPermissions();
     if (!granted) return;
 
-    const tokenData = await Notifications.getExpoPushTokenAsync();
+    // Standalone (EAS) builds need the project ID to mint a push token, or this
+    // throws and no token is ever registered. Read it from app.json (set by eas init).
+    const projectId =
+      Constants.expoConfig?.extra?.eas?.projectId ??
+      Constants.easConfig?.projectId;
+    const tokenData = await Notifications.getExpoPushTokenAsync(
+      projectId ? { projectId } : undefined
+    );
     const token = tokenData.data;
     if (!token) return;
 
