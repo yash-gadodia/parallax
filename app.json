@@ -8,7 +8,7 @@
     "userInterfaceStyle": "automatic",
     "android": {
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.parallax"
+      "package": "com.yashgadodia.parallax"
     },
     "web": {
       "output": "static"
@@ -29,8 +29,15 @@
       "reactCompiler": true
     },
     "ios": {
-      "bundleIdentifier": "com.anonymous.parallax",
+      "bundleIdentifier": "com.yashgadodia.parallax",
       "usesAppleSignIn": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "5404ebf0-ec43-4fa6-80af-c1912b8e9a21"
+      }
+    },
+    "owner": "mcbebu"
   }
 }
