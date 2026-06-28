@@ -47,7 +47,7 @@ export function Slashes({ h = 25, offset = false, light = false }: SlashesProps)
   const bar2Color = light ? 'rgba(255,255,255,0.82)' : colors.p2;
 
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'flex-end', marginHorizontal: h * 0.03, marginBottom: h * 0.2 }}>
+    <View style={{ flexDirection: 'row', alignItems: 'flex-end', marginHorizontal: h * 0.03, marginBottom: h * 0.22 }}>
       <View
         style={{
           width: barWidth,
@@ -87,7 +87,7 @@ export function Wordmark({
           fontFamily: fontFamily.disp,
           fontSize: size,
           color: light ? '#fff' : c,
-          letterSpacing: 0.25,
+          letterSpacing: size * 0.01,
           lineHeight: size,
         }}
       >
@@ -99,7 +99,7 @@ export function Wordmark({
           fontFamily: fontFamily.disp,
           fontSize: size,
           color: light ? '#fff' : c,
-          letterSpacing: 0.25,
+          letterSpacing: size * 0.01,
           lineHeight: size,
         }}
       >

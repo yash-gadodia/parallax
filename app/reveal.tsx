@@ -453,7 +453,7 @@ export default function RevealScreen() {
                         fontSize: 8.5,
                         fontWeight: '700',
                         lineHeight: 11,
-                        letterSpacing: 2.2,
+                        letterSpacing: 1.2,
                         color: colors.inkMute,
                         fontFamily: fontFamily.mono,
                         flexShrink: 0,

@@ -50,6 +50,7 @@ export default function Stat({ big, label, grad = false }: StatProps) {
         allowFontScaling={false}
         style={{
           fontSize: 9,
+          lineHeight: 10,
           fontFamily: fontFamily.mono,
           letterSpacing: 1.2,
           textTransform: 'uppercase',
