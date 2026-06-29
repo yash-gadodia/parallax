@@ -4,7 +4,7 @@ Parallax is **code-complete for v1** and runs as a single-player demo with zero 
 
 Owner legend: most of this is **infra/creds (Yash)**; a few are one-time edits you can hand back to Claude.
 
-**Status (28 Jun 2026):** prod Supabase + EAS build pipeline are live. Android builds working; iOS waiting on Apple Developer activation.
+**Status (29 Jun 2026):** prod Supabase + EAS build pipeline are live. Android builds working. **Apple Developer account (Individual) is now ACTIVATED** — iOS path unblocked. Next: switch App Store Connect to the personal team (NOT the Voltade org), generate an App Store Connect API key (`.p8` + Key ID + Issuer ID, Admin role) for hands-off EAS build+submit, create the app record (`com.yashgadodia.parallax`), then enable the Supabase Apple provider. Remaining hard blockers before submission: app icon (1024², none yet), screenshots, privacy/terms hosting + contact email. Google login: create a **Web** OAuth client in GCP project `parallax-500811` (redirect `…supabase.co/auth/v1/callback`) → enable the Supabase Google provider.
 
 ---
 
@@ -15,7 +15,9 @@ Owner legend: most of this is **infra/creds (Yash)**; a few are one-time edits y
 - [x] `eas init` → EAS `projectId` linked (`@mcbebu/parallax`). *(Existing repo linked via `eas init --id`, not `create-expo-app`.)*
 - [x] `.npmrc` (`legacy-peer-deps=true`) so EAS install matches local — without it builds die at install in ~20s.
 - [x] **Android** build pipeline proven on EAS (keystore auto-generated in cloud, APK builds).
-- [ ] **Apple Developer account** (Individual) → **in progress** (enrolled 28 Jun, awaiting activation). Then App Store Connect app record + **TestFlight**.
+- [x] **Apple Developer account** (Individual) → **ACTIVATED (29 Jun)**. ⚠️ Switch App Store Connect to the personal team, NOT the Voltade Pte Ltd org (seller name/ownership/payouts attach to the team you build under).
+- [ ] **App Store Connect API key** (Users & Access → Integrations → Keys → Admin) → `.p8` + Key ID + Issuer ID → wire EAS for hands-off build+submit.
+- [ ] App Store Connect **app record** (`com.yashgadodia.parallax`) + **TestFlight**.
 - [ ] (CI) Add `EXPO_TOKEN` as a repo secret for the `.github/workflows/` builds.
 
 ## 2. Production backend (turns the demo into the real app)
