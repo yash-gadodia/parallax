@@ -10,6 +10,7 @@ import { AppErrorBoundary } from '../src/components/AppErrorBoundary';
 import { flushQueue } from '../src/lib/offlineQueue';
 import { submitMyAnswers } from '../src/features/drops/dropActions';
 import { supabase } from '../src/lib/supabase';
+import { registerPushToken } from '../src/features/notifications';
 import { init as initAnalytics, identify, reset, track, EVENTS } from '../src/lib/analytics';
 
 export default function RootLayout() {
@@ -27,12 +28,14 @@ export default function RootLayout() {
       if (data.session) {
         identify(data.session.user.id);
         flushQueue(submitMyAnswers);
+        registerPushToken();
       }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
         identify(session.user.id);
+        if (event === 'SIGNED_IN') registerPushToken();
       } else if (event === 'SIGNED_OUT') {
         reset();
       }

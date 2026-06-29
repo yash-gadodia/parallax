@@ -1,5 +1,5 @@
 import * as Notifications from 'expo-notifications';
-import { requestPermissions, scheduleDailyNudge, cancelDailyNudge, registerPushToken, notifyPartner } from './index';
+import { requestPermissions, scheduleDailyNudge, cancelDailyNudge, registerPushToken, notifyPartner, notifyPaired } from './index';
 
 jest.mock('expo-notifications');
 // Stub supabase so notifyPartner tests control functions.invoke independently.
@@ -211,5 +211,23 @@ describe('notifyPartner', () => {
   it('swallows errors so the submit flow is never interrupted', async () => {
     mockInvoke.mockRejectedValueOnce(new Error('network failure'));
     await expect(notifyPartner('cd-3', 'played')).resolves.toBeUndefined();
+  });
+});
+
+describe('notifyPaired', () => {
+  const mockInvoke = supabase.functions.invoke as jest.Mock;
+
+  beforeEach(() => mockInvoke.mockClear());
+
+  it('invokes notify-partner with event=paired and the couple_id', async () => {
+    await notifyPaired('couple-9');
+    expect(mockInvoke).toHaveBeenCalledWith('notify-partner', {
+      body: { couple_id: 'couple-9', event: 'paired' },
+    });
+  });
+
+  it('swallows errors so the pairing flow is never interrupted', async () => {
+    mockInvoke.mockRejectedValueOnce(new Error('network failure'));
+    await expect(notifyPaired('couple-9')).resolves.toBeUndefined();
   });
 });

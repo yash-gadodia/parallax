@@ -88,6 +88,19 @@ export async function notifyPartner(
   }
 }
 
+// Notify the waiting partner (member_a) that someone just joined their couple.
+// Fired right after join_couple succeeds. Fire-and-forget.
+// GATE: delivers only once push tokens + the deployed edge fn are live.
+export async function notifyPaired(coupleId: string): Promise<void> {
+  try {
+    await supabase.functions.invoke('notify-partner', {
+      body: { couple_id: coupleId, event: 'paired' },
+    });
+  } catch {
+    // No-op: must never interrupt the pairing success flow.
+  }
+}
+
 // Get the Expo push token and persist it to profiles.push_token.
 // GATE: only works with a real EAS project + APNs/FCM credentials.
 export async function registerPushToken(): Promise<void> {

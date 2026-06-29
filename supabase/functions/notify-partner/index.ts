@@ -57,25 +57,34 @@ Deno.serve(async (req: Request) => {
     return json({ error: "not_configured" }, 503);
   }
 
-  let body: { couple_drop_id?: string; event?: string };
+  let body: { couple_drop_id?: string; couple_id?: string; event?: string };
   try {
     body = await req.json();
   } catch {
     return json({ error: "invalid_json" }, 400);
   }
 
-  const { couple_drop_id, event } = body;
-  if (!couple_drop_id || (event !== "played" && event !== "revealed")) {
+  const { couple_drop_id, couple_id: couple_id_in, event } = body;
+  const validEvent =
+    event === "played" || event === "revealed" || event === "paired";
+  // 'paired' fires at pairing time (no couple_drop exists yet) and carries the
+  // couple_id directly; 'played'/'revealed' carry the couple_drop_id.
+  if (!validEvent || (event === "paired" ? !couple_id_in : !couple_drop_id)) {
     return json({ error: "missing_or_invalid_params" }, 400);
   }
 
   try {
-    // 1. Load the couple_drop to get couple_id + who has answered (state).
-    const drops: Array<{ couple_id: string; state: string }> = await dbGet(
-      `couple_drops?id=eq.${couple_drop_id}&select=couple_id,state`
-    );
-    if (!drops.length) return json({ error: "couple_drop_not_found" }, 404);
-    const { couple_id, state } = drops[0];
+    // 1. Resolve couple_id — directly for 'paired', else via the couple_drop.
+    let couple_id: string;
+    if (event === "paired") {
+      couple_id = couple_id_in as string;
+    } else {
+      const drops: Array<{ couple_id: string; state: string }> = await dbGet(
+        `couple_drops?id=eq.${couple_drop_id}&select=couple_id,state`
+      );
+      if (!drops.length) return json({ error: "couple_drop_not_found" }, 404);
+      couple_id = drops[0].couple_id;
+    }
 
     // 2. Load the couple to get both member UUIDs.
     const couples: Array<{ member_a: string | null; member_b: string | null }> =
@@ -100,7 +109,22 @@ Deno.serve(async (req: Request) => {
 
     const messages: ExpoPushMessage[] = [];
 
-    if (event === "revealed") {
+    if (event === "paired") {
+      // Pairing just completed. member_b is the joiner (acted in-app); push
+      // member_a, who created the invite code and has been waiting.
+      const waiter = member_a ? profileMap.get(member_a) : undefined;
+      if (!waiter?.push_token) return json({ sent: 0 });
+      const joinerName =
+        member_b && profileMap.get(member_b)?.display_name
+          ? profileMap.get(member_b)!.display_name!
+          : "Your partner";
+      messages.push({
+        to: waiter.push_token,
+        title: "You're paired 💞",
+        body: `${joinerName} joined you on Parallax. Your first drop is ready.`,
+        sound: "default",
+      });
+    } else if (event === "revealed") {
       // Push both members — reveal is ready for everyone.
       for (const id of memberIds) {
         const token = profileMap.get(id)?.push_token;

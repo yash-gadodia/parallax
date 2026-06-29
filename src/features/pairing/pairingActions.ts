@@ -1,5 +1,6 @@
 import { supabase, Couple } from '../../lib/supabase';
 import { normalizeInviteCode, isValidInviteCode } from '../../domain/inviteCode';
+import { notifyPaired } from '../notifications';
 
 export async function unpairCouple(coupleId: string): Promise<void> {
   // @ts-expect-error supabase-js typed RPC resolves to never for void-returning functions
@@ -34,6 +35,9 @@ export async function joinCouple(input: string): Promise<Couple> {
   if (error) {
     throw error;
   }
+
+  // @ts-expect-error supabase-js typed RPC data resolves to never; the couple row has id
+  notifyPaired(data.id);
 
   return data;
 }
