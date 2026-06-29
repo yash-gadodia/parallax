@@ -53,9 +53,11 @@ The shared task list. Plain-English, owner-tagged, and the Claude agent reads & 
 _All deep-audit + phase-2 items shipped (2026-06-24, commits `cbe4434`…`9b144ef`). The only remaining account-deletion piece needs admin creds → reassigned to Yash below. Add a new request and Claude will pick it up._
 
 ## In progress
-- [~] **(Claude)** Fix `select_partner_profile` RLS — root cause: unqualified `id` in the couples subquery bound to `couples.id` (shadowing `profiles.id`), so the partner check was always false; a member could never read their partner's `display_name` (app fell back to hardcoded "Dani"). Fix on `main`: `0013_fix_partner_profile_rls.sql` + `partner_profile_test.sql` (pgTAP green, full suite 112 ✓). **Remaining: apply to prod** (needs `supabase link` DB password or a dashboard SQL paste) — then verify the live partner-name read + flip to Done.
+
+_(nothing right now)_
 
 ## Done
+- [x] **(Claude)** Fix `select_partner_profile` RLS — unqualified `id` in the couples subquery shadowed `profiles.id` (bound to `couples.id`), so the partner check was always false and a member could never read their partner's `display_name` (app fell back to hardcoded "Dani"). `0013_fix_partner_profile_rls.sql` + `partner_profile_test.sql` pgTAP (full suite 112 ✓), pushed to prod & **verified live** (review account now reads partner "Sam") (`37b80b3`)
 - [x] **(Claude)** Email/password signup + email confirmation (Resend) with Apple/Google
 - [x] **(Claude)** Realtime crash fix (unique channel topics) — verified on device
 - [x] **(Claude)** Go-live signup flow verified end-to-end + root redirect guard
