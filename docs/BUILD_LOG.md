@@ -62,6 +62,16 @@ When something broke, the rule was: form a hypothesis, investigate, fix the caus
 
 The `claude_design` MCP connector reads the design project directly (`DesignSync`), so the agent implements against the *actual* design files (`couples-*.jsx`), not a screenshot guess.
 
+## iOS go-live: Apple creds + auth providers (29 Jun 2026)
+
+Wired the iOS launch credentials end-to-end. Reusable steps + gotchas → `docs/APP_DEPLOYMENT.md` ("Apple identifiers, push key & auth providers"); secret-handling default → `.claude/rules/secrets.md`. Non-obvious lessons:
+
+- **Sign in with Apple = App ID, not a Services ID.** Native RN/Expo uses `signInWithIdToken` → needs an **App ID** with the capability. A *Services ID* is the web OAuth flow (asks for domains/return URLs — the wrong path). Apple identifiers are globally unique across types, so a stray Services ID on the bundle string blocks the App ID.
+- **APNs key environment matters.** TestFlight + App Store use the **Production** APNs env; a Sandbox-only `.p8` silently fails for testers/users. Make the key Sandbox+Production. The token `.p8` replaces the legacy per-App-ID SSL certs (ignore that dialog).
+- **Supabase provider via Management API, not `config push`.** `PATCH /v1/projects/{ref}/config/auth` with `external_apple_enabled` + `external_apple_client_id` (= bundle ID); secret stays null for the native flow. `supabase config push` would clobber prod with local `config.toml`.
+- **Headless EAS needs the ASC API key.** With only `EXPO_TOKEN` there's no interactive Apple login, so iOS builds can't generate a distribution cert/profile — the App Store Connect API key (`.p8` + Key ID + Issuer ID) is what unblocks non-interactive build + submit.
+- **Secret hook gap closed:** added `*.p8` to the PreToolUse block list (was covering `.pem/.key/.p12` but not `.p8`, the exact type used all day).
+
 ## What to improve next (see the self-improvement loop)
 
 - Capture each non-obvious fix as a durable learning (memory + this log) so it's never relearned.
