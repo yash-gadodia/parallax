@@ -32,12 +32,13 @@ Owner legend: most of this is **infra/creds (Yash)**; a few are one-time edits y
 ## 3. Keys / providers
 - [x] **Anthropic**: `ANTHROPIC_API_KEY` set as a Supabase secret + `refocus` deployed → **Refocus AI live in prod**.
 - [ ] **RevenueCat**: public SDK keys (`appl_…`/`goog_…`) + products + the **"Parallax Pro"** entitlement. Set Pro pricing.
-- [ ] **Google OAuth** client → Supabase Google provider. **Apple Sign In** creds → Supabase Apple provider.
+- [x] **Apple Sign In** (native flow): App ID `com.yashgadodia.parallax` + Sign in with Apple capability; **Supabase Apple provider enabled** (client_id = bundle ID, no secret) via Management API (29 Jun). Setup steps → `docs/APP_DEPLOYMENT.md`.
+- [ ] **Google OAuth** client (GCP **Web** client, redirect `…supabase.co/auth/v1/callback`) → Supabase Google provider (`external_google_*`).
 - [ ] **Resend**: verify the sending domain + set `RESEND_SMTP_PASSWORD` (prod confirmation emails).
 - [ ] **Analytics** (optional): set `EXPO_PUBLIC_ANALYTICS_KEY` (PostHog) — no-ops until then.
 
 ## 4. Push notifications (the habit loop + retention)
-- [ ] In EAS, add **APNs** (iOS) and **FCM** (Android) credentials (`eas credentials`).
+- [~] **APNs `.p8` key** created (App ID has Push capability) — ⚠️ **scoped Sandbox-only; recreate as Sandbox+Production before TestFlight** (TestFlight/App Store use the Production APNs env). Then upload to EAS (`eas credentials` → iOS → Push Notifications Key) + add **FCM** for Android.
 - [x] `projectId` passed to `getExpoPushTokenAsync` (standalone builds need it to mint a push token).
 - [x] **OTA updates** (`expo-updates`) configured — ship JS-only fixes without a rebuild (`eas update --branch production`).
 
