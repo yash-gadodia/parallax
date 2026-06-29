@@ -38,6 +38,7 @@ The shared task list. Plain-English, owner-tagged, and the Claude agent reads & 
 - [ ] **(Dani/Yash)** Dynamic-type / font-scaling a11y: the app uses `allowFontScaling={false}` for fidelity — a future pass to respect user text-size needs a scaled-token decision.
 
 ### (Dani) — onboarding, product & design decisions
+- [ ] **(Dani)** Review `docs/COMPETITIVE_PAIRED.md` — Paired teardown + R1–R7 gap-closing roadmap. Your calls especially: **R1** (content library — mostly editorial) and **R3** (how far to demote the "wavelength %" score)
 - [ ] **(Dani)** Get set up locally + learn the stack — start with `WORKING_WITH_CLAUDE.md`, then `docs/DEV_SETUP.md` (run `npm run dev`), and skim `docs/FLOWS.md` for how the app works
 - [ ] **(Dani)** Decide: ship the **Wrapped** feature, or cut it?
 - [ ] **(Dani)** Decide: add **therapist escalation** in Refocus (offer a real couples therapist after repeated conflicts)?
@@ -48,6 +49,8 @@ The shared task list. Plain-English, owner-tagged, and the Claude agent reads & 
 - [ ] **(Dani)** Recruit a few **beta couples** to test via TestFlight
 
 ### (Claude) — buildable now
+- [ ] **(Claude)** Fix `select_partner_profile` RLS — partner's `display_name` is NOT readable to the other member even on an active couple (verified in prod 2026-06-29: member can see the couple row but `profiles` query for partner id returns `[]`). App silently falls back to hardcoded "Dani" in `useProfile.ts`, so real couples never see each other's real name. Needs a new idempotent migration + pgTAP for the partner-profile read path, then push to prod.
+
 _All deep-audit + phase-2 items shipped (2026-06-24, commits `cbe4434`…`9b144ef`). The only remaining account-deletion piece needs admin creds → reassigned to Yash below. Add a new request and Claude will pick it up._
 
 ## In progress
