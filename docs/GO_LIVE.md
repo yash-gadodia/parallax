@@ -33,7 +33,7 @@ Owner legend: most of this is **infra/creds (Yash)**; a few are one-time edits y
 - [x] **Anthropic**: `ANTHROPIC_API_KEY` set as a Supabase secret + `refocus` deployed → **Refocus AI live in prod**.
 - [ ] **RevenueCat**: public SDK keys (`appl_…`/`goog_…`) + products + the **"Parallax Pro"** entitlement. Set Pro pricing.
 - [x] **Apple Sign In** (native flow): App ID `com.yashgadodia.parallax` + Sign in with Apple capability; **Supabase Apple provider enabled** (client_id = bundle ID, no secret) via Management API (29 Jun). Setup steps → `docs/APP_DEPLOYMENT.md`.
-- [ ] **Google OAuth** client (GCP **Web** client, redirect `…supabase.co/auth/v1/callback`) → Supabase Google provider (`external_google_*`).
+- [x] **Google OAuth** (GCP **Web** client, project `parallax-500811`, redirect `…supabase.co/auth/v1/callback`) → **Supabase Google provider enabled** via Management API (29 Jun).
 - [ ] **Resend**: verify the sending domain + set `RESEND_SMTP_PASSWORD` (prod confirmation emails).
 - [ ] **Analytics** (optional): set `EXPO_PUBLIC_ANALYTICS_KEY` (PostHog) — no-ops until then.
 
