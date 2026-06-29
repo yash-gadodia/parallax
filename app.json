@@ -30,7 +30,10 @@
     },
     "ios": {
       "bundleIdentifier": "com.yashgadodia.parallax",
-      "usesAppleSignIn": true
+      "usesAppleSignIn": true,
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "extra": {
       "router": {},
