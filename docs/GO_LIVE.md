@@ -16,8 +16,9 @@ Owner legend: most of this is **infra/creds (Yash)**; a few are one-time edits y
 - [x] `.npmrc` (`legacy-peer-deps=true`) so EAS install matches local — without it builds die at install in ~20s.
 - [x] **Android** build pipeline proven on EAS (keystore auto-generated in cloud, APK builds).
 - [x] **Apple Developer account** (Individual) → **ACTIVATED (29 Jun)**. ⚠️ Switch App Store Connect to the personal team, NOT the Voltade Pte Ltd org (seller name/ownership/payouts attach to the team you build under).
-- [ ] **App Store Connect API key** (Users & Access → Integrations → Keys → Admin) → `.p8` + Key ID + Issuer ID → wire EAS for hands-off build+submit.
-- [ ] App Store Connect **app record** (`com.yashgadodia.parallax`) + **TestFlight**.
+- [x] **App Store Connect API key** (Admin) created → `.p8` + Key ID `7DMZ2M2W46` + Issuer ID in `.secrets/`; wired into `eas.json` `submit.production.ios` (`ascApiKey*` + `ascAppId 6785406082`) → hands-off submit.
+- [x] App Store Connect **app record** "Parallax: Couples" (ASC App ID `6785406082`, bundle `com.yashgadodia.parallax`). **First iOS build + TestFlight submit DONE** (29 Jun, build `a2ad059d`, v1.0.0 build 5 — uploaded, Apple processing). iOS distribution cert + provisioning profile generated on EAS (one-time interactive); EAS also auto-created an APNs push key (Sandbox+Prod) → push works in TestFlight.
+- [ ] **TestFlight: add internal testers** + install (App Store Connect → TestFlight → Internal Testing → add `pirsquare.yash@gmail.com`). Then install the TestFlight app on device.
 - [ ] (CI) Add `EXPO_TOKEN` as a repo secret for the `.github/workflows/` builds.
 
 ## 2. Production backend (turns the demo into the real app)

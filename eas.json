@@ -32,6 +32,13 @@
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "ios": {
+        "ascAppId": "6785406082",
+        "ascApiKeyPath": "./.secrets/appstore/AuthKey_7DMZ2M2W46.p8",
+        "ascApiKeyId": "7DMZ2M2W46",
+        "ascApiKeyIssuerId": "80b00a67-32ac-4bc0-a791-2acad274762e"
+      }
+    }
   }
 }
