@@ -49,13 +49,11 @@ The shared task list. Plain-English, owner-tagged, and the Claude agent reads & 
 - [ ] **(Dani)** Recruit a few **beta couples** to test via TestFlight
 
 ### (Claude) — buildable now
-- [ ] **(Claude)** Fix `select_partner_profile` RLS — partner's `display_name` is NOT readable to the other member even on an active couple (verified in prod 2026-06-29: member can see the couple row but `profiles` query for partner id returns `[]`). App silently falls back to hardcoded "Dani" in `useProfile.ts`, so real couples never see each other's real name. Needs a new idempotent migration + pgTAP for the partner-profile read path, then push to prod.
 
 _All deep-audit + phase-2 items shipped (2026-06-24, commits `cbe4434`…`9b144ef`). The only remaining account-deletion piece needs admin creds → reassigned to Yash below. Add a new request and Claude will pick it up._
 
 ## In progress
-
-_(nothing right now)_
+- [~] **(Claude)** Fix `select_partner_profile` RLS — root cause: unqualified `id` in the couples subquery bound to `couples.id` (shadowing `profiles.id`), so the partner check was always false; a member could never read their partner's `display_name` (app fell back to hardcoded "Dani"). Fix on `main`: `0013_fix_partner_profile_rls.sql` + `partner_profile_test.sql` (pgTAP green, full suite 112 ✓). **Remaining: apply to prod** (needs `supabase link` DB password or a dashboard SQL paste) — then verify the live partner-name read + flip to Done.
 
 ## Done
 - [x] **(Claude)** Email/password signup + email confirmation (Resend) with Apple/Google
