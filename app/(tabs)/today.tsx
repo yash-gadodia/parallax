@@ -322,7 +322,7 @@ export default function TodayScreen() {
                     color: 'rgba(255,255,255,0.9)',
                   }}
                 >
-                  {activeDrop.code} · {activeDrop.day.toUpperCase()}
+                  {activeDrop.code} · {new Date().toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase()}
                 </Text>
               </View>
 

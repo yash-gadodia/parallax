@@ -10,15 +10,17 @@ import { signUpWithEmail } from '../../src/features/auth/authActions';
 const mockSignUp = signUpWithEmail as jest.Mock;
 
 // Controlled-input state only flushes inside an act() wrapper under
-// React 19 + RN 0.85 + RNTL 14, so all field edits go through one.
+// React 19 + RN 0.85 + RNTL 14. fireEvent act-wraps itself, so calling it
+// INSIDE act() nests two acts → "overlapping act() calls" (E2E finding F7);
+// invoke the onChangeText props directly inside one act instead.
 async function fillForm(
   screen: Awaited<ReturnType<typeof render>>,
   { name, email, password }: { name: string; email: string; password: string }
 ) {
   await act(async () => {
-    fireEvent.changeText(screen.getByPlaceholderText('Yash'), name);
-    fireEvent.changeText(screen.getByPlaceholderText('you@example.com'), email);
-    fireEvent.changeText(screen.getByPlaceholderText('at least 6 characters'), password);
+    screen.getByPlaceholderText('Yash').props.onChangeText(name);
+    screen.getByPlaceholderText('you@example.com').props.onChangeText(email);
+    screen.getByPlaceholderText('at least 6 characters').props.onChangeText(password);
   });
 }
 
@@ -44,9 +46,7 @@ describe('SignupScreen', () => {
       email: 'yash@example.com',
       password: 'secret123',
     });
-    await act(async () => {
-      fireEvent.press(screen.getByText('Create account'));
-    });
+    fireEvent.press(screen.getByText('Create account'));
 
     await waitFor(() => {
       expect(mockSignUp).toHaveBeenCalledWith('yash@example.com', 'secret123', 'Yash');
@@ -62,9 +62,7 @@ describe('SignupScreen', () => {
       email: 'yash@example.com',
       password: '123',
     });
-    await act(async () => {
-      fireEvent.press(screen.getByText('Create account'));
-    });
+    fireEvent.press(screen.getByText('Create account'));
 
     await waitFor(() => {
       expect(mockSignUp).not.toHaveBeenCalled();

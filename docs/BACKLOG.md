@@ -52,16 +52,16 @@ The shared task list. Plain-English, owner-tagged, and the Claude agent reads & 
 
 _From the 2026-07-02 E2E pass — details in `docs/E2E_FINDINGS_2026-07-02.md`._
 
-- [ ] **(Claude)** F2: stop calling `sim_partner_submit` unconditionally in `submitMyAnswers` — it always throws for unpaired couples (FK violation), killing the streak increment + reveal notification; and for paired couples it would overwrite the partner's real answers. Guard/remove the client call (pairs with the existing (Yash) "gate the RPC" item).
-- [ ] **(Claude)** F3: hydrate Today's played/revealed state from the server (`couple_drops` + own `answers`) — currently client-only Zustand, so a relaunch forgets you played and hides the reveal.
-- [ ] **(Claude)** F4: make the daily-drop day boundary user-local (device tz passed to `ensure_today_drop`) instead of server UTC — SG users currently roll over at 8am.
-- [ ] **(Claude)** F6: debounce/disable option taps during the answer→hunch phase transition (tap can register on the wrong phase).
-- [ ] **(Claude)** F7: clean up jest act() warnings (signup/onboarding/wrapped tests) — pristine output rule.
+- [x] **(Claude)** F2: sim call removed from `submitMyAnswers`; server (`0014_true_loop.sql` submit_answers) now owns reveal + wave_pct + streak; sim revoked in-migration, re-granted local-only via seed.sql (`d96c5df`)
+- [x] **(Claude)** F3: Today hydrates from the server via new `get_today_state` RPC + `useTodayState` (realtime) — relaunch-safe, no replay/clobber (`d96c5df`)
+- [x] **(Claude)** F4: day boundary is couple-local (`couples.tz`, default Asia/Singapore) across ensure_today_drop / streak / reset (`d96c5df`)
+- [x] **(Claude)** F6: transition lock in play.tsx — taps during the 360ms phase advance are ignored
+- [x] **(Claude)** F7: act() warnings eliminated (signup: direct onChangeText inside one act; wrapped: fake timers) — full suite 0 warnings
 - [ ] **(Claude)** Android fidelity pass once iOS is solid: `eas build -p android` works from the same codebase; needs shadows→elevation, blur + font/lineHeight checks per screen (first preview APK built 2026-07-02).
-- [~] **(Claude)** F1: reanimated 4.3.1→4.5.0 + worklets 0.10.1 to fix the SIGSEGV UI-thread race (upstream #9293/#9402) — deps upgraded, tsc/jest/export green; native rebuild + crash-soak verification in flight.
+- [~] **(Claude)** F1: reanimated 4.3.1→4.5.0 + worklets 0.8.3→0.10.1 committed (tsc/jest/export green). REMAINING (Yash/next dev session): native rebuild (`npm run ios`) + crash-soak on the waiting screen to confirm the SIGSEGV is gone.
 
 ### (Dani) — from the E2E pass
-- [ ] **(Dani)** F5: today's drop is hardcoded ("DROP 27 · soft launch", day says SUNDAY forever, fake archive) — decide the real daily-content rotation (ties into the existing prompt-packs item).
+- [ ] **(Dani)** F5: today's drop is hardcoded ("DROP 27 · soft launch", fake archive) — decide the real daily-content rotation (ties into the existing prompt-packs item + IMPROVEMENT_PLAN Phase 1). The day label now shows the real weekday (fixed).
 
 ## In progress
 

@@ -32,6 +32,10 @@ export default function PlayScreen() {
   const { me, partner } = useIdentity();
   const { idx, phase, myPicks, myHunches, reset } = usePlayStore();
   const [submitting, setSubmitting] = useState(false);
+  // Guards the answer→hunch / hunch→next-prompt transition: a tap landing
+  // during the re-render otherwise binds to the NEW phase's option at the
+  // same position (E2E finding F6).
+  const transitionLock = React.useRef(false);
   const prompt = DROP.prompts[idx];
   const isPick = phase === 'pick';
   const color = isPick ? colors.p1 : colors.p2;
@@ -47,6 +51,11 @@ export default function PlayScreen() {
   }, [reset]);
 
   const choose = async (optionIdx: number) => {
+    if (transitionLock.current) return;
+    transitionLock.current = true;
+    setTimeout(() => {
+      transitionLock.current = false;
+    }, 420);
     if (isPick) {
       usePlayStore.setState((s) => ({
         myPicks: s.myPicks.map((p, i) => (i === idx ? optionIdx : p)),
