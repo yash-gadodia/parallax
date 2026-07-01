@@ -51,7 +51,19 @@ export interface CoupleDrop {
   drop_id: string;
   date: string;
   state: 'open' | 'one_done' | 'revealed';
+  wave_pct: number | null;
   created_at: string;
+}
+
+export interface TodayState {
+  exists: boolean;
+  date: string;
+  couple_drop_id?: string;
+  state?: 'open' | 'one_done' | 'revealed';
+  wave_pct?: number | null;
+  i_answered?: boolean;
+  partner_answered?: boolean;
+  held?: boolean;
 }
 
 export interface Answer {
@@ -167,6 +179,10 @@ export interface Database {
       sim_partner_submit: {
         Args: { p_couple_drop: string };
         Returns: void;
+      };
+      get_today_state: {
+        Args: { p_couple: string };
+        Returns: Json;
       };
       log_activity: {
         Args: {

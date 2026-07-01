@@ -44,16 +44,21 @@ export default function RevealScreen() {
   const playState = usePlayStore();
   const coupleDropId = playState.coupleDropId;
 
-  // Server reveal data (populated when session+couple+coupleDropId)
+  // Server reveal data (required for live sessions; demo computes locally)
   const [serverReveal, setServerReveal] = useState<{
     reveal: RevealScore;
     promptAnswers: PromptAnswers[];
   } | null>(null);
+  const [fetchFailed, setFetchFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
-  // Computed from local store (demo fallback)
+  const isLive = !!(session && couple);
+
+  // Demo-only local score. A live session NEVER falls back to this — showing
+  // a fabricated reveal to a real couple is worse than an honest error.
   const localReveal = computeReveal(playState);
-
-  const reveal = serverReveal?.reveal ?? localReveal;
+  const reveal = isLive ? serverReveal?.reveal ?? localReveal : localReveal;
+  const liveReady = !isLive || !!serverReveal;
 
   const [show, setShow] = useState(false);
   const [aligned, setAligned] = useState(false);
@@ -69,13 +74,20 @@ export default function RevealScreen() {
   }, []);
 
   useEffect(() => {
-    if (!session || !couple || !coupleDropId) return;
-    fetchReveal(coupleDropId).then((result) => {
-      setServerReveal({ reveal: result.reveal, promptAnswers: result.promptAnswers });
-    }).catch(() => {
-      // fall through to local demo reveal on error
-    });
-  }, [session, couple, coupleDropId]);
+    if (!isLive) return;
+    if (!coupleDropId) {
+      setFetchFailed(true);
+      return;
+    }
+    setFetchFailed(false);
+    fetchReveal(coupleDropId)
+      .then((result) => {
+        setServerReveal({ reveal: result.reveal, promptAnswers: result.promptAnswers });
+      })
+      .catch(() => {
+        setFetchFailed(true);
+      });
+  }, [isLive, coupleDropId, attempt]);
 
   const verdict =
     reveal.wave >= 80
@@ -101,6 +113,56 @@ export default function RevealScreen() {
   const handleThreadOpen = (promptId: string) => {
     router.push(`/thread?promptId=${promptId}`);
   };
+
+  // Live session, no server data yet: honest loading / error — never a fake reveal.
+  if (!liveReady) {
+    return (
+      <LinearGradient
+        colors={gradients.dawn.colors}
+        locations={gradients.dawn.locations}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={{ flex: 1 }}
+      >
+        <DawnBlobs />
+        <SafeAreaView style={{ flex: 1 }}>
+          <View
+            style={{
+              flex: 1,
+              justifyContent: 'center',
+              alignItems: 'center',
+              paddingHorizontal: space.gutter,
+              gap: 14,
+            }}
+          >
+            <Peek size={112} mood="search" />
+            {fetchFailed ? (
+              <>
+                <Serif s={28} italic c={colors.ink} style={{ textAlign: 'center' }}>
+                  can't reach your reveal
+                </Serif>
+                <Kick c={colors.inkSoft} style={{ textAlign: 'center' }}>
+                  your answers are safe · check your connection
+                </Kick>
+                <View style={{ width: '100%', marginTop: 10 }}>
+                  <Btn kind="ink" onPress={() => setAttempt((a) => a + 1)}>
+                    Try again
+                  </Btn>
+                </View>
+                <Press onPress={handleClose} scale={false} accessibilityLabel="Back to Today">
+                  <Kick c={colors.inkMute} style={{ marginTop: 8 }}>
+                    back to today
+                  </Kick>
+                </Press>
+              </>
+            ) : (
+              <Kick c={colors.inkSoft}>fetching your reveal…</Kick>
+            )}
+          </View>
+        </SafeAreaView>
+      </LinearGradient>
+    );
+  }
 
   return (
     <LinearGradient

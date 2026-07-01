@@ -22,7 +22,6 @@ import { useSession } from '../src/features/auth/useSession';
 import { useCouple } from '../src/features/pairing/useCouple';
 import { useIdentity } from '../src/features/profile/useIdentity';
 import { submitMyAnswers } from '../src/features/drops/dropActions';
-import { enqueueSubmit } from '../src/lib/offlineQueue';
 import { useUiStore } from '../src/store/ui';
 import { track, EVENTS } from '../src/lib/analytics';
 
@@ -65,28 +64,29 @@ export default function PlayScreen() {
       } else {
         // Final submit: either via Supabase (if session + couple) or local fallback
         if (session && couple) {
+          if (submitting) return;
           setSubmitting(true);
           const currentState = usePlayStore.getState();
           try {
-            const coupleDropId = await submitMyAnswers(
+            const result = await submitMyAnswers(
               couple.id,
               currentState.myPicks,
               currentState.myHunches
             );
             track(EVENTS.DROP_SUBMITTED);
-            usePlayStore.setState({ done: true, coupleDropId });
+            usePlayStore.setState({ done: true, coupleDropId: result.coupleDropId });
+            // Second submitter: the reveal is ready — skip the waiting room.
+            const dest = result.state === 'revealed' ? '/reveal' : '/waiting';
             setTimeout(() => {
-              router.push('/waiting');
+              router.push(dest);
             }, 220);
           } catch (_err) {
+            // Honest failure: stay here with answers intact so a re-tap retries.
+            // Never pretend the submit landed (no fake done, no fake reveal).
             setSubmitting(false);
-            await enqueueSubmit(couple.id, currentState.myPicks, currentState.myHunches);
-            track(EVENTS.DROP_SUBMITTED, { offline: true });
-            useUiStore.getState().fireToast("We'll send your answers when you're back online");
-            usePlayStore.setState({ done: true });
-            setTimeout(() => {
-              router.push('/waiting');
-            }, 220);
+            useUiStore
+              .getState()
+              .fireToast("Couldn't send your answers — check your connection and tap again");
           }
         } else {
           track(EVENTS.DROP_SUBMITTED, { demo: true });

@@ -1,7 +1,9 @@
 -- ============================================================================
 -- STREAK TEST
--- Proves the 0007 streak logic: gap-aware complete_streak + reset_stale_streaks
--- (freeze forgiveness then reset). Hermetic, rolled back.
+-- Proves the streak logic (0007, couple-local dates since 0014): gap-aware
+-- complete_streak + reset_stale_streaks (freeze forgiveness then reset).
+-- Dates are seeded in the couple's timezone (default Asia/Singapore) because
+-- that is what the functions compare against. Hermetic, rolled back.
 -- ============================================================================
 begin;
   create extension if not exists pgtap;
@@ -24,10 +26,10 @@ begin;
   insert into public.couples (id, member_a, member_b, invite_code, status, together_since, streak, longest_streak, last_played_on, freezes_remaining)
   values ('c4c4c4c4-0000-0000-0000-000000000001'::uuid,
           'c1c1c1c1-0000-0000-0000-000000000001'::uuid, 'c1c1c1c1-0000-0000-0000-000000000002'::uuid,
-          'STRK-01', 'active', '2024-01-01', 5, 9, current_date - 1, 2);
+          'STRK-01', 'active', '2024-01-01', 5, 9, (now() at time zone 'Asia/Singapore')::date - 1, 2);
 
   insert into public.couple_drops (id, couple_id, drop_id, date, state)
-  values ('c5c5c5c5-0000-0000-0000-000000000001'::uuid, 'c4c4c4c4-0000-0000-0000-000000000001'::uuid, 'c2c2c2c2-0000-0000-0000-000000000001'::uuid, current_date, 'revealed');
+  values ('c5c5c5c5-0000-0000-0000-000000000001'::uuid, 'c4c4c4c4-0000-0000-0000-000000000001'::uuid, 'c2c2c2c2-0000-0000-0000-000000000001'::uuid, (now() at time zone 'Asia/Singapore')::date, 'revealed');
 
   -- complete_streak as a member: consecutive day -> 6
   set local role authenticated;
@@ -42,13 +44,13 @@ begin;
   insert into public.couples (id, member_a, member_b, invite_code, status, together_since, streak, longest_streak, last_played_on, freezes_remaining)
   values ('c4c4c4c4-0000-0000-0000-000000000002'::uuid,
           'c1c1c1c1-0000-0000-0000-000000000001'::uuid, 'c1c1c1c1-0000-0000-0000-000000000002'::uuid,
-          'STRK-02', 'active', '2024-01-01', 7, 7, current_date - 2, 1);
+          'STRK-02', 'active', '2024-01-01', 7, 7, (now() at time zone 'Asia/Singapore')::date - 2, 1);
 
   -- A third couple that missed TWO days, no freeze -> must reset.
   insert into public.couples (id, member_a, member_b, invite_code, status, together_since, streak, longest_streak, last_played_on, freezes_remaining)
   values ('c4c4c4c4-0000-0000-0000-000000000003'::uuid,
           'c1c1c1c1-0000-0000-0000-000000000001'::uuid, 'c1c1c1c1-0000-0000-0000-000000000002'::uuid,
-          'STRK-03', 'active', '2024-01-01', 4, 8, current_date - 3, 0);
+          'STRK-03', 'active', '2024-01-01', 4, 8, (now() at time zone 'Asia/Singapore')::date - 3, 0);
 
   select public.reset_stale_streaks();
 

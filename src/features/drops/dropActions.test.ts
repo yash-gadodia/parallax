@@ -1,4 +1,4 @@
-import { ensureTodayDrop, submitMyAnswers, fetchReveal } from './dropActions';
+import { ensureTodayDrop, submitMyAnswers, fetchReveal, getTodayState } from './dropActions';
 
 jest.mock('../../lib/supabase', () => ({
   supabase: {
@@ -42,8 +42,24 @@ function builder(result: unknown) {
   return self;
 }
 
+// Standard table routing for submitMyAnswers: couple_drops row + 3 prompts.
+function mockSubmitTables(promptIds: string[] = ['p1', 'p2', 'p3']) {
+  mockSupabase.from.mockImplementation((table: string) => {
+    if (table === 'couple_drops') {
+      return builder({ data: { drop_id: 'd-1' }, error: null });
+    }
+    if (table === 'drop_prompts') {
+      return builder({ data: promptIds.map((id) => ({ id })), error: null });
+    }
+    return builder({ data: null, error: null });
+  });
+}
+
 describe('dropActions', () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockSupabase.auth.getUser.mockResolvedValue({ data: { user: { id: 'me' } } });
+  });
 
   describe('ensureTodayDrop', () => {
     it('calls the ensure_today_drop RPC and returns the couple_drop id', async () => {
@@ -60,22 +76,19 @@ describe('dropActions', () => {
   });
 
   describe('submitMyAnswers', () => {
-    it('submits one answer per prompt, then sims the partner and completes the drop, returning coupleDropId', async () => {
-      // rpc call order: ensure_today_drop -> submit_answers -> sim_partner_submit
+    it('submits one answer per prompt of THIS drop and returns the server state — no partner sim, no client streak', async () => {
       mockSupabase.rpc
         .mockResolvedValueOnce({ data: 'cd-9', error: null }) // ensure_today_drop
-        .mockResolvedValueOnce({ error: null }) // submit_answers
-        .mockResolvedValueOnce({ error: null }); // sim_partner_submit
-      mockSupabase.from.mockReturnValue(
-        builder({ data: [{ id: 'p1' }, { id: 'p2' }, { id: 'p3' }], error: null })
-      );
+        .mockResolvedValueOnce({
+          data: { success: true, couple_drop_id: 'cd-9', new_state: 'one_done', wave_pct: null },
+          error: null,
+        }); // submit_answers
+      mockSubmitTables();
 
-      const returnedId = await submitMyAnswers('couple-1', [0, 1, 2], [2, 1, 0]);
+      const result = await submitMyAnswers('couple-1', [0, 1, 2], [2, 1, 0]);
 
-      // Must return the coupleDropId so callers can thread it to waiting/reveal
-      expect(returnedId).toBe('cd-9');
+      expect(result).toEqual({ coupleDropId: 'cd-9', state: 'one_done', wavePct: null });
 
-      // submit_answers got the picks/hunches mapped onto the ordered prompt ids
       expect(mockSupabase.rpc).toHaveBeenNthCalledWith(2, 'submit_answers', {
         p_couple_drop: 'cd-9',
         p_answers: [
@@ -84,38 +97,51 @@ describe('dropActions', () => {
           { prompt_id: 'p3', pick: 2, hunch: 0 },
         ],
       });
-      expect(mockSupabase.rpc).toHaveBeenNthCalledWith(3, 'sim_partner_submit', { p_couple_drop: 'cd-9' });
-      expect(completeDrop).toHaveBeenCalledWith('cd-9');
+      // The demo helper and the client-driven streak are gone from the real flow.
+      expect(mockSupabase.rpc).toHaveBeenCalledTimes(2);
+      expect(completeDrop).not.toHaveBeenCalled();
     });
 
-    it('fires notifyPartner(played) then notifyPartner(revealed) when a session exists', async () => {
+    it('fires only notifyPartner(played) when the partner has not answered yet', async () => {
       mockSupabase.rpc
-        .mockResolvedValueOnce({ data: 'cd-7', error: null }) // ensure_today_drop
-        .mockResolvedValueOnce({ error: null }) // submit_answers
-        .mockResolvedValueOnce({ error: null }); // sim_partner_submit
-      mockSupabase.from.mockReturnValue(
-        builder({ data: [{ id: 'p1' }], error: null })
-      );
-      // getUser returns a real user (session present) — use Once so it doesn't bleed into later tests
-      mockSupabase.auth.getUser.mockResolvedValueOnce({ data: { user: { id: 'me' } } });
+        .mockResolvedValueOnce({ data: 'cd-7', error: null })
+        .mockResolvedValueOnce({
+          data: { success: true, couple_drop_id: 'cd-7', new_state: 'one_done', wave_pct: null },
+          error: null,
+        });
+      mockSubmitTables(['p1']);
 
       await submitMyAnswers('couple-1', [0], [1]);
 
       expect(notifyPartner).toHaveBeenCalledWith('cd-7', 'played');
+      expect(notifyPartner).toHaveBeenCalledTimes(1);
+    });
+
+    it('fires only notifyPartner(revealed) when this submit completes the reveal, and returns the server wave', async () => {
+      mockSupabase.rpc
+        .mockResolvedValueOnce({ data: 'cd-7', error: null })
+        .mockResolvedValueOnce({
+          data: { success: true, couple_drop_id: 'cd-7', new_state: 'revealed', wave_pct: 67 },
+          error: null,
+        });
+      mockSubmitTables(['p1']);
+
+      const result = await submitMyAnswers('couple-1', [0], [1]);
+
+      expect(result).toEqual({ coupleDropId: 'cd-7', state: 'revealed', wavePct: 67 });
       expect(notifyPartner).toHaveBeenCalledWith('cd-7', 'revealed');
-      expect(notifyPartner).toHaveBeenCalledTimes(2);
+      expect(notifyPartner).toHaveBeenCalledTimes(1);
     });
 
     it('does not call notifyPartner when there is no session', async () => {
       mockSupabase.rpc
-        .mockResolvedValueOnce({ data: 'cd-8', error: null }) // ensure_today_drop
-        .mockResolvedValueOnce({ error: null }) // submit_answers
-        .mockResolvedValueOnce({ error: null }); // sim_partner_submit
-      mockSupabase.from.mockReturnValue(
-        builder({ data: [{ id: 'p1' }], error: null })
-      );
-      // No session — user is null — use Once so it doesn't bleed into later tests
-      mockSupabase.auth.getUser.mockResolvedValueOnce({ data: { user: null } });
+        .mockResolvedValueOnce({ data: 'cd-8', error: null })
+        .mockResolvedValueOnce({
+          data: { success: true, couple_drop_id: 'cd-8', new_state: 'one_done', wave_pct: null },
+          error: null,
+        });
+      mockSubmitTables(['p1']);
+      mockSupabase.auth.getUser.mockResolvedValue({ data: { user: null } });
 
       await submitMyAnswers('couple-1', [0], [1]);
 
@@ -124,9 +150,57 @@ describe('dropActions', () => {
 
     it('throws if there are no prompts', async () => {
       mockSupabase.rpc.mockResolvedValueOnce({ data: 'cd-9', error: null });
-      mockSupabase.from.mockReturnValue(builder({ data: [], error: null }));
+      mockSubmitTables([]);
       await expect(submitMyAnswers('couple-1', [0], [0])).rejects.toBeDefined();
       expect(completeDrop).not.toHaveBeenCalled();
+    });
+
+    it('throws (and does not fake success) when submit_answers errors', async () => {
+      mockSupabase.rpc
+        .mockResolvedValueOnce({ data: 'cd-9', error: null })
+        .mockResolvedValueOnce({ data: null, error: { message: 'permission denied' } });
+      mockSubmitTables(['p1']);
+
+      await expect(submitMyAnswers('couple-1', [0], [1])).rejects.toBeDefined();
+      expect(notifyPartner).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getTodayState', () => {
+    it('returns the server state verbatim', async () => {
+      mockSupabase.rpc.mockResolvedValue({
+        data: {
+          exists: true,
+          date: '2026-07-02',
+          couple_drop_id: 'cd-1',
+          state: 'one_done',
+          wave_pct: null,
+          i_answered: true,
+          partner_answered: false,
+          held: false,
+        },
+        error: null,
+      });
+
+      const state = await getTodayState('couple-1');
+
+      expect(mockSupabase.rpc).toHaveBeenCalledWith('get_today_state', { p_couple: 'couple-1' });
+      expect(state).toEqual({
+        exists: true,
+        date: '2026-07-02',
+        couple_drop_id: 'cd-1',
+        state: 'one_done',
+        wave_pct: null,
+        i_answered: true,
+        partner_answered: false,
+        held: false,
+      });
+    });
+
+    it('returns null (never a fabricated state) on error', async () => {
+      mockSupabase.rpc.mockResolvedValue({ data: null, error: { message: 'nope' } });
+      const state = await getTodayState('couple-1');
+      expect(state).toBeNull();
     });
   });
 
@@ -134,7 +208,7 @@ describe('dropActions', () => {
     it('maps each author to you/them and scores the reveal', async () => {
       mockSupabase.from.mockImplementation((table: string) => {
         if (table === 'couple_drops') {
-          return builder({ data: { id: 'cd-1', couple_id: 'c-1', state: 'revealed', drop_id: 'd-1' }, error: null });
+          return builder({ data: { id: 'cd-1', couple_id: 'c-1', state: 'revealed', drop_id: 'd-1', wave_pct: null }, error: null });
         }
         if (table === 'drop_prompts') {
           return builder({ data: [{ id: 'p1', position: 0 }], error: null });
@@ -161,12 +235,36 @@ describe('dropActions', () => {
       expect(result.reveal.twins).toBe(1);
     });
 
-    it('maps "you" to the CURRENT user even when they are member_b', async () => {
-      // The caller is "them" here — youPick must come from the 'them'-authored row.
-      mockSupabase.auth.getUser.mockResolvedValueOnce({ data: { user: { id: 'them' } } });
+    it('headlines the server-stored wave_pct when present', async () => {
       mockSupabase.from.mockImplementation((table: string) => {
         if (table === 'couple_drops') {
-          return builder({ data: { id: 'cd-1', couple_id: 'c-1', state: 'revealed', drop_id: 'd-1' }, error: null });
+          return builder({ data: { id: 'cd-1', couple_id: 'c-1', state: 'revealed', drop_id: 'd-1', wave_pct: 73 }, error: null });
+        }
+        if (table === 'drop_prompts') {
+          return builder({ data: [{ id: 'p1', position: 0 }], error: null });
+        }
+        if (table === 'answers') {
+          return builder({
+            data: [
+              { prompt_id: 'p1', author: 'me', pick: 1, hunch: 2 },
+              { prompt_id: 'p1', author: 'them', pick: 1, hunch: 0 },
+            ],
+            error: null,
+          });
+        }
+        return builder({ data: null, error: null });
+      });
+
+      const result = await fetchReveal('cd-1');
+      expect(result.reveal.wave).toBe(73);
+    });
+
+    it('maps "you" to the CURRENT user even when they are member_b', async () => {
+      // The caller is "them" here — youPick must come from the 'them'-authored row.
+      mockSupabase.auth.getUser.mockResolvedValue({ data: { user: { id: 'them' } } });
+      mockSupabase.from.mockImplementation((table: string) => {
+        if (table === 'couple_drops') {
+          return builder({ data: { id: 'cd-1', couple_id: 'c-1', state: 'revealed', drop_id: 'd-1', wave_pct: null }, error: null });
         }
         if (table === 'drop_prompts') {
           return builder({ data: [{ id: 'p1', position: 0 }], error: null });

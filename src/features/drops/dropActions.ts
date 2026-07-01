@@ -1,10 +1,9 @@
 import { supabase } from '../../lib/supabase';
 import { PromptAnswers, scoreReveal } from '../../domain/reveal';
 import { useUiStore } from '../../store/ui';
-import { completeDrop } from '../engagement/engagementActions';
 import { persistDropLearning } from './dropLearning';
 import { notifyPartner } from '../notifications';
-import type { CoupleDrop, Answer, DropPrompt, Couple, Json } from '../../types/db';
+import type { CoupleDrop, Answer, DropPrompt, Couple, Json, TodayState } from '../../types/db';
 
 /**
  * Ensure today's couple_drop exists and return its UUID.
@@ -39,23 +38,46 @@ interface AnswerPayload {
   hunch: number | null;
 }
 
+export interface SubmitResult {
+  coupleDropId: string;
+  state: 'open' | 'one_done' | 'revealed';
+  wavePct: number | null;
+}
+
 /**
  * Submit the user's answers (picks and hunches) for a couple_drop.
- * Then auto-submit a demo partner (sim_partner_submit) so state flips to 'revealed'.
+ * The server (submit_answers, migration 0014) owns the state flip: when the
+ * second partner submits it stores wave_pct and increments the couple streak.
+ * The client never simulates the partner and never drives the streak.
  */
 export async function submitMyAnswers(
   coupleId: string,
   picks: (number | null)[],
   hunches: (number | null)[]
-): Promise<string> {
+): Promise<SubmitResult> {
   try {
     // First, ensure today's drop exists
     const coupleDropId = await ensureTodayDrop(coupleId);
 
-    // Fetch the prompts to get prompt IDs in correct order
+    // Fetch the prompts of THIS drop (not the whole catalog), in order
+    const { data: coupleDrop, error: cdError } = await supabase
+      .from('couple_drops')
+      .select('drop_id')
+      .eq('id', coupleDropId)
+      .maybeSingle();
+
+    if (cdError) {
+      throw cdError;
+    }
+    const dropId = (coupleDrop as { drop_id: string } | null)?.drop_id;
+    if (!dropId) {
+      throw new Error('Couple drop not found');
+    }
+
     const { data: prompts, error: promptError } = await supabase
       .from('drop_prompts')
       .select('id')
+      .eq('drop_id', dropId)
       .order('position', { ascending: true });
 
     if (promptError) {
@@ -74,9 +96,9 @@ export async function submitMyAnswers(
       hunch: hunches[i] ?? null,
     }));
 
-    // Then, submit the user's answers
+    // Submit the user's answers — the server computes the new state
     // @ts-expect-error supabase-js RPC overload limitation with multiple function signatures
-    const { error: submitError } = await supabase.rpc('submit_answers', {
+    const { data: submitData, error: submitError } = await supabase.rpc('submit_answers', {
       p_couple_drop: coupleDropId,
       p_answers: answers,
     });
@@ -85,38 +107,54 @@ export async function submitMyAnswers(
       throw submitError;
     }
 
-    // Fire 'played' notification to the partner now that we've submitted our answers.
-    // Only when a real session exists (demo/unauthed path is a no-op inside notifyPartner).
+    const result = (submitData ?? {}) as {
+      new_state?: 'open' | 'one_done' | 'revealed';
+      wave_pct?: number | null;
+    };
+    const newState = result.new_state ?? 'one_done';
+
+    // Partner notifications (no-op without a real session inside notifyPartner).
     const { data: sessionData } = await supabase.auth.getUser();
     const hasSession = !!sessionData?.user?.id;
     if (hasSession) {
-      notifyPartner(coupleDropId, 'played'); // fire-and-forget
+      if (newState === 'revealed') {
+        // We were the second submitter — the reveal is ready for both.
+        notifyPartner(coupleDropId, 'revealed'); // fire-and-forget
+      } else {
+        notifyPartner(coupleDropId, 'played'); // fire-and-forget
+      }
     }
 
-    // Finally, auto-submit demo partner to flip state to 'revealed'
-    // @ts-expect-error supabase-js RPC overload limitation with multiple function signatures
-    const { error: simError } = await supabase.rpc('sim_partner_submit', {
-      p_couple_drop: coupleDropId,
-    });
-
-    if (simError) {
-      throw simError;
-    }
-
-    // Complete the drop to increment streak
-    await completeDrop(coupleDropId);
-
-    // Fire 'revealed' notification to both partners now that the reveal is ready.
-    if (hasSession) {
-      notifyPartner(coupleDropId, 'revealed'); // fire-and-forget
-    }
-
-    return coupleDropId;
+    return {
+      coupleDropId,
+      state: newState,
+      wavePct: result.wave_pct ?? null,
+    };
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Failed to submit answers';
     useUiStore.getState().fireToast(`Error: ${msg}`);
     throw err;
   }
+}
+
+/**
+ * Fetch today's truthful state for the couple in one round-trip.
+ * RLS (correctly) hides the partner's answers pre-reveal, so partner_answered
+ * can only be known via this SECURITY DEFINER RPC — never inferred client-side.
+ */
+export async function getTodayState(coupleId: string): Promise<TodayState | null> {
+  // @ts-expect-error supabase-js RPC overload limitation with multiple function signatures
+  const { data, error } = await supabase.rpc('get_today_state', {
+    p_couple: coupleId,
+  });
+
+  if (error) {
+    // Quiet failure by design: callers render the neutral not-done state
+    // rather than a fabricated one. No toast — this runs on every focus.
+    return null;
+  }
+
+  return (data ?? null) as TodayState | null;
 }
 
 /**
@@ -128,7 +166,7 @@ export async function fetchReveal(coupleDropId: string) {
     // Read couple_drop metadata
     const { data: coupleDrop, error: dropError } = await supabase
       .from('couple_drops')
-      .select('id, couple_id, state, drop_id')
+      .select('id, couple_id, state, drop_id, wave_pct')
       .eq('id', coupleDropId)
       .maybeSingle();
 
@@ -136,7 +174,7 @@ export async function fetchReveal(coupleDropId: string) {
       throw dropError;
     }
 
-    type CoupleDropRow = { id: string; couple_id: string; state: 'open' | 'one_done' | 'revealed'; drop_id: string };
+    type CoupleDropRow = { id: string; couple_id: string; state: 'open' | 'one_done' | 'revealed'; drop_id: string; wave_pct: number | null };
     const drop = coupleDrop as CoupleDropRow | null;
     if (!drop) {
       throw new Error('Couple drop not found');
@@ -215,7 +253,9 @@ export async function fetchReveal(coupleDropId: string) {
 
     return {
       state: drop.state,
-      reveal,
+      // The server-stored wavelength is authoritative when present (0014);
+      // the client-scored detail breakdown still drives the per-prompt UI.
+      reveal: drop.wave_pct != null ? { ...reveal, wave: drop.wave_pct } : reveal,
       promptAnswers,
       prompts: promptList,
     };

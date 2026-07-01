@@ -25,6 +25,7 @@ import { colors, gradients, radius, shadows, space } from '../../src/design/toke
 import { fontFamily } from '../../src/design/typography';
 import { DROP } from '../../src/content/drop';
 import { usePlayStore, computeReveal } from '../../src/store/play';
+import { useTodayState } from '../../src/features/drops/useTodayState';
 import { useCouple } from '../../src/features/pairing/useCouple';
 import { useActivity } from '../../src/features/engagement/useActivity';
 import { useSession } from '../../src/features/auth/useSession';
@@ -38,17 +39,30 @@ export default function TodayScreen() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const playState = usePlayStore();
-  const done = playState.done;
-  const reveal = done ? computeReveal(playState) : null;
   const { session } = useSession();
   const { couple } = useCouple();
+  const { today } = useTodayState(session && couple ? couple.id : null);
   const { items: dbActivity, unreadCount } = useActivity(couple?.id || null);
   const { spiceLevel } = useProfile();
   const { me, partner } = useIdentity();
   const activeDrop = selectDropForSpice(DROP, normaliseSpiceLevel(spiceLevel) as SpiceLevel);
 
+  // Live sessions trust the server (relaunch-safe); the unauthenticated demo
+  // falls back to the in-memory play store as before.
+  const isLive = !!(session && couple);
+  const revealed = isLive ? today?.state === 'revealed' : playState.done;
+  const iAnswered = isLive ? !!today?.i_answered : playState.done;
+  // Truthful partner-presence: comes from get_today_state (SECURITY DEFINER),
+  // never assumed. Only shown while it's still my turn.
+  const partnerPlayed = isLive && !!today?.partner_answered && !iAnswered;
+  const done = iAnswered;
+
   const streak = couple?.streak ?? 0;
-  const wave = reveal?.wave ?? 0;
+  const wave = isLive
+    ? today?.wave_pct ?? 0
+    : playState.done
+      ? computeReveal(playState).wave
+      : 0;
   const hasUnreadActivity = unreadCount > 0;
   // Pairing pending: user is in, partner hasn't joined. They can answer ahead;
   // the reveal stays server-held (migration 0011) until the partner joins + answers.
@@ -71,6 +85,11 @@ export default function TodayScreen() {
   };
 
   const handleReveal = () => {
+    // Relaunch-safe: rehydrate the play store's coupleDropId from the server
+    // state so the reveal screen can fetch the real data.
+    if (isLive && today?.couple_drop_id) {
+      usePlayStore.setState({ done: true, coupleDropId: today.couple_drop_id });
+    }
     router.push('/reveal');
   };
 
@@ -217,8 +236,8 @@ export default function TodayScreen() {
             </View>
           </View>
 
-          {/* Partner ping banner (show when not done) — invite CTA while pending */}
-          {!done && (
+          {/* Banner: invite CTA while pending · partner-played only when TRUE */}
+          {!done && (isPending || partnerPlayed) && (
             <Press onPress={isPending ? handleInvite : handlePlay}>
               <LinearGradient
                 colors={gradients.usSoft.colors}
@@ -404,6 +423,23 @@ export default function TodayScreen() {
                       Invite your partner →
                     </Btn>
                   </View>
+                </>
+              ) : !revealed ? (
+                <>
+                  <Kick c={colors.p2Deep}>your answers are in ✓</Kick>
+                  <Text
+                    style={{
+                      fontSize: 16,
+                      lineHeight: 23,
+                      fontWeight: '600',
+                      color: colors.ink,
+                      fontFamily: fontFamily.ui,
+                      marginTop: 8,
+                      marginBottom: 4,
+                    }}
+                  >
+                    Waiting on {partner.name} — the reveal unlocks the moment they play.
+                  </Text>
                 </>
               ) : (
                 <>
