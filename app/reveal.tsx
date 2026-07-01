@@ -416,20 +416,6 @@ export default function RevealScreen() {
                           size={13}
                           color={colors.inkSoft}
                         />
-                        {i === 0 && (
-                          <Text
-                            allowFontScaling={false}
-                            style={{
-                              fontSize: 10,
-                              fontWeight: '700',
-                              color: colors.p2Deep,
-                              fontFamily: fontFamily.mono,
-                              letterSpacing: 1.6,
-                            }}
-                          >
-                            3
-                          </Text>
-                        )}
                       </View>
                     </Press>
                   </View>
@@ -486,7 +472,7 @@ export default function RevealScreen() {
             </Btn>
           </View>
           <View style={{ marginTop: 11 }}>
-            <Btn kind="soft" onPress={handleDone} sub="next drop in 9h">
+            <Btn kind="soft" onPress={handleDone} sub="next drop tomorrow">
               Done for today
             </Btn>
           </View>

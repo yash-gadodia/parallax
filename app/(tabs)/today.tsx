@@ -47,8 +47,8 @@ export default function TodayScreen() {
   const { me, partner } = useIdentity();
   const activeDrop = selectDropForSpice(DROP, normaliseSpiceLevel(spiceLevel) as SpiceLevel);
 
-  const streak = couple?.streak ?? 23;
-  const wave = reveal?.wave ?? 76;
+  const streak = couple?.streak ?? 0;
+  const wave = reveal?.wave ?? 0;
   const hasUnreadActivity = unreadCount > 0;
   // Pairing pending: user is in, partner hasn't joined. They can answer ahead;
   // the reveal stays server-held (migration 0011) until the partner joins + answers.

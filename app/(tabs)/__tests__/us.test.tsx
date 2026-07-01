@@ -11,8 +11,14 @@ jest.mock('../../../src/features/lovemap/useLearnings', () => ({
 
 jest.mock('../../../src/features/lovemap/useCoupleHistory', () => ({
   useCoupleHistory: jest.fn(() => ({
-    history: [],
-    isSample: true,
+    // Real history so the wavelength chart + stat trio render (empty history
+    // now shows the first-run state instead).
+    history: [
+      { date: '2026-06-30', code: 'TODAY', title: 'soft launch', wavelength: 82, twins_count: 2 },
+      { date: '2026-06-29', code: 'DROP 26', title: 'the ick list', wavelength: 74, twins_count: 1 },
+      { date: '2026-06-28', code: 'DROP 25', title: 'future tense', wavelength: 88, twins_count: 3 },
+    ],
+    isSample: false,
   })),
 }));
 

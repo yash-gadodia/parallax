@@ -80,7 +80,8 @@ export default function RefocusScreen() {
     } else if (step === 'share') {
       setStep('mode');
     } else if (step === 'waiting') {
-      // Can't go back from waiting
+      // Cancel the analysis and return to the compose step (keeps their input).
+      setStep('share');
     } else if (step === 'result') {
       exitToTabs();
     }
@@ -142,6 +143,7 @@ export default function RefocusScreen() {
         <WaitingStep
           userText={text || VOICE_TRANSCRIPT}
           daniText={DANI_SIDE}
+          onCancel={handleBack}
           onDone={(res) => {
             track(EVENTS.REFOCUS_COMPLETED);
             setResult(res);
@@ -700,10 +702,11 @@ function WaveformBar({
 interface WaitingStepProps {
   userText: string;
   daniText: string;
+  onCancel: () => void;
   onDone: (result: RefocusResult) => void;
 }
 
-function WaitingStep({ userText, daniText, onDone }: WaitingStepProps) {
+function WaitingStep({ userText, daniText, onCancel, onDone }: WaitingStepProps) {
   const { partner } = useIdentity();
   const [phase, setPhase] = useState(0); // 0 you in · 1 dani in · 2 analyzing
   const mounted = useRef(true);
@@ -741,6 +744,9 @@ function WaitingStep({ userText, daniText, onDone }: WaitingStepProps) {
         paddingHorizontal: 34,
       }}
     >
+      {/* Visible exit — the analysis wait must never trap the user. */}
+      <TopBar title="finding focus" onBack={onCancel} />
+
       {/* Floating Peek with halo */}
       <View
         style={{

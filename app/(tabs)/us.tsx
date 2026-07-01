@@ -16,7 +16,6 @@ import { Kick, Serif } from '../../src/components/Text';
 import GradientText from '../../src/components/GradientText';
 import { colors, gradients, radius, shadows, space } from '../../src/design/tokens';
 import { fontFamily } from '../../src/design/typography';
-import { LEARNINGS } from '../../src/content/us';
 import { ARCHIVE } from '../../src/content/drop';
 import { useLearnings } from '../../src/features/lovemap/useLearnings';
 import { useCoupleHistory } from '../../src/features/lovemap/useCoupleHistory';
@@ -28,15 +27,10 @@ export default function UsScreen() {
   const { history, isSample: historySample } = useCoupleHistory();
   const { name, partnerName, streak, togetherSince } = useProfile();
 
-  const done = true;
-  const currentWave = history.length > 0 ? `${history[0].wavelength}` : '76';
+  const currentWave = history.length > 0 ? `${history[0].wavelength}` : null;
 
-  // Wavelength bar chart: always 7 bars = last 6 drops (oldest -> newest) + today.
-  // Pad with the prototype's demo sequence so the chart is never sparse.
-  const DEMO_WAVES = [62, 71, 58, 80, 74, 88];
-  const recent = history.slice(0, 6).reverse().map((h) => h.wavelength);
-  const sixth = DEMO_WAVES.slice(0, Math.max(0, 6 - recent.length));
-  const hist: number[] = [...sixth, ...recent, done ? parseInt(currentWave, 10) : 83];
+  // Wavelength bar chart: built only from real history (most recent rendered as current).
+  const hist: number[] = history.slice(0, 7).reverse().map((h) => h.wavelength);
 
   const handleProfilePress = () => {
     router.push('/profile');
@@ -145,61 +139,63 @@ export default function UsScreen() {
           </View>
 
           {/* Wrapped hero card */}
-          <Press onPress={handleWrappedPress} accessibilityLabel="Your month, wrapped — June recap">
-            <View
-              style={{
-                borderRadius: 26,
-                overflow: 'hidden',
-                marginTop: 18,
-                ...shadows.shadow,
-              }}
-            >
-              <LinearGradient
-                colors={gradients.us.colors}
-                locations={gradients.us.locations}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
+          {history.length > 0 && (
+            <Press onPress={handleWrappedPress} accessibilityLabel="Your month, wrapped — June recap">
+              <View
                 style={{
-                  paddingHorizontal: 18,
-                  paddingVertical: 18,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 14,
-                  position: 'relative',
+                  borderRadius: 26,
+                  overflow: 'hidden',
+                  marginTop: 18,
+                  ...shadows.shadow,
                 }}
               >
-                {/* Radial overlay for depth */}
-                <View
+                <LinearGradient
+                  colors={gradients.us.colors}
+                  locations={gradients.us.locations}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
                   style={{
-                    position: 'absolute',
-                    inset: 0,
-                    backgroundColor: 'rgba(255,255,255,0.15)',
+                    paddingHorizontal: 18,
+                    paddingVertical: 18,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 14,
+                    position: 'relative',
                   }}
-                />
-
-                {/* Gift emoji */}
-                <Text style={{ fontSize: 38, zIndex: 1 }}>🎁</Text>
-
-                {/* Text content */}
-                <View style={{ flex: 1, zIndex: 1 }}>
-                  <Kick c="rgba(255,255,255,0.85)">new · june recap</Kick>
-                  <Serif s={28} c="#fff" style={{ marginTop: 2 }}>
-                    Your month, wrapped
-                  </Serif>
-                  <Text
+                >
+                  {/* Radial overlay for depth */}
+                  <View
                     style={{
-                      fontSize: 13,
-                      color: 'rgba(255,255,255,0.92)',
-                      marginTop: 3,
-                      fontFamily: fontFamily.ui,
+                      position: 'absolute',
+                      inset: 0,
+                      backgroundColor: 'rgba(255,255,255,0.15)',
                     }}
-                  >
-                    find out your couple type →
-                  </Text>
-                </View>
-              </LinearGradient>
-            </View>
-          </Press>
+                  />
+
+                  {/* Gift emoji */}
+                  <Text style={{ fontSize: 38, zIndex: 1 }}>🎁</Text>
+
+                  {/* Text content */}
+                  <View style={{ flex: 1, zIndex: 1 }}>
+                    <Kick c="rgba(255,255,255,0.85)">new · june recap</Kick>
+                    <Serif s={28} c="#fff" style={{ marginTop: 2 }}>
+                      Your month, wrapped
+                    </Serif>
+                    <Text
+                      style={{
+                        fontSize: 13,
+                        color: 'rgba(255,255,255,0.92)',
+                        marginTop: 3,
+                        fontFamily: fontFamily.ui,
+                      }}
+                    >
+                      find out your couple type →
+                    </Text>
+                  </View>
+                </LinearGradient>
+              </View>
+            </Press>
+          )}
 
           {/* Love Map card */}
           <Press onPress={handleLoveMapPress} accessibilityLabel="Your Love Map">
@@ -233,7 +229,7 @@ export default function UsScreen() {
                     Your Love Map
                   </Text>
                   <Kick style={{ marginTop: 2 }}>
-                    {LEARNINGS.length} things you're learning
+                    {learningItems.length} things you're learning
                   </Kick>
                 </View>
                 <Icon d={ICONS.chevR} size={18} color={colors.inkMute} />
@@ -298,6 +294,8 @@ export default function UsScreen() {
             </Card>
           </Press>
 
+          {history.length > 0 ? (
+          <>
           {/* Wavelength card with chart */}
           <Card
             style={{
@@ -427,6 +425,24 @@ export default function UsScreen() {
               </Card>
             ))}
           </View>
+          </>
+          ) : (
+            <View style={{ alignItems: 'center', marginTop: 32, marginBottom: 8, paddingHorizontal: 20 }}>
+              <Kick c={colors.inkMute}>YOUR STORY STARTS HERE</Kick>
+              <Text
+                style={{
+                  fontSize: 14,
+                  lineHeight: 20,
+                  color: colors.inkSoft,
+                  fontFamily: fontFamily.ui,
+                  textAlign: 'center',
+                  marginTop: 8,
+                }}
+              >
+                Your wavelength history shows up after your first reveal.
+              </Text>
+            </View>
+          )}
 
           {/* Drop history label */}
           <View style={{ marginTop: 24, marginBottom: 10 }}>

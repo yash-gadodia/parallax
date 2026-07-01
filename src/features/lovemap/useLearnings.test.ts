@@ -79,7 +79,7 @@ describe('useLearnings', () => {
     expect(partnerLearning?.about).toBe('partner');
   });
 
-  it('returns sample learnings when couple exists but empty from DB', async () => {
+  it('returns empty (not sample) when a real couple has no learnings yet', async () => {
     mockUseSession.mockReturnValue({
       session: { user: { id: 'user-1' } as any } as any,
       loading: false,
@@ -114,12 +114,11 @@ describe('useLearnings', () => {
       await new Promise(resolve => setTimeout(resolve, 50));
     });
 
-    expect(capturedState.isSample).toBe(true);
-    expect(capturedState.items.length).toBe(LEARNINGS.length);
-    expect(capturedState.items[0].couple_id).toBe('couple-1');
+    expect(capturedState.isSample).toBe(false);
+    expect(capturedState.items.length).toBe(0);
   });
 
-  it('handles fetch error and falls back to sample learnings', async () => {
+  it('returns empty (not sample) on fetch error for a real couple', async () => {
     mockUseSession.mockReturnValue({
       session: { user: { id: 'user-1' } as any } as any,
       loading: false,
@@ -156,7 +155,7 @@ describe('useLearnings', () => {
 
     expect(capturedState.error).toBeDefined();
     expect(capturedState.error?.message).toBe('Network error');
-    expect(capturedState.isSample).toBe(true);
-    expect(capturedState.items.length).toBe(LEARNINGS.length);
+    expect(capturedState.isSample).toBe(false);
+    expect(capturedState.items.length).toBe(0);
   });
 });

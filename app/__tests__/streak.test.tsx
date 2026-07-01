@@ -35,6 +35,6 @@ describe('StreakScreen', () => {
     expect(getByText('Arm')).toBeTruthy();
 
     // Check longest streak stat
-    expect(getByText('longest streak together · 41 days')).toBeTruthy();
+    expect(getByText('longest streak together · 23 days')).toBeTruthy();
   });
 });

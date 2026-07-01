@@ -412,10 +412,10 @@ function Step3PairUp({
       setCreatingCouple(true);
       try {
         const couple = await createCouple();
-        setInviteCode(couple.invite_code || 'YASH-4827');
+        setInviteCode(couple.invite_code ?? null);
       } catch {
-        // not signed in yet (or offline) - show a demo code so the flow is smooth
-        setInviteCode('YASH-4827');
+        setInviteCode(null);
+        fireToast('Could not create your invite code. Check your connection and try again.');
       } finally {
         setCreatingCouple(false);
       }
@@ -507,7 +507,7 @@ function Step3PairUp({
                   marginBottom: 6,
                 }}
               >
-                {creatingCouple ? 'Loading...' : inviteCode || 'ERROR'}
+                {creatingCouple ? 'Loading...' : inviteCode || 'Tap retry'}
               </Text>
               <Text
                 allowFontScaling={false}
@@ -811,7 +811,7 @@ function Step5NotifyTime({
           kind="us"
           onPress={handleFinish}
           disabled={loading}
-          sub="drop 27 is live"
+          sub="your first drop is live"
         >
           Turn on daily nudge
         </Btn>

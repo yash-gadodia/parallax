@@ -51,23 +51,9 @@ export function useLearnings(): UseLearningsReturn {
 
         if (fetchError) throw fetchError;
 
-        // If empty, use sample
+        // Real couple with no data yet: show empty (real empty state), never sample
         if (!data || data.length === 0) {
-          const sampleLearnings: Learning[] = LEARNINGS.map((l) => ({
-            id: l.id,
-            couple_id: couple.id,
-            about: l.who === 'you' ? 'you' : 'partner',
-            emoji: l.emoji,
-            need: l.need,
-            detail: l.detail,
-            source: l.from as 'drop' | 'refocus',
-            origin: l.origin,
-            mastery: l.mastery,
-            became_prompt_id: l.becameQ ? 'prompt-' + l.id : null,
-            became_question: l.becameQ,
-            created_at: new Date().toISOString(),
-          }));
-          setItems(sampleLearnings);
+          setItems([]);
         } else {
           // Normalize `about` (stored as a member UUID) to 'you'/'partner' so the
           // UI's who-chip resolves correctly regardless of which partner is viewing.
@@ -82,22 +68,8 @@ export function useLearnings(): UseLearningsReturn {
         setLoading(false);
       } catch (err) {
         setError(err instanceof Error ? err : new Error('Failed to fetch learnings'));
-        // Fall back to sample on error
-        const sampleLearnings: Learning[] = LEARNINGS.map((l) => ({
-          id: l.id,
-          couple_id: couple?.id || '',
-          about: l.who === 'you' ? 'you' : 'partner',
-          emoji: l.emoji,
-          need: l.need,
-          detail: l.detail,
-          source: l.from,
-          origin: l.origin,
-          mastery: l.mastery,
-          became_prompt_id: l.becameQ ? 'prompt-' + l.id : null,
-          became_question: l.becameQ,
-          created_at: new Date().toISOString(),
-        }));
-        setItems(sampleLearnings);
+        // Real couple (demo path returned earlier): show empty, never sample
+        setItems([]);
         setLoading(false);
       }
     };

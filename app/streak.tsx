@@ -32,8 +32,8 @@ export default function StreakScreen() {
   const { couple } = useCouple();
   const { me, partner } = useIdentity();
 
-  const streak = couple?.streak ?? 23;
-  const week = [true, true, true, true, true, true, false]; // M-S, today not yet
+  const streak = couple?.streak ?? 0;
+  const week = Array.from({ length: 7 }, (_, i) => i >= 7 - Math.min(streak, 7));
   const next = MILES.find((m) => m > streak) || 365;
   const prevM = [0, ...MILES].reverse().find((m) => m <= streak) || 0;
   const prog = next === prevM ? 1 : Math.min(1, (streak - prevM) / (next - prevM));
@@ -245,7 +245,7 @@ export default function StreakScreen() {
             marginBottom: 24,
           }}
         >
-          play today to keep it alive, 9h 12m left
+          play today to keep it alive
         </Text>
 
         {/* Milestones */}
@@ -449,7 +449,7 @@ export default function StreakScreen() {
             marginTop: 18,
           }}
         >
-          longest streak together · 41 days
+          {`longest streak together · ${streak} days`}
         </Text>
       </ScrollView>
 

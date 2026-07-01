@@ -10,7 +10,7 @@ describe('ThreadScreen', () => {
     expect(getByText('talk about it')).toBeTruthy();
 
     // Pinned prompt context (DROP code + question)
-    expect(getByText('DROP 27 · the answer you\'re on')).toBeTruthy();
+    expect(getByText('TODAY · the answer you\'re on')).toBeTruthy();
     expect(getByText('Our perfect Friday night?')).toBeTruthy();
 
     // Initial thread message from THREAD.msgs

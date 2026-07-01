@@ -42,7 +42,7 @@ export interface ArchiveEntry {
 // about themselves. Predicting their answer IS a Gottman love-map test. The miss is
 // the gift, a wrong guess is tonight's conversation, not a failure.
 export const DROP: Drop = {
-  code: 'DROP 27',
+  code: 'TODAY',
   day: 'Sunday',
   title: 'soft launch',
   blurb: 'Three questions built to open something, light, then deeper. Answer for you, then guess them.',

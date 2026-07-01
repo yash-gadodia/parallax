@@ -450,7 +450,7 @@ export default function LovemapScreen() {
 
         {/* Learning cards (or empty state before anything's been learned) */}
         <View style={{ gap: space.gap }}>
-          {learnings.length === 0 ? (
+          {learnings.length === 0 && !loading ? (
             <View style={{ alignItems: 'center', paddingVertical: 30, paddingHorizontal: 24 }}>
               <Text allowFontScaling={false} style={{ fontSize: 30, marginBottom: 10 }}>
                 🌱

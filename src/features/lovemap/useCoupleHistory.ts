@@ -43,16 +43,9 @@ export function useCoupleHistory(): UseCoupleHistoryReturn {
 
         if (fetchError) throw fetchError;
 
-        // If empty, use sample
+        // Real couple with no history yet: show empty (real empty state), never sample
         if (!data || (Array.isArray(data) && (data as never[]).length === 0)) {
-          const sampleHistory = ARCHIVE.map((d) => ({
-            date: new Date().toISOString().split('T')[0],
-            code: d.code,
-            title: d.title,
-            wavelength: d.wave,
-            twins_count: d.twins,
-          }));
-          setHistory(sampleHistory);
+          setHistory([]);
         } else if (Array.isArray(data)) {
           setHistory(data as CoupleHistoryRow[]);
         }
@@ -60,15 +53,8 @@ export function useCoupleHistory(): UseCoupleHistoryReturn {
         setLoading(false);
       } catch (err) {
         setError(err instanceof Error ? err : new Error('Failed to fetch couple history'));
-        // Fall back to sample on error
-        const sampleHistory = ARCHIVE.map((d) => ({
-          date: new Date().toISOString().split('T')[0],
-          code: d.code,
-          title: d.title,
-          wavelength: d.wave,
-          twins_count: d.twins,
-        }));
-        setHistory(sampleHistory);
+        // Real couple (demo path returned earlier): show empty, never sample
+        setHistory([]);
         setLoading(false);
       }
     };
