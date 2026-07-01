@@ -51,10 +51,10 @@ import { supabase } from '../../src/lib/supabase';
 import { addLearning } from '../../src/features/lovemap/addLearning';
 import { learningOrigin } from '../../src/domain/learningOrigin';
 import { track, EVENTS } from '../../src/lib/analytics';
+import { useIdentity } from '../../src/features/profile/useIdentity';
 
 // Identity definitions
 const YOU = { name: 'you', initial: 'Y' };
-const PAR = { name: 'Dani', initial: 'D' };
 
 type Step = 'intro' | 'mode' | 'share' | 'waiting' | 'result';
 
@@ -174,6 +174,7 @@ interface IntroStepProps {
 }
 
 function IntroStep({ insets, onStart, onBack }: IntroStepProps) {
+  const { partner } = useIdentity();
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <TopBar title="refocus" onBack={onBack} />
@@ -222,9 +223,7 @@ function IntroStep({ insets, onStart, onBack }: IntroStepProps) {
               fontFamily: fontFamily.ui,
             }}
           >
-            A rough moment is just the two of you seeing it from different
-            angles. Share your side privately, Dani shares theirs, and we'll
-            find where they meet.
+            {`A rough moment is just the two of you seeing it from different angles. Share your side privately, ${partner.name} shares theirs, and we'll find where they meet.`}
           </Text>
         </View>
 
@@ -419,6 +418,7 @@ function ShareStep({
   onSubmit,
   onBack,
 }: ShareStepProps) {
+  const { partner } = useIdentity();
   const [rec, setRec] = useState(false);
   const [secs, setSecs] = useState(0);
 
@@ -473,7 +473,7 @@ function ShareStep({
               fontFamily: fontFamily.ui,
             }}
           >
-            Private to the AI. Dani only ever sees the resolution.
+            {`Private to the AI. ${partner.name} only ever sees the resolution.`}
           </Text>
         </View>
 
@@ -645,7 +645,7 @@ function ShareStep({
           kind="us"
           onPress={onSubmit}
           disabled={!ready}
-          sub="then we wait for Dani"
+          sub={`then we wait for ${partner.name}`}
         >
           Share my side
         </Btn>
@@ -704,6 +704,7 @@ interface WaitingStepProps {
 }
 
 function WaitingStep({ userText, daniText, onDone }: WaitingStepProps) {
+  const { partner } = useIdentity();
   const [phase, setPhase] = useState(0); // 0 you in · 1 dani in · 2 analyzing
   const mounted = useRef(true);
 
@@ -714,7 +715,7 @@ function WaitingStep({ userText, daniText, onDone }: WaitingStepProps) {
     const min = new Promise((r) => setTimeout(r, 4200));
 
     // Live Claude mediation (edge fn) raced against a min display time.
-    Promise.all([analyze(userText, daniText), min]).then(([res]) => {
+    Promise.all([analyze(userText, daniText, partner.name), min]).then(([res]) => {
       // Guard: the user may navigate away during the ~4.2s wait.
       if (mounted.current) onDone(res);
     });
@@ -728,7 +729,7 @@ function WaitingStep({ userText, daniText, onDone }: WaitingStepProps) {
 
   const lines = [
     { color: colors.p1, who: YOU, label: 'You shared your side', active: phase >= 0 },
-    { color: colors.p2, who: PAR, label: 'Dani shared their side', active: phase >= 1 },
+    { color: colors.p2, who: { name: partner.name, initial: partner.initial }, label: `${partner.name} shared their side`, active: phase >= 1 },
   ];
 
   return (
@@ -781,7 +782,7 @@ function WaitingStep({ userText, daniText, onDone }: WaitingStepProps) {
         {phase < 1
           ? 'sharing your side…'
           : phase < 2
-            ? "Dani's in too…"
+            ? `${partner.name}'s in too…`
             : 'finding where you meet…'}
       </Serif>
 
@@ -896,6 +897,7 @@ function ResultStep({
   onShowToast,
   onOpenLoveMap,
 }: ResultStepProps) {
+  const { partner } = useIdentity();
   const [msg, setMsg] = useState(result.bridge);
   const [sent, setSent] = useState(false);
   const [savingLearnings, setSavingLearnings] = useState(false);
@@ -945,7 +947,7 @@ function ResultStep({
               fontFamily: fontFamily.ui,
             }}
           >
-            Dani saw this too, the resolution, not your raw words.
+            {`${partner.name} saw this too, the resolution, not your raw words.`}
           </Text>
         </View>
 
@@ -994,8 +996,8 @@ function ResultStep({
               text={result.angles.you}
             />
             <AngleCard
-              who={PAR}
-              label="Dani's angle"
+              who={{ initial: partner.initial, name: partner.name }}
+              label={`${partner.name}'s angle`}
               text={result.angles.dani}
             />
           </View>
@@ -1005,7 +1007,7 @@ function ResultStep({
         <ResultSection icon="💗" label="what's really underneath">
           <View style={{ gap: 10 }}>
             <NeedCard who={YOU} youSide text={result.underneath.you} />
-            <NeedCard who={PAR} text={result.underneath.dani} />
+            <NeedCard who={{ initial: partner.initial, name: partner.name }} text={result.underneath.dani} />
           </View>
         </ResultSection>
 
@@ -1063,7 +1065,7 @@ function ResultStep({
                 fontFamily: fontFamily.ui,
               }}
             >
-              Say it to Dani?
+              {`Say it to ${partner.name}?`}
             </Text>
             <Text
               style={{
@@ -1102,11 +1104,11 @@ function ResultStep({
               onPress={() => {
                 if (!sent) {
                   setSent(true);
-                  onShowToast('Sent to Dani 🤍');
+                  onShowToast(`Sent to ${partner.name} 🤍`);
                 }
               }}
             >
-              {sent ? 'Sent 🤍' : 'Send to Dani'}
+              {sent ? 'Sent 🤍' : `Send to ${partner.name}`}
             </Btn>
           </View>
         </Card>
@@ -1159,7 +1161,7 @@ function ResultStep({
           </Text>
           <View style={{ gap: 10, marginBottom: 14 }}>
             <NeedCard who={YOU} youSide text={result.underneath.you} />
-            <NeedCard who={PAR} text={result.underneath.dani} />
+            <NeedCard who={{ initial: partner.initial, name: partner.name }} text={result.underneath.dani} />
           </View>
           <Btn
             kind="soft"
@@ -1289,7 +1291,7 @@ function AngleCard({
   label,
   text,
 }: {
-  who: typeof YOU | typeof PAR;
+  who: { name: string; initial: string };
   youSide?: boolean;
   label: string;
   text: string;
@@ -1336,7 +1338,7 @@ function NeedCard({
   youSide = false,
   text,
 }: {
-  who: typeof YOU | typeof PAR;
+  who: { name: string; initial: string };
   youSide?: boolean;
   text: string;
 }) {
@@ -1362,7 +1364,8 @@ function NeedCard({
 
 async function analyze(
   userText: string,
-  daniText: string
+  daniText: string,
+  partnerName: string
 ): Promise<RefocusResult> {
   // Live Claude mediation via the `refocus` Supabase edge function (key is
   // server-side). Falls back to the scripted EXEMPLAR if the function isn't
@@ -1370,7 +1373,7 @@ async function analyze(
   try {
     const { data, error } = await supabase.functions.invoke<RefocusResult>(
       'refocus',
-      { body: { userText, daniText, partnerName: 'Dani' } }
+      { body: { userText, daniText, partnerName } }
     );
     if (
       error ||

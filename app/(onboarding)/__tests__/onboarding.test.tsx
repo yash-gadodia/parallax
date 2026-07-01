@@ -149,6 +149,17 @@ jest.mock('../../../src/features/pairing/useCouple', () => ({
   }),
 }));
 
+// Onboarding tests don't exercise the profile/supabase plumbing — stub identity
+// with a fixed real partner name so the copy renders deterministically.
+jest.mock('../../../src/features/profile/useIdentity', () => ({
+  useIdentity: () => ({
+    me: { name: 'You', initial: 'Y' },
+    partner: { name: 'Sam', initial: 'S', hasPartner: true },
+    loading: false,
+  }),
+  GENERIC_PARTNER_NAME: 'your partner',
+}));
+
 jest.mock('../../../src/features/pairing/pairingActions', () => ({
   createCouple: jest.fn(async () => ({
     id: 'couple-1',
@@ -307,12 +318,12 @@ describe('Onboarding', () => {
     });
   });
 
-  it('step 3 pair-up button text is "Send Dani the link"', async () => {
+  it('step 3 pair-up button text is "Send your partner the link"', async () => {
     mockSessionValue = { session: { user: { id: 'u1' } }, loading: false };
     const { getByText } = await render(<OnboardingScreen />);
 
     await waitFor(() => {
-      expect(getByText(/Send Dani the link/i)).toBeTruthy();
+      expect(getByText(/Send your partner the link/i)).toBeTruthy();
     });
   });
 
@@ -339,15 +350,15 @@ describe('Onboarding', () => {
 
     // Advance to step 4 by reaching the pair-up step and simulating the share
     const { Share } = require('react-native');
-    await waitFor(() => expect(getByText(/Send Dani the link/i)).toBeTruthy());
-    fireEvent.press(getByText(/Send Dani the link/i));
+    await waitFor(() => expect(getByText(/Send your partner the link/i)).toBeTruthy());
+    fireEvent.press(getByText(/Send your partner the link/i));
 
     await waitFor(() => {
       expect(getByText(/You're in/i)).toBeTruthy();
     });
     // It's a doorway into the app (answer ahead), not a dead-end wait.
     expect(getAllByText(/Answer today's drop/i).length).toBeGreaterThan(0);
-    expect(queryByText(/Dani joined!/i)).toBeNull();
+    expect(queryByText(/Sam joined!/i)).toBeNull();
   });
 
   it('step 4 (with session, active couple): shows celebration', async () => {
@@ -356,11 +367,11 @@ describe('Onboarding', () => {
 
     const { getByText } = await render(<OnboardingScreen />);
 
-    await waitFor(() => expect(getByText(/Send Dani the link/i)).toBeTruthy());
-    fireEvent.press(getByText(/Send Dani the link/i));
+    await waitFor(() => expect(getByText(/Send your partner the link/i)).toBeTruthy());
+    fireEvent.press(getByText(/Send your partner the link/i));
 
     await waitFor(() => {
-      expect(getByText(/Dani joined!/i)).toBeTruthy();
+      expect(getByText(/Sam joined!/i)).toBeTruthy();
     });
   });
 
@@ -371,13 +382,13 @@ describe('Onboarding', () => {
     mockCoupleStatus = 'none'; // not 'active' → isActive false (with a session)
 
     const { getByText, getAllByText, queryByText } = await render(<OnboardingScreen />);
-    await waitFor(() => expect(getByText(/Send Dani the link/i)).toBeTruthy());
-    fireEvent.press(getByText(/Send Dani the link/i));
+    await waitFor(() => expect(getByText(/Send your partner the link/i)).toBeTruthy());
+    fireEvent.press(getByText(/Send your partner the link/i));
 
     await waitFor(() => {
       expect(getByText(/You're in/i)).toBeTruthy();
     });
     expect(getAllByText(/Answer today's drop/i).length).toBeGreaterThan(0);
-    expect(queryByText(/Dani joined!/i)).toBeNull();
+    expect(queryByText(/Sam joined!/i)).toBeNull();
   });
 });

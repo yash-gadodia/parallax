@@ -18,12 +18,11 @@ import Press from '../src/components/Press';
 import Tok from '../src/components/Tok';
 import Btn from '../src/components/Btn';
 import { WRAP, COUPLE_TYPE } from '../src/content/extras';
-
-const YOU = { initial: 'Y' };
-const PAR = { initial: 'D' };
+import { useIdentity } from '../src/features/profile/useIdentity';
 
 export default function WrappedScreen() {
   const router = useRouter();
+  const { me, partner } = useIdentity();
   const [slideIdx, setSlideIdx] = useState(0);
   const { height: screenHeight } = useWindowDimensions();
   const barAnim = useRef(new RNAnimated.Value(0)).current;
@@ -234,9 +233,9 @@ export default function WrappedScreen() {
                   marginBottom: 22,
                 }}
               >
-                <Tok who={YOU} you size={66} ring />
+                <Tok who={{ initial: me.initial, name: me.name }} you size={66} ring />
                 <View style={{ marginLeft: -18 }}>
-                  <Tok who={PAR} size={66} ring />
+                  <Tok who={{ initial: partner.initial, name: partner.name }} size={66} ring />
                 </View>
               </View>
 
@@ -262,7 +261,7 @@ export default function WrappedScreen() {
                   fontFamily: fontFamily.ui,
                 }}
               >
-                Yash & Dani · tap to begin →
+                {`${me.name} & ${partner.name} · tap to begin →`}
               </Text>
             </View>
           )}
@@ -475,7 +474,7 @@ export default function WrappedScreen() {
                     fontFamily: fontFamily.mono,
                   }}
                 >
-                  YASH & DANI · 83% IN SYNC
+                  {`${me.name.toUpperCase()} & ${partner.name.toUpperCase()} · 83% IN SYNC`}
                 </Text>
               </BlurView>
 

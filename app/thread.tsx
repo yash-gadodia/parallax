@@ -18,6 +18,7 @@ import { colors, gradients, radius, shadows } from '../src/design/tokens';
 import { fontFamily } from '../src/design/typography';
 import { THREAD } from '../src/content/extras';
 import { DROP } from '../src/content/drop';
+import { useIdentity } from '../src/features/profile/useIdentity';
 
 interface ThreadMessage {
   who: string;
@@ -52,7 +53,7 @@ export default function ThreadScreen() {
     setText('');
   };
 
-  const PAR = { initial: 'D' };
+  const { partner } = useIdentity();
 
   return (
     <View style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, paddingTop: insets.top + 48, flexDirection: 'column' }}>
@@ -118,7 +119,7 @@ export default function ThreadScreen() {
                 flexDirection: 'row',
               }}
             >
-              {!isYou && <Tok who={PAR} size={26} />}
+              {!isYou && <Tok who={{ initial: partner.initial, name: partner.name }} size={26} />}
               <View
                 style={{
                   paddingHorizontal: 15,

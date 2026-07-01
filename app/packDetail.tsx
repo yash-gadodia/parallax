@@ -22,11 +22,13 @@ import Btn from '../src/components/Btn';
 import Press from '../src/components/Press';
 import { Icon, ICONS } from '../src/components/Icon';
 import Toast from '../src/components/Toast';
+import { useIdentity } from '../src/features/profile/useIdentity';
 
 export default function PackDetailScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams();
+  const { partner } = useIdentity();
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
   // Resolve pack ID from params, fallback to 'deep'
@@ -42,7 +44,7 @@ export default function PackDetailScreen() {
   };
 
   const handleSendDrop = () => {
-    setToastMsg('Sent to Dani 💌');
+    setToastMsg(`Sent to ${partner.name} 💌`);
     setTimeout(() => {
       safeBack(router);
     }, 700);
@@ -243,7 +245,7 @@ export default function PackDetailScreen() {
               >
                 {locked
                   ? `A themed drop for when you want to go there. Unlock Plus to send it, you'll both answer + place hunches, same as the daily.`
-                  : `Send it to Dani and you'll both answer + place hunches, same as the daily drop.`}
+                  : `Send it to ${partner.name} and you'll both answer + place hunches, same as the daily drop.`}
               </Text>
             </View>
           </View>
@@ -364,7 +366,7 @@ export default function PackDetailScreen() {
                   fontFamily: fontFamily.ui,
                 }}
               >
-                Send drop to Dani
+                Send drop to {partner.name}
               </Text>
             </View>
           </Btn>

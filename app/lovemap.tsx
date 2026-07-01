@@ -22,9 +22,7 @@ import { colors, gradients, radius, shadows, space } from '../src/design/tokens'
 import { fontFamily } from '../src/design/typography';
 import { MASTERY } from '../src/content/us';
 import { useLearnings } from '../src/features/lovemap/useLearnings';
-
-const YOU = { initial: 'Y' };
-const PAR = { initial: 'D' };
+import { useIdentity, Person } from '../src/features/profile/useIdentity';
 
 function Mastery({ level }: { level: 0 | 1 | 2 | 3 }) {
   return (
@@ -59,7 +57,7 @@ function Mastery({ level }: { level: 0 | 1 | 2 | 3 }) {
   );
 }
 
-function WhoChip({ who }: { who: 'you' | 'dani' }) {
+function WhoChip({ who, me, partner }: { who: 'you' | 'dani'; me: Person; partner: Person }) {
   const isYou = who === 'you';
   return (
     <View
@@ -74,7 +72,7 @@ function WhoChip({ who }: { who: 'you' | 'dani' }) {
         backgroundColor: isYou ? 'rgba(255,142,122,0.14)' : 'rgba(157,149,245,0.16)',
       }}
     >
-      <Tok who={isYou ? YOU : PAR} you={isYou} size={18} />
+      <Tok who={isYou ? { initial: me.initial } : { initial: partner.initial, name: partner.name }} you={isYou} size={18} />
       <Text
         allowFontScaling={false}
         style={{
@@ -85,7 +83,7 @@ function WhoChip({ who }: { who: 'you' | 'dani' }) {
           lineHeight: 16,
         }}
       >
-        {isYou ? 'You' : 'Dani'}
+        {isYou ? 'You' : partner.name}
       </Text>
     </View>
   );
@@ -93,8 +91,12 @@ function WhoChip({ who }: { who: 'you' | 'dani' }) {
 
 function LearnCard({
   l,
+  me,
+  partner,
 }: {
   l: { emoji: string | null; need: string | null; detail: string | null; source: string; mastery: number; about: string; became_prompt_id: string | null; became_question?: string | null };
+  me: Person;
+  partner: Person;
 }) {
   const isYou = l.about === 'you';
   const fromFight = l.source === 'refocus';
@@ -115,7 +117,7 @@ function LearnCard({
         <Text allowFontScaling={false} style={{ fontSize: 22 }}>
           {l.emoji}
         </Text>
-        <WhoChip who={isYou ? 'you' : 'dani'} />
+        <WhoChip who={isYou ? 'you' : 'dani'} me={me} partner={partner} />
         <View style={{ flex: 1 }} />
         <View
           style={{
@@ -237,6 +239,7 @@ export default function LovemapScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { items: learnings, loading, isSample } = useLearnings();
+  const { me, partner } = useIdentity();
   const fightCount = learnings.filter(l => l.source === 'refocus').length;
 
   return (
@@ -470,7 +473,7 @@ export default function LovemapScreen() {
               </Text>
             </View>
           ) : (
-            learnings.map((l) => <LearnCard key={l.id} l={l} />)
+            learnings.map((l) => <LearnCard key={l.id} l={l} me={me} partner={partner} />)
           )}
         </View>
 

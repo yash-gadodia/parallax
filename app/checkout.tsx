@@ -24,12 +24,14 @@ import { PLANS, PERKS } from '../src/content/pay';
 import { usePurchases } from '../src/features/purchases/usePurchases';
 import Toast from '../src/components/Toast';
 import { track, EVENTS } from '../src/lib/analytics';
+import { useIdentity } from '../src/features/profile/useIdentity';
 
 type PlanId = 'year' | 'month';
 type PaymentMethod = 'apple' | 'card';
 
 export default function CheckoutScreen() {
   const router = useRouter();
+  const { partner } = useIdentity();
   const [plan, setPlan] = useState<PlanId>('year');
   const [method, setMethod] = useState<PaymentMethod>('apple');
   const [confirming, setConfirming] = useState(false);
@@ -170,7 +172,7 @@ export default function CheckoutScreen() {
                 textAlign: 'center',
               }}
             >
-              One subscription covers you <Text style={{ fontStyle: 'italic', color: colors.inkSoft }}>and</Text> Dani.
+              One subscription covers you <Text style={{ fontStyle: 'italic', color: colors.inkSoft }}>and</Text> {partner.name}.
             </Text>
           </View>
 

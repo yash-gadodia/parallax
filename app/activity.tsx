@@ -26,15 +26,14 @@ import { useSession } from '../src/features/auth/useSession';
 import { useCouple } from '../src/features/pairing/useCouple';
 import { useActivity } from '../src/features/engagement/useActivity';
 import { mapActivityToDisplay, DisplayActivity } from '../src/features/engagement/activityFormatter';
-
-const YOU = { initial: 'Y' };
-const DANI = { initial: 'D' };
+import { useIdentity } from '../src/features/profile/useIdentity';
 
 export default function ActivityScreen() {
   const router = useRouter();
   const { width, height } = useWindowDimensions();
   const { session } = useSession();
   const { couple } = useCouple();
+  const { me, partner } = useIdentity();
   const { items: dbItems, markAllRead: markAllReadDb, loading: activityLoading } = useActivity(couple?.id || null);
 
   const [toastMsg, setToastMsg] = useState<string | null>(null);
@@ -165,7 +164,7 @@ export default function ActivityScreen() {
                         {a.who !== 'us' && (
                           <View style={styles.tokOverlay}>
                             <Tok
-                              who={a.who === 'you' ? YOU : DANI}
+                              who={a.who === 'you' ? { initial: me.initial } : { initial: partner.initial, name: partner.name }}
                               you={a.who === 'you'}
                               size={20}
                             />
@@ -215,7 +214,7 @@ export default function ActivityScreen() {
                         {a.who !== 'us' && (
                           <View style={styles.tokOverlay}>
                             <Tok
-                              who={a.who === 'you' ? YOU : DANI}
+                              who={a.who === 'you' ? { initial: me.initial } : { initial: partner.initial, name: partner.name }}
                               you={a.who === 'you'}
                               size={20}
                             />
@@ -285,7 +284,7 @@ export default function ActivityScreen() {
                   fontFamily: fontFamily.ui,
                 }}
               >
-                When you and Dani play, nudge, or hit a milestone, it shows up here.
+                {`When you and ${partner.name} play, nudge, or hit a milestone, it shows up here.`}
               </Text>
             </View>
           ) : (

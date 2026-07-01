@@ -20,18 +20,17 @@ import Tok from '../src/components/Tok';
 import { DawnBlobs } from '../src/components/DawnBlobs';
 import { useSession } from '../src/features/auth/useSession';
 import { useCouple } from '../src/features/pairing/useCouple';
+import { useIdentity } from '../src/features/profile/useIdentity';
 import { submitMyAnswers } from '../src/features/drops/dropActions';
 import { enqueueSubmit } from '../src/lib/offlineQueue';
 import { useUiStore } from '../src/store/ui';
 import { track, EVENTS } from '../src/lib/analytics';
 
-const YOU = { initial: 'Y' };
-const PAR = { initial: 'D' };
-
 export default function PlayScreen() {
   const router = useRouter();
   const { session } = useSession();
   const { couple } = useCouple();
+  const { me, partner } = useIdentity();
   const { idx, phase, myPicks, myHunches, reset } = usePlayStore();
   const [submitting, setSubmitting] = useState(false);
   const prompt = DROP.prompts[idx];
@@ -209,7 +208,11 @@ export default function PlayScreen() {
               marginBottom: 16,
             }}
           >
-            <Tok who={isPick ? YOU : PAR} size={20} you={isPick} />
+            <Tok
+              who={isPick ? { initial: me.initial } : { initial: partner.initial, name: partner.name }}
+              size={20}
+              you={isPick}
+            />
             <Text
               allowFontScaling={false}
               style={{
@@ -220,7 +223,7 @@ export default function PlayScreen() {
                 fontFamily: fontFamily.ui,
               }}
             >
-              {isPick ? 'Your honest pick' : "Your hunch, what'll Dani say?"}
+              {isPick ? 'Your honest pick' : `Your hunch, what'll ${partner.name} say?`}
             </Text>
           </View>
 

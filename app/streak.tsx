@@ -22,10 +22,7 @@ import { colors, gradients, radius, shadows, space } from '../src/design/tokens'
 import { fontFamily } from '../src/design/typography';
 import { MILES } from '../src/content/us';
 import { useCouple } from '../src/features/pairing/useCouple';
-
-// Mock partner data
-const YOU = { initial: 'Y' };
-const PARTNER = { initial: 'D' };
+import { useIdentity } from '../src/features/profile/useIdentity';
 
 export default function StreakScreen() {
   const router = useRouter();
@@ -33,6 +30,7 @@ export default function StreakScreen() {
   const [frozen, setFrozen] = useState(false);
   const [showToast, setShowToast] = useState('');
   const { couple } = useCouple();
+  const { me, partner } = useIdentity();
 
   const streak = couple?.streak ?? 23;
   const week = [true, true, true, true, true, true, false]; // M-S, today not yet
@@ -131,9 +129,9 @@ export default function StreakScreen() {
             marginTop: 14,
             alignItems: 'center',
           }}>
-            <Tok who={YOU} you size={34} ring />
+            <Tok who={{ initial: me.initial }} you size={34} ring />
             <View style={{ marginLeft: -10 }}>
-              <Tok who={PARTNER} size={34} ring />
+              <Tok who={{ initial: partner.initial, name: partner.name }} size={34} ring />
             </View>
           </View>
         </View>

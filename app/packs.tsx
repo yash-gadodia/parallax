@@ -17,11 +17,13 @@ import TopBar from '../src/components/TopBar';
 import { Icon, ICONS } from '../src/components/Icon';
 import { DawnBlobs } from '../src/components/DawnBlobs';
 import { usePurchases } from '../src/features/purchases/usePurchases';
+import { useIdentity } from '../src/features/profile/useIdentity';
 
 export default function PacksScreen() {
   const router = useRouter();
   const plus = usePurchases((s) => s.isPro);
   const insets = useSafeAreaInsets();
+  const { partner } = useIdentity();
 
   const handlePackPress = (packId: string) => {
     router.push(`/packDetail?id=${packId}`);
@@ -85,11 +87,11 @@ export default function PacksScreen() {
                   >
                     Plus
                   </Text>
-                  {', every pack is unlocked. Send Dani any drop you like.'}
+                  {`, every pack is unlocked. Send ${partner.name} any drop you like.`}
                 </>
               ) : (
                 <>
-                  {'Send Dani a themed drop whenever you want, the daily one\'s free, the rest are '}
+                  {`Send ${partner.name} a themed drop whenever you want, the daily one's free, the rest are `}
                   <Text
                     style={{
                       color: colors.p1Deep,
@@ -172,7 +174,7 @@ export default function PacksScreen() {
                     marginBottom: 16,
                   }}
                 >
-                  Every pack, unlimited drops, full history, shared with Dani. Manage anytime in settings.
+                  {`Every pack, unlimited drops, full history, shared with ${partner.name}. Manage anytime in settings.`}
                 </Text>
                 <Btn
                   kind="soft"
@@ -200,7 +202,7 @@ export default function PacksScreen() {
                     marginBottom: 16,
                   }}
                 >
-                  Every pack, unlimited drops, your full wavelength history. $4.99/mo, covers you and Dani.
+                  {`Every pack, unlimited drops, your full wavelength history. $4.99/mo, covers you and ${partner.name}.`}
                 </Text>
                 <Btn
                   kind="us"

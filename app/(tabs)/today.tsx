@@ -29,12 +29,9 @@ import { useCouple } from '../../src/features/pairing/useCouple';
 import { useActivity } from '../../src/features/engagement/useActivity';
 import { useSession } from '../../src/features/auth/useSession';
 import { useProfile } from '../../src/features/profile/useProfile';
+import { useIdentity } from '../../src/features/profile/useIdentity';
 import { selectDropForSpice, normaliseSpiceLevel } from '../../src/domain/spice';
 import type { SpiceLevel } from '../../src/domain/spice';
-
-// Identity definitions
-const YOU = { name: 'you', initial: 'Y' };
-const PAR = { name: 'Dani', initial: 'D' };
 
 export default function TodayScreen() {
   const router = useRouter();
@@ -47,6 +44,7 @@ export default function TodayScreen() {
   const { couple } = useCouple();
   const { items: dbActivity, unreadCount } = useActivity(couple?.id || null);
   const { spiceLevel } = useProfile();
+  const { me, partner } = useIdentity();
   const activeDrop = selectDropForSpice(DROP, normaliseSpiceLevel(spiceLevel) as SpiceLevel);
 
   const streak = couple?.streak ?? 23;
@@ -214,7 +212,7 @@ export default function TodayScreen() {
                 accessibilityHint="View and edit your profile"
                 hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
               >
-                <Tok who={YOU} you size={36} decorative />
+                <Tok who={{ name: me.name, initial: me.initial }} you size={36} decorative />
               </Press>
             </View>
           </View>
@@ -256,7 +254,7 @@ export default function TodayScreen() {
                     >
                       {isPending
                         ? 'Invite your partner to pair'
-                        : 'Dani already played today'}
+                        : `${partner.name} already played today`}
                     </Text>
                     <Kick c={colors.p2Deep} style={{ marginTop: 2 }}>
                       {isPending
@@ -491,7 +489,7 @@ export default function TodayScreen() {
                     fontFamily: fontFamily.ui,
                   }}
                 >
-                  Send Dani a pack
+                  Send {partner.name} a pack
                 </Text>
                 <Kick style={{ marginTop: 3 }}>
                   themed drops · deep, spicy, silly & more

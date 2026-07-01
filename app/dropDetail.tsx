@@ -17,9 +17,11 @@ import Card from '../src/components/Card';
 import Chip from '../src/components/Chip';
 import GradientText from '../src/components/GradientText';
 import { DawnBlobs } from '../src/components/DawnBlobs';
+import { useIdentity } from '../src/features/profile/useIdentity';
 
 export default function DropDetailScreen() {
   const router = useRouter();
+  const { partner } = useIdentity();
   const params = useLocalSearchParams();
   const code = typeof params.code === 'string' ? params.code : undefined;
 
@@ -173,13 +175,13 @@ export default function DropDetailScreen() {
                       </Chip>
                     </View>
 
-                    {/* PAR (Dani) column */}
+                    {/* partner column */}
                     <View style={{ flex: 1 }}>
                       <Kick
                         c={colors.p2Deep}
                         style={{ marginBottom: 6 }}
                       >
-                        Dani
+                        {partner.name}
                       </Kick>
                       <Chip soft>
                         {r[2]}

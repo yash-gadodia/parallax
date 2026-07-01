@@ -12,6 +12,7 @@ import { DawnBlobs } from '../src/components/DawnBlobs';
 import { colors, gradients, space } from '../src/design/tokens';
 import { useSession } from '../src/features/auth/useSession';
 import { useCouple } from '../src/features/pairing/useCouple';
+import { useIdentity } from '../src/features/profile/useIdentity';
 import { useDropState } from '../src/features/drops/useDropState';
 import { usePlayStore } from '../src/store/play';
 
@@ -20,6 +21,7 @@ export default function WaitingScreen() {
   const router = useRouter();
   const { session } = useSession();
   const { couple } = useCouple();
+  const { partner } = useIdentity();
   const coupleDropId = usePlayStore((s) => s.coupleDropId);
   const blobAnim = React.useRef(new Animated.Value(0)).current;
   const dotAnims = React.useRef([
@@ -187,7 +189,7 @@ export default function WaitingScreen() {
           c={colors.ink}
           style={{ marginTop: 12, marginBottom: 10, textAlign: 'center' }}
         >
-          looking for Dani…
+          looking for {partner.name}…
         </Serif>
 
         {/* Description text */}
@@ -196,7 +198,7 @@ export default function WaitingScreen() {
             c={colors.inkSoft}
             style={{ fontSize: 15, lineHeight: 22, textAlign: 'center' }}
           >
-            Your two views are still apart. The moment Dani plays, they snap into focus, that's the reveal.
+            Your two views are still apart. The moment {partner.name} plays, they snap into focus, that's the reveal.
           </Kick>
         </View>
 

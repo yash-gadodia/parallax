@@ -11,6 +11,7 @@ import Press from '../../src/components/Press';
 import { Serif } from '../../src/components/Text';
 import { colors, space, radius, gradients } from '../../src/design/tokens';
 import { fontFamily } from '../../src/design/typography';
+import { useIdentity } from '../../src/features/profile/useIdentity';
 
 const perks = [
   {
@@ -32,6 +33,7 @@ const perks = [
 
 export default function PlusSheet() {
   const router = useRouter();
+  const { partner } = useIdentity();
 
   const handleStart = async () => {
     // Real build: present RevenueCat's hosted paywall; on unlock → success.
@@ -65,7 +67,7 @@ export default function PlusSheet() {
               fontFamily: fontFamily.ui,
             }}
           >
-            $4.99/mo · covers you and Dani
+            {`$4.99/mo · covers you and ${partner.name}`}
           </Text>
         </View>
 

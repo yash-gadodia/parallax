@@ -23,9 +23,7 @@ import { Ring } from '../src/components/Ring';
 import { Mark } from '../src/components/Mark';
 import Toast from '../src/components/Toast';
 import GradientText from '../src/components/GradientText';
-
-const YOU = { initial: 'Y' };
-const PAR = { initial: 'D' };
+import { useIdentity } from '../src/features/profile/useIdentity';
 
 interface HeartParticle {
   id: number;
@@ -36,6 +34,7 @@ interface HeartParticle {
 // WaveWidget: ring @ 83%, subtitle, touchable to open play screen
 function WaveWidget({ onTap, big }: { onTap?: () => void; big?: boolean }) {
   const widgetHeight = big ? 158 : 150;
+  const { partner } = useIdentity();
 
   return (
     <Press onPress={onTap} scale={!!onTap}>
@@ -120,7 +119,7 @@ function WaveWidget({ onTap, big }: { onTap?: () => void; big?: boolean }) {
                 lineHeight: 14.5 * 1.2,
               }}
             >
-              Dani played 💌
+              {partner.name} played 💌
             </Text>
             <Text
               allowFontScaling={false}
@@ -290,6 +289,7 @@ function HeartRain({ x, emoji }: { x: number; emoji: string }) {
 export default function HomeScreen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
+  const { partner } = useIdentity();
   const [hearts, setHearts] = useState<HeartParticle[]>([]);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
@@ -302,7 +302,7 @@ export default function HomeScreen() {
       emoji: emojis[i % 4],
     }));
     setHearts((h) => [...h, ...burst]);
-    setToastMsg('Dani felt that 💞');
+    setToastMsg(`${partner.name} felt that 💞`);
 
     setTimeout(() => {
       setHearts((h) => h.filter((x) => !burst.find((b) => b.id === x.id)));

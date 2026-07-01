@@ -22,11 +22,10 @@ import TopBar from '../src/components/TopBar';
 import { DawnBlobs } from '../src/components/DawnBlobs';
 import GradientText from '../src/components/GradientText';
 import Toast from '../src/components/Toast';
-
-const YOU = { initial: 'Y' };
-const PAR = { initial: 'D' };
+import { useIdentity } from '../src/features/profile/useIdentity';
 
 function WaveWidget({ onTap, big }: { onTap?: () => void; big?: boolean }) {
+  const { partner } = useIdentity();
   return (
     <Press onPress={onTap} scale={!!onTap}>
       <View
@@ -115,7 +114,7 @@ function WaveWidget({ onTap, big }: { onTap?: () => void; big?: boolean }) {
                 fontFamily: fontFamily.ui,
               }}
             >
-              Dani played 💌
+              {partner.name} played 💌
             </Text>
             <Text
               allowFontScaling={false}
@@ -188,10 +187,11 @@ function PingWidget({ onTap }: { onTap?: () => void }) {
 export default function WidgetSetupScreen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
+  const { partner } = useIdentity();
   const [pingToast, setPingToast] = useState<string | null>(null);
 
   const handlePing = () => {
-    setPingToast('Dani felt that 💞');
+    setPingToast(`${partner.name} felt that 💞`);
     setTimeout(() => setPingToast(null), 2200);
   };
 
@@ -224,7 +224,7 @@ export default function WidgetSetupScreen() {
 
           {/* Hero headline */}
           <Serif s={38} style={{ marginTop: 10, marginBottom: 8 }}>
-            See Dani all day, not just in the app.
+            See {partner.name} all day, not just in the app.
           </Serif>
 
           {/* Subheader */}
@@ -239,7 +239,7 @@ export default function WidgetSetupScreen() {
             }}
           >
             A little piece of <Text style={{ fontStyle: 'italic', color: colors.inkSoft }}>us</Text> on your home screen.
-            Your wavelength updates live, and one tap sends Dani a "thinking of you."
+            Your wavelength updates live, and one tap sends {partner.name} a "thinking of you."
           </Text>
 
           {/* Preview on a mini wallpaper */}

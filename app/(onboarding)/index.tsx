@@ -27,19 +27,13 @@ import { useUiStore } from '../../src/store/ui';
 import { useOnboardingStore } from '../../src/store/onboarding';
 import { useSession } from '../../src/features/auth/useSession';
 import { useCouple } from '../../src/features/pairing/useCouple';
+import { useIdentity } from '../../src/features/profile/useIdentity';
 import { createCouple, joinCouple } from '../../src/features/pairing/pairingActions';
 import { supabase } from '../../src/lib/supabase';
 import { requestPermissions, scheduleDailyNudge, registerPushToken } from '../../src/features/notifications';
 import { track, EVENTS } from '../../src/lib/analytics';
 
 const TAGLINE = 'mind the parallax error';
-
-interface User {
-  initial: string;
-}
-
-const YOU: User = { initial: 'Y' };
-const PAR: User = { initial: 'D' };
 
 // Progress dots component
 function ProgressDots({ current, total }: { current: number; total: number }) {
@@ -133,10 +127,11 @@ function Step0Welcome({ onNext }: { onNext: () => void }) {
 
 // Step 1: How it works
 function Step1HowItWorks({ onNext }: { onNext: () => void }) {
+  const { me, partner } = useIdentity();
   const rows = [
     {
       color: colors.p1,
-      who: YOU,
+      who: { initial: me.initial },
       showPeek: false,
       title: 'Answer honestly',
       subtitle:
@@ -144,7 +139,7 @@ function Step1HowItWorks({ onNext }: { onNext: () => void }) {
     },
     {
       color: colors.p2,
-      who: PAR,
+      who: { initial: partner.initial },
       showPeek: false,
       title: 'Call their answer',
       subtitle:
@@ -485,7 +480,7 @@ function Step3PairUp({
             fontFamily: fontFamily.ui,
           }}
         >
-          Send Dani your invite link. Parallax only works once you're both in.
+          Send your partner the invite link. Parallax only works once you're both in.
         </Text>
 
         {!showJoinInput ? (
@@ -554,7 +549,7 @@ function Step3PairUp({
               disabled={!inviteCode || creatingCouple}
               sub="opens messages"
             >
-              Send Dani the link
+              Send your partner the link
             </Btn>
             <Press onPress={() => setShowJoinInput(true)} scale={false}>
               <Text
@@ -607,6 +602,7 @@ function Step3PairUp({
 function Step4Joined({ onNext, hasSession }: { onNext: () => void; hasSession: boolean }) {
   const router = useRouter();
   const { status } = useCouple();
+  const { me, partner } = useIdentity();
   // Demo path (no session): show scripted celebration immediately.
   // Real path (session): wait for couple to become active via realtime/poll.
   const isActive = !hasSession || status === 'active';
@@ -652,9 +648,9 @@ function Step4Joined({ onNext, hasSession }: { onNext: () => void; hasSession: b
     <SafeAreaViewContext style={styles.screenContainer}>
       <View style={[styles.screenContent, styles.centeredContent]}>
         <View style={styles.avatarOverlap}>
-          <Tok who={YOU} you size={70} ring />
+          <Tok who={{ initial: me.initial }} you size={70} ring />
           <View style={{ marginLeft: -22 }}>
-            <Tok who={PAR} size={70} ring />
+            <Tok who={{ initial: partner.initial, name: partner.name }} size={70} ring />
           </View>
         </View>
 
@@ -662,7 +658,7 @@ function Step4Joined({ onNext, hasSession }: { onNext: () => void; hasSession: b
           🎉
         </Text>
         <Serif s={42} italic>
-          Dani joined!
+          {partner.name} joined!
         </Serif>
         <Text
           allowFontScaling={false}

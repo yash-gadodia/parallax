@@ -20,9 +20,7 @@ import { Kick, Serif } from '../src/components/Text';
 import Press from '../src/components/Press';
 import Btn from '../src/components/Btn';
 import { DawnBlobs } from '../src/components/DawnBlobs';
-
-const YOU = { initial: 'Y' };
-const PAR = { initial: 'D' };
+import { useIdentity } from '../src/features/profile/useIdentity';
 
 interface Confetti {
   id: number;
@@ -34,6 +32,7 @@ interface Confetti {
 export default function PlusSuccessScreen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
+  const { partner } = useIdentity();
 
   const hearts = useMemo<Confetti[]>(
     () =>
@@ -160,8 +159,7 @@ export default function PlusSuccessScreen() {
               fontFamily: fontFamily.ui,
             }}
           >
-            Every pack is unlocked, drops are unlimited, and your full history
-            is saved, for you and Dani.
+            {`Every pack is unlocked, drops are unlimited, and your full history is saved, for you and ${partner.name}.`}
           </Text>
 
           {/* Action buttons */}

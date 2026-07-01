@@ -30,18 +30,17 @@ import GradientText from '../src/components/GradientText';
 import { DawnBlobs } from '../src/components/DawnBlobs';
 import { useSession } from '../src/features/auth/useSession';
 import { useCouple } from '../src/features/pairing/useCouple';
+import { useIdentity } from '../src/features/profile/useIdentity';
 import { fetchReveal } from '../src/features/drops/dropActions';
 import type { RevealScore } from '../src/domain/reveal';
 import type { PromptAnswers } from '../src/domain/reveal';
 import { track, EVENTS } from '../src/lib/analytics';
 
-const YOU = { initial: 'Y' };
-const PAR = { initial: 'D' };
-
 export default function RevealScreen() {
   const router = useRouter();
   const { session } = useSession();
   const { couple } = useCouple();
+  const { partner } = useIdentity();
   const playState = usePlayStore();
   const coupleDropId = playState.coupleDropId;
 
@@ -302,7 +301,7 @@ export default function RevealScreen() {
                         bg: 'rgba(255,142,122,0.14)',
                       },
                       {
-                        label: 'Dani',
+                        label: partner.name,
                         choice: theirChoice,
                         color: colors.p2Deep,
                         bg: 'rgba(157,149,245,0.16)',
