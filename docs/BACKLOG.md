@@ -50,11 +50,22 @@ The shared task list. Plain-English, owner-tagged, and the Claude agent reads & 
 
 ### (Claude) — buildable now
 
-_All deep-audit + phase-2 items shipped (2026-06-24, commits `cbe4434`…`9b144ef`). The only remaining account-deletion piece needs admin creds → reassigned to Yash below. Add a new request and Claude will pick it up._
+_From the 2026-07-02 E2E pass — details in `docs/E2E_FINDINGS_2026-07-02.md`._
+
+- [ ] **(Claude)** F2: stop calling `sim_partner_submit` unconditionally in `submitMyAnswers` — it always throws for unpaired couples (FK violation), killing the streak increment + reveal notification; and for paired couples it would overwrite the partner's real answers. Guard/remove the client call (pairs with the existing (Yash) "gate the RPC" item).
+- [ ] **(Claude)** F3: hydrate Today's played/revealed state from the server (`couple_drops` + own `answers`) — currently client-only Zustand, so a relaunch forgets you played and hides the reveal.
+- [ ] **(Claude)** F4: make the daily-drop day boundary user-local (device tz passed to `ensure_today_drop`) instead of server UTC — SG users currently roll over at 8am.
+- [ ] **(Claude)** F6: debounce/disable option taps during the answer→hunch phase transition (tap can register on the wrong phase).
+- [ ] **(Claude)** F7: clean up jest act() warnings (signup/onboarding/wrapped tests) — pristine output rule.
+- [ ] **(Claude)** Android fidelity pass once iOS is solid: `eas build -p android` works from the same codebase; needs shadows→elevation, blur + font/lineHeight checks per screen (first preview APK built 2026-07-02).
+- [~] **(Claude)** F1: reanimated 4.3.1→4.5.0 + worklets 0.10.1 to fix the SIGSEGV UI-thread race (upstream #9293/#9402) — deps upgraded, tsc/jest/export green; native rebuild + crash-soak verification in flight.
+
+### (Dani) — from the E2E pass
+- [ ] **(Dani)** F5: today's drop is hardcoded ("DROP 27 · soft launch", day says SUNDAY forever, fake archive) — decide the real daily-content rotation (ties into the existing prompt-packs item).
 
 ## In progress
 
-_(nothing right now)_
+_(F1 reanimated upgrade verification — see above)_
 
 ## Done
 - [x] **(Claude)** Fix `select_partner_profile` RLS — unqualified `id` in the couples subquery shadowed `profiles.id` (bound to `couples.id`), so the partner check was always false and a member could never read their partner's `display_name` (app fell back to hardcoded "Dani"). `0013_fix_partner_profile_rls.sql` + `partner_profile_test.sql` pgTAP (full suite 112 ✓), pushed to prod & **verified live** (review account now reads partner "Sam") (`37b80b3`)
