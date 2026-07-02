@@ -693,7 +693,10 @@ function Step4Joined({ onNext, hasSession }: { onNext: () => void; hasSession: b
             hunches the moment they join.
           </Text>
           <View style={{ marginTop: 30, width: '100%' }}>
-            <Btn kind="us" onPress={() => router.replace('/(tabs)/today')}>
+            {/* Ritual anchoring (P2.4): pending users go through the
+                notify-time step too — it was silently skipped before,
+                leaving most new users with no daily reminder at all. */}
+            <Btn kind="us" onPress={onNext}>
               Answer today's drop →
             </Btn>
           </View>

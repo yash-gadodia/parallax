@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Redirect } from 'expo-router';
 import { ScrollView, View, Text, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -60,6 +61,11 @@ export default function Gallery() {
   const [ringKey, setRingKey] = useState(0);
   const [sheetOpen, setSheetOpen] = useState(false);
   const { toast, fireToast } = useUiStore();
+
+  // Dev-only component storybook — never a reachable surface in production.
+  if (!__DEV__) {
+    return <Redirect href="/" />;
+  }
 
   return (
     <LinearGradient

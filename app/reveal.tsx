@@ -137,9 +137,6 @@ export default function RevealScreen() {
     safeBack(router);
   };
 
-  const handleThreadOpen = (promptId: string) => {
-    router.push(`/thread?promptId=${promptId}`);
-  };
 
   // Live session, no server data yet: honest loading / error — never a fake reveal.
   if (!liveReady) {
@@ -482,31 +479,6 @@ export default function RevealScreen() {
                       {prompt.note[noteIdx]}
                     </Text>
 
-                    <Press
-                      onPress={() => handleThreadOpen(prompt.id)}
-                      scale={false}
-                      style={{ width: 'auto' }}
-                      accessibilityLabel="Open discussion thread"
-                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                    >
-                      <View
-                        style={{
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          gap: 5,
-                          paddingVertical: 5,
-                          paddingHorizontal: 10,
-                          borderRadius: radius.pill,
-                          backgroundColor: colors.sunken,
-                        }}
-                      >
-                        <Icon
-                          d={ICONS.chat}
-                          size={13}
-                          color={colors.inkSoft}
-                        />
-                      </View>
-                    </Press>
                   </View>
 
                   {/* Why section (authored content only — no fabricated science lines) */}
