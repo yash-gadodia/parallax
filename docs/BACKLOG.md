@@ -68,6 +68,9 @@ _From the 2026-07-02 E2E pass — details in `docs/E2E_FINDINGS_2026-07-02.md`._
 _(F1 reanimated upgrade verification — see above)_
 
 ## Done
+- [x] **(Claude)** IMPROVEMENT_PLAN P0 complete + deployed to prod (migrations 0014-0017, refocus + notify-partner edge fns): server-driven reveal/wave/streak, couple-local days, honest states everywhere, solo Refocus, auth dead-ends, fabricated signals removed (`d96c5df`..`e573cdb`)
+- [x] **(Claude)** 90-drop/270-prompt rotating content catalog live on prod (0015) — spice-aware, no repeats (`8d31f07`)
+- [x] **(Claude)** nudge push + 1/day rate limit (0016), notify-partner actor fix, real streak surface + milestone events (0017), honest share card + real Wrapped (`e573cdb`)
 - [x] **(Claude)** Fix `select_partner_profile` RLS — unqualified `id` in the couples subquery shadowed `profiles.id` (bound to `couples.id`), so the partner check was always false and a member could never read their partner's `display_name` (app fell back to hardcoded "Dani"). `0013_fix_partner_profile_rls.sql` + `partner_profile_test.sql` pgTAP (full suite 112 ✓), pushed to prod & **verified live** (review account now reads partner "Sam") (`37b80b3`)
 - [x] **(Claude)** Email/password signup + email confirmation (Resend) with Apple/Google
 - [x] **(Claude)** Realtime crash fix (unique channel topics) — verified on device
