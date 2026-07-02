@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react-native';
+import { render, fireEvent } from '@testing-library/react-native';
 import React from 'react';
 import ActivityScreen from '../activity';
 import type { Activity } from '../../src/types/db';
@@ -31,7 +31,51 @@ describe('ActivityScreen', () => {
       items: [],
       markAllRead: jest.fn().mockResolvedValue(undefined),
       loading: false,
+      error: null,
+      refetch: jest.fn(),
     });
+  });
+
+  it('paired: shows skeleton rows (not "Nothing yet") while the feed loads', async () => {
+    mockUseSession.mockReturnValue({ session: { user: { id: 'user-a' } } });
+    mockUseCouple.mockReturnValue({ couple: { id: 'couple-1' } });
+    mockUseActivity.mockReturnValue({
+      items: [],
+      markAllRead: jest.fn().mockResolvedValue(undefined),
+      loading: true,
+      error: null,
+      refetch: jest.fn(),
+    });
+
+    const { getAllByTestId, queryByText } = await render(<ActivityScreen />);
+
+    expect(getAllByTestId('activity-skeleton-row')).toHaveLength(3);
+    expect(queryByText('Nothing yet')).toBeNull();
+    expect(queryByText("that's everything · just you two")).toBeNull();
+  });
+
+  it('paired: shows the warm retryable error state when the feed fetch fails', async () => {
+    mockUseSession.mockReturnValue({ session: { user: { id: 'user-a' } } });
+    mockUseCouple.mockReturnValue({ couple: { id: 'couple-1' } });
+    const refetch = jest.fn();
+    mockUseActivity.mockReturnValue({
+      items: [],
+      markAllRead: jest.fn().mockResolvedValue(undefined),
+      loading: false,
+      error: new Error('offline'),
+      refetch,
+    });
+
+    const { getByText, queryByText } = await render(<ActivityScreen />);
+
+    expect(getByText("hmm, that didn't load")).toBeDefined();
+    expect(
+      getByText("Whatever you and Dani have been up to is safe — we just couldn't reach it.")
+    ).toBeDefined();
+    expect(queryByText('Nothing yet')).toBeNull();
+
+    fireEvent.press(getByText('try again'));
+    expect(refetch).toHaveBeenCalledTimes(1);
   });
 
   it('renders the activity feed with sample data when not paired', async () => {

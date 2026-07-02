@@ -63,10 +63,46 @@ describe('activityFormatter', () => {
       expect(result.who).toBe('us');
     });
 
-    // 'pack' / 'refocus' / 'reveal' have no server-side producer, so their
+    it('maps "refocus" kind (real producer: start_refocus, 0020) with the topic in the body', () => {
+      const activity: Activity = {
+        id: 'activity-refocus',
+        couple_id: 'couple-1',
+        kind: 'refocus',
+        actor: 'user-a',
+        payload: { topic: 'the dishes thing', session_id: 'sess-1' },
+        read_by: [],
+        created_at: '2026-06-22T10:00:00Z',
+      };
+
+      const result = mapActivityToDisplay(activity);
+
+      expect(result.emoji).toBe('💛');
+      expect(result.title).toBe('A refocus session started');
+      expect(result.body).toBe('"the dishes thing" — untangling it together.');
+      expect(result.cta).toBeNull();
+      expect(result.who).toBe('us');
+    });
+
+    it('maps a "refocus" row without a topic payload to the generic body', () => {
+      const activity: Activity = {
+        id: 'activity-refocus-2',
+        couple_id: 'couple-1',
+        kind: 'refocus',
+        actor: 'user-a',
+        payload: null,
+        read_by: [],
+        created_at: '2026-06-22T10:00:00Z',
+      };
+
+      const result = mapActivityToDisplay(activity);
+
+      expect(result.body).toBe('Untangling something together.');
+    });
+
+    // 'pack' / 'reveal' have no server-side producer, so their
     // bespoke copy was removed (no dead promises). If such a row ever appears
     // they render via the generic fallback, never invented copy.
-    it.each(['pack', 'refocus', 'reveal'])(
+    it.each(['pack', 'reveal'])(
       'maps producer-less "%s" kind to the generic fallback',
       (kind) => {
         const activity: Activity = {

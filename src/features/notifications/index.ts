@@ -104,6 +104,22 @@ export async function notifyNudge(coupleId: string): Promise<void> {
   }
 }
 
+// Push a gentle "add your side" to the partner after start_refocus succeeds.
+// The edge function identifies the initiator from the JWT `sub` and targets the
+// OTHER member. No-op without a session (demo/solo mode). Fire-and-forget.
+// GATE: delivers only once push tokens + the deployed edge fn are live.
+export async function notifyRefocus(coupleId: string): Promise<void> {
+  try {
+    const { data } = await supabase.auth.getSession();
+    if (!data.session) return;
+    await supabase.functions.invoke('notify-partner', {
+      body: { couple_id: coupleId, event: 'refocus' },
+    });
+  } catch {
+    // No-op: push failure must never interrupt the refocus flow.
+  }
+}
+
 // Notify the waiting partner (member_a) that someone just joined their couple.
 // Fired right after join_couple succeeds. Fire-and-forget.
 // GATE: delivers only once push tokens + the deployed edge fn are live.

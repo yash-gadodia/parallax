@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { supabase, CoupleHistoryRow } from '../../lib/supabase';
 import { useSession } from '../auth/useSession';
 import { useCouple } from '../pairing/useCouple';
@@ -9,6 +9,7 @@ interface UseCoupleHistoryReturn {
   loading: boolean;
   isSample: boolean;
   error: Error | null;
+  refetch: () => void;
 }
 
 export function useCoupleHistory(): UseCoupleHistoryReturn {
@@ -17,6 +18,7 @@ export function useCoupleHistory(): UseCoupleHistoryReturn {
   const [history, setHistory] = useState<CoupleHistoryRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     const fetchHistory = async () => {
@@ -60,9 +62,17 @@ export function useCoupleHistory(): UseCoupleHistoryReturn {
     };
 
     fetchHistory();
-  }, [session, couple, coupleLoading]);
+  }, [session, couple, coupleLoading, reloadKey]);
+
+  // Retry after a failed fetch: clears the error, re-enters loading, re-runs
+  // the effect. Screens surface this as their honest "try again" action.
+  const refetch = useCallback(() => {
+    setError(null);
+    setLoading(true);
+    setReloadKey((k) => k + 1);
+  }, []);
 
   const isSample = !session || !couple || history.length === ARCHIVE.length;
 
-  return { history, loading: loading || coupleLoading, isSample, error };
+  return { history, loading: loading || coupleLoading, isSample, error, refetch };
 }

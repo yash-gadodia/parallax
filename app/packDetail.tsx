@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -21,7 +21,6 @@ import Card from '../src/components/Card';
 import Btn from '../src/components/Btn';
 import Press from '../src/components/Press';
 import { Icon, ICONS } from '../src/components/Icon';
-import Toast from '../src/components/Toast';
 import { useIdentity } from '../src/features/profile/useIdentity';
 
 export default function PackDetailScreen() {
@@ -29,7 +28,6 @@ export default function PackDetailScreen() {
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams();
   const { partner } = useIdentity();
-  const [toastMsg, setToastMsg] = useState<string | null>(null);
 
   // Resolve pack ID from params, fallback to 'deep'
   const packId = typeof params.id === 'string' ? params.id : 'deep';
@@ -41,13 +39,6 @@ export default function PackDetailScreen() {
 
   const handleBack = () => {
     safeBack(router);
-  };
-
-  const handleSendDrop = () => {
-    setToastMsg(`Sent to ${partner.name} 💌`);
-    setTimeout(() => {
-      safeBack(router);
-    }, 700);
   };
 
   const handleUnlockPlus = () => {
@@ -244,8 +235,8 @@ export default function PackDetailScreen() {
                 }}
               >
                 {locked
-                  ? `A themed drop for when you want to go there. Unlock Plus to send it, you'll both answer + place hunches, same as the daily.`
-                  : `Send it to ${partner.name} and you'll both answer + place hunches, same as the daily drop.`}
+                  ? `A themed drop for when you want to go there. Unlock Plus to peek at every question inside — drops like these land in your daily rotation.`
+                  : `Nothing to send — drops like these land in your daily rotation, and you and ${partner.name} both answer + place hunches, same as always.`}
               </Text>
             </View>
           </View>
@@ -354,27 +345,42 @@ export default function PackDetailScreen() {
             </View>
           </Btn>
         ) : (
-          <Btn kind="us" onPress={handleSendDrop} sub="they'll get a ping">
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <Icon d={ICONS.send} size={17} color="#fff" sw={1.6} />
-              <Text
-                allowFontScaling={false}
-                style={{
-                  fontSize: 16.5,
-                  fontWeight: '700',
-                  color: '#fff',
-                  fontFamily: fontFamily.ui,
-                }}
-              >
-                Send drop to {partner.name}
-              </Text>
-            </View>
-          </Btn>
+          /* No fake sends: drops arrive through the daily rotation, so the
+             honest state here is a note, not a button. */
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              paddingVertical: 16,
+              paddingHorizontal: 18,
+              borderRadius: radius.pill,
+              backgroundColor: colors.surface,
+              borderWidth: 1,
+              borderColor: colors.line,
+              ...shadows.shadow,
+            }}
+          >
+            <Icon d={ICONS.spark} size={16} color={colors.p2Deep} sw={1.6} />
+            <Text
+              allowFontScaling={false}
+              style={{
+                flex: 1,
+                fontSize: 13.5,
+                lineHeight: 13.5 * 1.4,
+                fontWeight: '600',
+                color: colors.inkSoft,
+                fontFamily: fontFamily.ui,
+              }}
+            >
+              {pack.id === 'spicy'
+                ? `these join your rotation once you and ${partner.name} both set your spice to spicy`
+                : `these land in your daily rotation — no sending needed`}
+            </Text>
+          </View>
         )}
       </View>
-
-      {/* Toast */}
-      {toastMsg && <Toast msg={toastMsg} />}
     </View>
   );
 }

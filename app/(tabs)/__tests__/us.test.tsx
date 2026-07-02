@@ -1,5 +1,5 @@
 import React from 'react';
-import { render } from '@testing-library/react-native';
+import { render, fireEvent } from '@testing-library/react-native';
 import UsScreen from '../us';
 import { useCoupleHistory } from '../../../src/features/lovemap/useCoupleHistory';
 
@@ -45,8 +45,68 @@ const THREE_DROPS = [
 
 describe('UsScreen', () => {
   beforeEach(() => {
-    mockUseCoupleHistory.mockReturnValue({ history: THREE_DROPS, isSample: false });
+    mockUseCoupleHistory.mockReturnValue({
+      history: THREE_DROPS,
+      isSample: false,
+      loading: false,
+      error: null,
+      refetch: jest.fn(),
+    });
     mockUseDropEmojis.mockReturnValue({});
+  });
+
+  it('shows the history skeleton (chart, stat trio, rows) while history loads', async () => {
+    mockUseCoupleHistory.mockReturnValue({
+      history: [],
+      isSample: false,
+      loading: true,
+      error: null,
+      refetch: jest.fn(),
+    });
+    const { getByTestId, getAllByTestId, queryByText } = await render(<UsScreen />);
+
+    expect(getByTestId('us-skeleton-chart')).toBeTruthy();
+    expect(getAllByTestId('us-skeleton-stat')).toHaveLength(3);
+    expect(getAllByTestId('us-skeleton-row')).toHaveLength(2);
+    // Neither the empty state nor the chart pops in while loading.
+    expect(queryByText('YOUR STORY STARTS HERE')).toBeNull();
+    expect(queryByText('LAST 7 DROPS')).toBeNull();
+    expect(queryByText('your drop history')).toBeNull();
+  });
+
+  it('shows the warm retryable error state when the history fetch fails', async () => {
+    const refetch = jest.fn();
+    mockUseCoupleHistory.mockReturnValue({
+      history: [],
+      isSample: false,
+      loading: false,
+      error: new Error('network down'),
+      refetch,
+    });
+    const { getByText, queryByText } = await render(<UsScreen />);
+
+    expect(getByText("hmm, that didn't load")).toBeTruthy();
+    expect(
+      getByText("your story with Jordan is safe — we just couldn't reach it.")
+    ).toBeTruthy();
+    expect(queryByText('YOUR STORY STARTS HERE')).toBeNull();
+
+    fireEvent.press(getByText('try again'));
+    expect(refetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('hides the drop-history label when a real couple has no history yet', async () => {
+    mockUseCoupleHistory.mockReturnValue({
+      history: [],
+      isSample: false,
+      loading: false,
+      error: null,
+      refetch: jest.fn(),
+    });
+    const { getByText, queryByText } = await render(<UsScreen />);
+
+    expect(getByText('Your wavelength with Jordan shows up after your first reveal.')).toBeTruthy();
+    expect(queryByText('your drop history')).toBeNull();
   });
 
   it('renders real couple name from useProfile', async () => {

@@ -122,6 +122,23 @@ export interface Learning {
   created_at: string;
 }
 
+// 0020: a two-sided Refocus session. Writes go through the DEFINER RPCs
+// (start_refocus / add_refocus_side); ai_result is written by the refocus
+// edge function with the service role once both sides are in.
+export interface RefocusSession {
+  id: string;
+  couple_id: string;
+  initiator: string;
+  topic: string;
+  initiator_side: string;
+  partner_side: string | null;
+  state: 'waiting_partner' | 'ready' | 'revealed' | 'expired';
+  ai_result: Json | null;
+  created_at: string;
+  partner_joined_at: string | null;
+  revealed_at: string | null;
+}
+
 export interface CoupleHistoryRow {
   date: string;
   code: string;
@@ -179,6 +196,11 @@ export interface Database {
         Row: Learning;
         Insert: Omit<Learning, 'id' | 'created_at'>;
         Update: Partial<Omit<Learning, 'id' | 'created_at'>>;
+      };
+      refocus_sessions: {
+        Row: RefocusSession;
+        Insert: Omit<RefocusSession, 'id' | 'created_at'>;
+        Update: Partial<Omit<RefocusSession, 'id' | 'created_at'>>;
       };
     };
     Functions: {
@@ -248,6 +270,21 @@ export interface Database {
       couple_history: {
         Args: { p_couple: string };
         Returns: CoupleHistoryRow[];
+      };
+      start_refocus: {
+        Args: {
+          p_couple: string;
+          p_topic: string;
+          p_side: string;
+        };
+        Returns: string;
+      };
+      add_refocus_side: {
+        Args: {
+          p_session: string;
+          p_side: string;
+        };
+        Returns: void;
       };
       unpair: {
         Args: { p_couple: string };

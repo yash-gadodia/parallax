@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { supabase, Learning } from '../../lib/supabase';
 import { useSession } from '../auth/useSession';
 import { useCouple } from '../pairing/useCouple';
@@ -9,6 +9,7 @@ interface UseLearningsReturn {
   loading: boolean;
   isSample: boolean;
   error: Error | null;
+  refetch: () => void;
 }
 
 export function useLearnings(): UseLearningsReturn {
@@ -17,6 +18,7 @@ export function useLearnings(): UseLearningsReturn {
   const [items, setItems] = useState<Learning[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     const fetchLearnings = async () => {
@@ -75,9 +77,17 @@ export function useLearnings(): UseLearningsReturn {
     };
 
     fetchLearnings();
-  }, [session, couple, coupleLoading]);
+  }, [session, couple, coupleLoading, reloadKey]);
+
+  // Retry after a failed fetch: clears the error, re-enters loading, re-runs
+  // the effect. Screens surface this as their honest "try again" action.
+  const refetch = useCallback(() => {
+    setError(null);
+    setLoading(true);
+    setReloadKey((k) => k + 1);
+  }, []);
 
   const isSample = !session || !couple || items.some((i) => LEARNINGS.find((l) => l.id === i.id));
 
-  return { items, loading: loading || coupleLoading, isSample, error };
+  return { items, loading: loading || coupleLoading, isSample, error, refetch };
 }

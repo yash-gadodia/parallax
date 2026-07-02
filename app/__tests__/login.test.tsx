@@ -8,6 +8,7 @@ jest.mock('../../src/features/auth/authActions', () => ({
   signInWithGoogle: jest.fn(),
   requestPasswordReset: jest.fn(),
   isValidEmail: jest.requireActual('../../src/features/auth/authActions').isValidEmail,
+  humanAuthError: jest.requireActual('../../src/features/auth/authActions').humanAuthError,
 }));
 
 import { requestPasswordReset } from '../../src/features/auth/authActions';

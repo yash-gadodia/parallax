@@ -5,6 +5,7 @@ jest.mock('../../src/features/auth/authActions', () => ({
   signUpWithEmail: jest.fn(),
   resendConfirmationEmail: jest.fn(),
   isValidEmail: jest.requireActual('../../src/features/auth/authActions').isValidEmail,
+  humanAuthError: jest.requireActual('../../src/features/auth/authActions').humanAuthError,
 }));
 
 import { signUpWithEmail, resendConfirmationEmail } from '../../src/features/auth/authActions';

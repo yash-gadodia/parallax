@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, Animated as RNAnimated } from 'react-native';
+import { View, Text, ActivityIndicator, Animated as RNAnimated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -39,7 +39,7 @@ export default function WrappedScreen() {
   const router = useRouter();
   const { me, partner } = useIdentity();
   const { couple } = useCouple();
-  const { history, loading } = useCoupleHistory();
+  const { history, loading, error, refetch } = useCoupleHistory();
   const [slideIdx, setSlideIdx] = useState(0);
   const barAnim = useRef(new RNAnimated.Value(0)).current;
 
@@ -132,6 +132,108 @@ export default function WrappedScreen() {
       setSlideIdx(slideIdx - 1);
     }
   };
+
+  // Still counting the month: hold on the brand gradient instead of flashing
+  // a zero-drop recap (or the not-yet state) while history loads.
+  if (loading) {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#000' }}>
+        <LinearGradient
+          colors={['#FF8E7A', '#9D95F5']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={{
+            flex: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 14,
+          }}
+        >
+          <ActivityIndicator color="#fff" size="large" />
+          <Text
+            allowFontScaling={false}
+            style={{
+              fontSize: 14.5,
+              fontWeight: '600',
+              color: 'rgba(255,255,255,0.92)',
+              lineHeight: 20,
+              fontFamily: fontFamily.ui,
+            }}
+          >
+            pulling your month together…
+          </Text>
+        </LinearGradient>
+      </SafeAreaView>
+    );
+  }
+
+  // The fetch failed: say so honestly — never the "play more drops" copy when
+  // the real story just didn't load.
+  if (error) {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#000' }}>
+        <LinearGradient
+          colors={['#FF8E7A', '#9D95F5']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={{
+            flex: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingHorizontal: 34,
+          }}
+        >
+          <Press
+            onPress={handleClose}
+            scale={false}
+            accessibilityLabel="Close wrapped"
+            style={{
+              position: 'absolute',
+              top: 50,
+              right: 14,
+              width: 34,
+              height: 34,
+              zIndex: 30,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Icon d={ICONS.close} size={17} color="#fff" sw={2} />
+          </Press>
+
+          <Text allowFontScaling={false} style={{ fontSize: 44, lineHeight: 50 }}>
+            🫧
+          </Text>
+          <Serif
+            s={36}
+            c="#fff"
+            style={{ lineHeight: 41, marginTop: 16, textAlign: 'center' }}
+          >
+            hmm, that didn't load
+          </Serif>
+          <Text
+            allowFontScaling={false}
+            style={{
+              fontSize: 15,
+              color: 'rgba(255,255,255,0.92)',
+              lineHeight: 22,
+              marginTop: 12,
+              maxWidth: 300,
+              textAlign: 'center',
+              fontFamily: fontFamily.ui,
+            }}
+          >
+            {`your month with ${partner.name} is safe — we just couldn't reach it.`}
+          </Text>
+          <View style={{ marginTop: 26, width: '100%' }}>
+            <Btn kind="soft" onPress={refetch}>
+              try again
+            </Btn>
+          </View>
+        </LinearGradient>
+      </SafeAreaView>
+    );
+  }
 
   // Not enough real reveals this month for a recap: the warm not-yet state.
   if (!loading && stats.count < MIN_DROPS_FOR_WRAPPED) {

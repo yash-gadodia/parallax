@@ -17,9 +17,7 @@ import { Kick } from '../src/components/Text';
 import TopBar from '../src/components/TopBar';
 import Tok from '../src/components/Tok';
 import Btn from '../src/components/Btn';
-import Press from '../src/components/Press';
 import Toast from '../src/components/Toast';
-import { Icon, ICONS } from '../src/components/Icon';
 import { DawnBlobs } from '../src/components/DawnBlobs';
 import { useProfile } from '../src/features/profile/useProfile';
 
@@ -29,26 +27,28 @@ export default function EditProfileScreen() {
   const { name: profileName, partnerName, togetherSince, updateProfile } = useProfile();
   const [name, setName] = useState('');
   const [since, setSince] = useState('');
-  const [showCameraToast, setShowCameraToast] = useState(false);
-  const [showSaveToast, setShowSaveToast] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
 
   useEffect(() => {
     setName(profileName);
     setSince(togetherSince || 'February 2024');
   }, [profileName, togetherSince]);
 
-  const handleCameraPress = () => {
-    setShowCameraToast(true);
-    setTimeout(() => setShowCameraToast(false), 2000);
-  };
-
   const handleSaveChanges = async () => {
-    await updateProfile(name, since);
-    setShowSaveToast(true);
-    setTimeout(() => {
-      setShowSaveToast(false);
-      safeBack(router);
-    }, 2000);
+    setSaving(true);
+    try {
+      await updateProfile(name, since);
+      setToastMsg('Changes saved');
+      setTimeout(() => {
+        setToastMsg(null);
+        safeBack(router);
+      }, 2000);
+    } catch {
+      setSaving(false);
+      setToastMsg("couldn't save that — try again in a sec");
+      setTimeout(() => setToastMsg(null), 2200);
+    }
   };
 
   const handleBack = () => {
@@ -160,62 +160,26 @@ export default function EditProfileScreen() {
             marginBottom: 24,
           }}
         >
-          <View style={{ position: 'relative' }}>
-            {/* Avatar */}
-            <Tok
-              who={{ initial: (name[0] || 'Y').toUpperCase() }}
-              size={88}
-              you
-              ring
-            />
-
-            {/* Camera overlay button */}
-            <Press
-              onPress={handleCameraPress}
-              scale={false}
-              style={{
-                position: 'absolute',
-                bottom: -2,
-                right: -2,
-                width: 32,
-                height: 32,
-              }}
-            >
-              <View
-                style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: radius.pill,
-                  backgroundColor: colors.ink,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  borderWidth: 3,
-                  borderColor: colors.surface,
-                }}
-              >
-                <Icon
-                  d="M5 7h2l1-1.5h4L13 7h2a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1V8a1 1 0 011-1zM10 13a2.3 2.3 0 100-4.6 2.3 2.3 0 000 4.6z"
-                  size={15}
-                  color="#fff"
-                  sw={1.5}
-                />
-              </View>
-            </Press>
-          </View>
-
-          {/* Change photo link */}
-          <Press onPress={handleCameraPress} scale={false} style={{ marginTop: 10 }}>
-            <Text
-              allowFontScaling={false}
-              style={{
-                fontSize: 13.5,
-                fontWeight: '700',
-                color: colors.p2Deep,
-              }}
-            >
-              Change photo
-            </Text>
-          </Press>
+          {/* Avatar — your initial in your coral. (No photo-picker stub: photos
+              aren't a real feature yet, so nothing here pretends they are.) */}
+          <Tok
+            who={{ initial: (name[0] || 'Y').toUpperCase() }}
+            size={88}
+            you
+            ring
+          />
+          <Text
+            allowFontScaling={false}
+            style={{
+              marginTop: 10,
+              fontSize: 12.5,
+              lineHeight: 12.5 * 1.4,
+              color: colors.inkMute,
+              fontFamily: fontFamily.ui,
+            }}
+          >
+            your initial is your face here, for now
+          </Text>
         </View>
 
         {/* Form fields */}
@@ -326,20 +290,12 @@ export default function EditProfileScreen() {
             opacity: 0.9,
           }}
         />
-        <Btn kind="us" onPress={handleSaveChanges}>
-          Save changes
+        <Btn kind="us" onPress={handleSaveChanges} disabled={saving}>
+          {saving ? 'Saving…' : 'Save changes'}
         </Btn>
       </View>
 
-      {/* Camera toast */}
-      {showCameraToast && (
-        <Toast msg="Camera roll, pick a photo" />
-      )}
-
-      {/* Save toast */}
-      {showSaveToast && (
-        <Toast msg="Changes saved" />
-      )}
+      {toastMsg && <Toast msg={toastMsg} />}
     </View>
   );
 }

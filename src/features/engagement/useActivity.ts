@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { supabase, Activity } from '../../lib/supabase';
-import { useUiStore } from '../../store/ui';
 
 // supabase.channel(topic) dedupes by topic; a unique suffix per subscriber keeps
 // two simultaneous mounts (Today's bell + the Activity screen) from sharing one
@@ -11,14 +10,17 @@ interface UseActivityReturn {
   items: Activity[];
   unreadCount: number;
   loading: boolean;
+  error: Error | null;
+  refetch: () => void;
   markAllRead: () => Promise<void>;
 }
 
 export function useActivity(coupleId: string | null): UseActivityReturn {
   const [items, setItems] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
   const [userId, setUserId] = useState<string | null>(null);
-  const fireToast = useUiStore(s => s.fireToast);
 
   useEffect(() => {
     const getUser = async () => {
@@ -54,6 +56,7 @@ export function useActivity(coupleId: string | null): UseActivityReturn {
         }
 
         setItems((data || []) as Activity[]);
+        setError(null);
         setLoading(false);
 
         channel = supabase
@@ -75,8 +78,9 @@ export function useActivity(coupleId: string | null): UseActivityReturn {
           .subscribe();
       } catch (err) {
         if (cancelled) return;
-        const msg = err instanceof Error ? err.message : 'Failed to fetch activity';
-        fireToast(`Error: ${msg}`);
+        // No toast here — the Activity screen renders an honest in-place
+        // error state; passive consumers (Today's bell) fail quietly.
+        setError(err instanceof Error ? err : new Error('Failed to fetch activity'));
         setLoading(false);
       }
     };
@@ -89,7 +93,7 @@ export function useActivity(coupleId: string | null): UseActivityReturn {
         supabase.removeChannel(channel);
       }
     };
-  }, [coupleId, fireToast]);
+  }, [coupleId, reloadKey]);
 
   const unreadCount = items.filter(a => {
     return userId && a.read_by && !a.read_by.includes(userId);
@@ -122,15 +126,26 @@ export function useActivity(coupleId: string | null): UseActivityReturn {
         );
       }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Failed to mark as read';
-      fireToast(`Error: ${msg}`);
+      // Rethrow: the manual mark-read button shows its own warm toast; the
+      // background auto-read swallows it silently. The hook never toasts.
+      throw err instanceof Error ? err : new Error('Failed to mark activity read');
     }
+  };
+
+  // Retry after a failed fetch: clears the error, re-enters loading, re-runs
+  // the effect (which also re-subscribes the realtime channel).
+  const refetch = () => {
+    setError(null);
+    setLoading(true);
+    setReloadKey(k => k + 1);
   };
 
   return {
     items,
     unreadCount,
     loading,
+    error,
+    refetch,
     markAllRead,
   };
 }

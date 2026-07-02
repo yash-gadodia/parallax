@@ -26,6 +26,7 @@ import {
   signInWithGoogle,
   requestPasswordReset,
   isValidEmail,
+  humanAuthError,
 } from '../src/features/auth/authActions';
 
 export default function LoginScreen() {
@@ -58,7 +59,7 @@ export default function LoginScreen() {
       await requestPasswordReset(email.trim());
       setMode('resetSent');
     } catch (err) {
-      fireToast(err instanceof Error ? err.message : 'Could not send the reset link');
+      fireToast(humanAuthError(err, "couldn't send the reset link — try again in a sec"));
     } finally {
       setLoading(false);
     }
@@ -66,12 +67,12 @@ export default function LoginScreen() {
 
   const handleLogIn = async () => {
     if (!email.trim()) {
-      fireToast('Please enter your email');
+      fireToast("what's your email?");
       return;
     }
 
     if (!password) {
-      fireToast('Please enter your password');
+      fireToast("don't forget your password");
       return;
     }
 
@@ -80,8 +81,7 @@ export default function LoginScreen() {
       await signInWithEmail(email, password);
       router.replace('/');
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Sign in failed';
-      fireToast(msg);
+      fireToast(humanAuthError(err, "couldn't sign you in — try again in a sec"));
     } finally {
       setLoading(false);
     }
@@ -101,8 +101,10 @@ export default function LoginScreen() {
       router.replace('/');
     } catch (err) {
       const fallback =
-        provider === 'apple' ? 'Apple sign-in failed' : 'Google sign-in failed';
-      fireToast(err instanceof Error ? err.message : fallback);
+        provider === 'apple'
+          ? "Apple sign-in didn't finish — try again in a sec"
+          : "Google sign-in didn't finish — try again in a sec";
+      fireToast(humanAuthError(err, fallback));
     } finally {
       setLoading(false);
     }

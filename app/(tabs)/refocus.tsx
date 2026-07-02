@@ -40,6 +40,12 @@ import {
   MODES,
   RefocusResult,
   RefocusMode,
+  RefocusMediation,
+  RefocusSafety,
+  RefocusAiResult,
+  AI_DISCLOSURE,
+  THERAPY_DISCLAIMER,
+  SCREENING_UNAVAILABLE_NOTE,
 } from '../../src/content/refocus';
 import { useSession } from '../../src/features/auth/useSession';
 import { useCouple } from '../../src/features/pairing/useCouple';
@@ -48,11 +54,37 @@ import { addLearning } from '../../src/features/lovemap/addLearning';
 import { learningOrigin } from '../../src/domain/learningOrigin';
 import { track, EVENTS } from '../../src/lib/analytics';
 import { useIdentity } from '../../src/features/profile/useIdentity';
+import { useRefocusSession } from '../../src/features/refocus/useRefocusSession';
+import {
+  startRefocus,
+  addRefocusSide,
+  mediateSession,
+  parseAiResult,
+  REFOCUS_ALREADY_OPEN,
+} from '../../src/features/refocus/refocusActions';
+import type { RefocusSession } from '../../src/types/db';
 
 // Identity definitions
 const YOU = { name: 'you', initial: 'Y' };
 
-type Step = 'intro' | 'mode' | 'share' | 'waiting' | 'error' | 'result';
+type Step =
+  // solo (unchanged flow, plus a safety routing outcome)
+  | 'intro'
+  | 'mode'
+  | 'share'
+  | 'waiting'
+  | 'error'
+  | 'result'
+  | 'soloSafety'
+  // two-sided session flow (4.6)
+  | 'togetherTopic'
+  | 'togetherWaiting'
+  | 'togetherAdd'
+  | 'togetherMediating'
+  | 'togetherResult'
+  | 'togetherSafety'
+  | 'togetherError'
+  | 'togetherExpired';
 
 export default function RefocusScreen() {
   const router = useRouter();
@@ -61,7 +93,59 @@ export default function RefocusScreen() {
   const [mode, setMode] = useState<RefocusMode>('text');
   const [text, setText] = useState('');
   const [result, setResult] = useState<RefocusResult | null>(null);
+  const [safety, setSafety] = useState<RefocusSafety | null>(null);
+  const [mediation, setMediation] = useState<RefocusMediation | null>(null);
+  const [pendingTopic, setPendingTopic] = useState('');
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+
+  const { session: authSession } = useSession();
+  const { couple } = useCouple();
+  const myId = authSession?.user.id ?? null;
+  const {
+    session: rfSession,
+    refresh: refreshSession,
+  } = useRefocusSession(couple?.id ?? null);
+
+  // Auto-route into an open session ONCE per session id (so the invited
+  // partner's tab lands on "add your side" and a returning initiator lands on
+  // waiting) — after that, back always reaches the intro without being
+  // re-hijacked. While INSIDE the together flow, keep following realtime state
+  // flips (waiting -> ready -> revealed / expired).
+  const routedSessionRef = useRef<string | null>(null);
+
+  const routeToSession = (s: RefocusSession) => {
+    if (s.state === 'waiting_partner') {
+      setStep(s.initiator === myId ? 'togetherWaiting' : 'togetherAdd');
+    } else if (s.state === 'ready') {
+      setStep('togetherMediating');
+    } else if (s.state === 'revealed') {
+      const parsed = parseAiResult(s.ai_result);
+      if (parsed && parsed.type === 'mediation') {
+        setMediation(parsed);
+        setStep('togetherResult');
+      } else if (parsed) {
+        setSafety(parsed);
+        setStep('togetherSafety');
+      } else {
+        // Revealed but the row's ai_result didn't parse — the edge fn returns
+        // the stored result idempotently.
+        setStep('togetherMediating');
+      }
+    } else {
+      setStep('togetherExpired');
+    }
+  };
+
+  useEffect(() => {
+    if (!rfSession || !myId) return;
+    const following =
+      step === 'togetherWaiting' || step === 'togetherAdd';
+    const firstSight = step === 'intro' && routedSessionRef.current !== rfSession.id;
+    if (!following && !firstSight) return;
+    routedSessionRef.current = rfSession.id;
+    routeToSession(rfSession);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rfSession, myId]);
 
   const exitToTabs = () => {
     if (router.canGoBack()) router.back();
@@ -80,8 +164,12 @@ export default function RefocusScreen() {
       setStep('share');
     } else if (step === 'error') {
       setStep('share');
-    } else if (step === 'result') {
+    } else if (step === 'result' || step === 'soloSafety') {
       exitToTabs();
+    } else {
+      // every together step backs out to the intro (the session persists
+      // server-side; the intro card is the way back in)
+      setStep('intro');
     }
   };
 
@@ -92,6 +180,26 @@ export default function RefocusScreen() {
 
   const handleNavigateToLoveMap = () => {
     router.push('/lovemap');
+  };
+
+  const handleStartTogether = () => {
+    if (rfSession) {
+      routedSessionRef.current = rfSession.id;
+      routeToSession(rfSession);
+    } else {
+      setStep('togetherTopic');
+    }
+  };
+
+  const handleMediationDone = (res: RefocusAiResult) => {
+    track(EVENTS.REFOCUS_COMPLETED);
+    if (res.type === 'mediation') {
+      setMediation(res);
+      setStep('togetherResult');
+    } else {
+      setSafety(res);
+      setStep('togetherSafety');
+    }
   };
 
   // ── RENDER ───────────────────────────────────────────────────────
@@ -109,7 +217,11 @@ export default function RefocusScreen() {
       {step === 'intro' && (
         <IntroStep
           insets={insets}
-          onStart={() => setStep('mode')}
+          canTogether={!!couple && !!myId}
+          openSession={rfSession}
+          myId={myId}
+          onStartTogether={handleStartTogether}
+          onStartSolo={() => setStep('mode')}
           onBack={handleBack}
         />
       )}
@@ -146,6 +258,10 @@ export default function RefocusScreen() {
             setResult(res);
             setStep('result');
           }}
+          onSafety={(s) => {
+            setSafety(s);
+            setStep('soloSafety');
+          }}
           onError={() => setStep('error')}
         />
       )}
@@ -167,6 +283,90 @@ export default function RefocusScreen() {
         />
       )}
 
+      {(step === 'soloSafety' || step === 'togetherSafety') && safety && (
+        <SafetyStep safety={safety} onBack={handleBack} />
+      )}
+
+      {step === 'togetherTopic' && couple && (
+        <TogetherTopicStep
+          onBack={() => setStep('intro')}
+          onSubmit={async (topic, side) => {
+            try {
+              await startRefocus(couple.id, topic, side);
+              setPendingTopic(topic);
+              setStep('togetherWaiting');
+              await refreshSession();
+            } catch (err) {
+              const msg = err instanceof Error ? err.message : String(err);
+              if (msg.includes(REFOCUS_ALREADY_OPEN)) {
+                showToast('you two already have one open 💛');
+                await refreshSession();
+                setStep('intro');
+              } else {
+                showToast('Couldn\'t start it just now, try again in a moment.');
+              }
+            }
+          }}
+        />
+      )}
+
+      {step === 'togetherWaiting' && (
+        <TogetherWaitingStep
+          topic={rfSession?.topic ?? pendingTopic}
+          onBack={handleBack}
+        />
+      )}
+
+      {step === 'togetherAdd' && rfSession && (
+        <TogetherAddStep
+          session={rfSession}
+          onBack={handleBack}
+          onSubmit={async (side) => {
+            try {
+              await addRefocusSide(rfSession.id, side);
+              setStep('togetherMediating');
+            } catch {
+              showToast('Couldn\'t add your side just now, try again in a moment.');
+            }
+          }}
+        />
+      )}
+
+      {step === 'togetherMediating' && rfSession && (
+        <TogetherMediatingStep
+          sessionId={rfSession.id}
+          onCancel={handleBack}
+          onDone={handleMediationDone}
+          onError={() => setStep('togetherError')}
+        />
+      )}
+
+      {step === 'togetherError' && (
+        <ErrorStep
+          onRetry={() => setStep('togetherMediating')}
+          onBack={() => setStep('intro')}
+        />
+      )}
+
+      {step === 'togetherResult' && mediation && rfSession && (
+        <TogetherResultStep
+          insets={insets}
+          mediation={mediation}
+          session={rfSession}
+          myId={myId}
+          onBack={handleBack}
+          onShowToast={showToast}
+          onOpenLoveMap={handleNavigateToLoveMap}
+        />
+      )}
+
+      {step === 'togetherExpired' && (
+        <TogetherExpiredStep
+          onStartFresh={() => setStep('togetherTopic')}
+          onBack={() => setStep('intro')}
+        />
+      )}
+
       {toastMsg && <Toast msg={toastMsg} />}
     </LinearGradient>
   );
@@ -176,11 +376,29 @@ export default function RefocusScreen() {
 
 interface IntroStepProps {
   insets: ReturnType<typeof useSafeAreaInsets>;
-  onStart: () => void;
+  canTogether: boolean;
+  openSession: RefocusSession | null;
+  myId: string | null;
+  onStartTogether: () => void;
+  onStartSolo: () => void;
   onBack: () => void;
 }
 
-function IntroStep({ insets, onStart, onBack }: IntroStepProps) {
+function IntroStep({
+  insets,
+  canTogether,
+  openSession,
+  myId,
+  onStartTogether,
+  onStartSolo,
+  onBack,
+}: IntroStepProps) {
+  const { partner } = useIdentity();
+  const invited =
+    !!openSession &&
+    openSession.state === 'waiting_partner' &&
+    openSession.initiator !== myId;
+
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <TopBar title="refocus" onBack={onBack} />
@@ -190,7 +408,7 @@ function IntroStep({ insets, onStart, onBack }: IntroStepProps) {
         contentContainerStyle={{
           paddingHorizontal: space.gutter,
           paddingTop: 70,
-          paddingBottom: 160,
+          paddingBottom: canTogether ? 230 : 160,
         }}
       >
         {/* Hero: floating Peek */}
@@ -229,11 +447,46 @@ function IntroStep({ insets, onStart, onBack }: IntroStepProps) {
               fontFamily: fontFamily.ui,
             }}
           >
-            A rough moment gets easier once you untangle your side of it. Say
-            what happened, just for you, and we&apos;ll help you see
-            what&apos;s underneath and a kind way to raise it.
+            A rough moment gets easier once you untangle it. Do it together,
+            each of you adds your real side and we find the middle, or just
+            untangle your side, privately.
           </Text>
         </View>
+
+        {/* An open session: the way back in (or the partner's invite) */}
+        {openSession && (
+          <Press onPress={onStartTogether}>
+            <Card
+              style={{
+                borderRadius: 22,
+                paddingHorizontal: 18,
+                paddingVertical: 16,
+                marginTop: 22,
+                backgroundColor: colors.usSoft,
+                borderWidth: 1,
+                borderColor: 'rgba(157,149,245,0.25)',
+              }}
+            >
+              <Kick c={colors.p2Deep}>
+                {invited ? 'your side is missing' : 'in progress'}
+              </Kick>
+              <Text
+                style={{
+                  fontSize: 14.5,
+                  fontWeight: '700',
+                  color: colors.ink,
+                  marginTop: 6,
+                  lineHeight: 14.5 * 1.4,
+                  fontFamily: fontFamily.ui,
+                }}
+              >
+                {invited
+                  ? `${partner.name} wants to refocus: ${openSession.topic} — add your side`
+                  : `"${openSession.topic}" — tap to check on it`}
+              </Text>
+            </Card>
+          </Press>
+        )}
 
         {/* Promises card */}
         <Card
@@ -304,7 +557,7 @@ function IntroStep({ insets, onStart, onBack }: IntroStepProps) {
         </Card>
       </ScrollView>
 
-      {/* Sticky button */}
+      {/* Sticky buttons */}
       <View
         style={{
           position: 'absolute',
@@ -312,10 +565,26 @@ function IntroStep({ insets, onStart, onBack }: IntroStepProps) {
           left: space.gutter,
           right: space.gutter,
           zIndex: 40,
+          gap: 10,
         }}
       >
-        <Btn kind="us" onPress={onStart} sub="just your side, privately" testID="refocus-start">
-          Start, untangle my side
+        {canTogether && (
+          <Btn
+            kind="us"
+            onPress={onStartTogether}
+            sub="both real sides, one middle ground"
+            testID="refocus-start-together"
+          >
+            Untangle it together
+          </Btn>
+        )}
+        <Btn
+          kind={canTogether ? 'soft' : 'us'}
+          onPress={onStartSolo}
+          sub="just your side, privately"
+          testID="refocus-start"
+        >
+          Just my side
         </Btn>
       </View>
     </SafeAreaView>
@@ -528,16 +797,17 @@ function ShareStep({
   );
 }
 
-// ── WAITING STEP ─────────────────────────────────────────────────
+// ── WAITING STEP (solo) ──────────────────────────────────────────
 
 interface WaitingStepProps {
   userText: string;
   onCancel: () => void;
   onDone: (result: RefocusResult) => void;
+  onSafety: (safety: RefocusSafety) => void;
   onError: () => void;
 }
 
-function WaitingStep({ userText, onCancel, onDone, onError }: WaitingStepProps) {
+function WaitingStep({ userText, onCancel, onDone, onSafety, onError }: WaitingStepProps) {
   const { partner } = useIdentity();
   const [phase, setPhase] = useState(0); // 0 reading · 1 reflecting
   const mounted = useRef(true);
@@ -552,7 +822,8 @@ function WaitingStep({ userText, onCancel, onDone, onError }: WaitingStepProps) 
     Promise.all([analyze(userText, partner.name), min]).then(([res]) => {
       // Guard: the user may navigate away during the ~4.2s wait.
       if (!mounted.current) return;
-      if (res) onDone(res);
+      if (res && 'safety' in res) onSafety(res.safety);
+      else if (res) onDone(res.reflection);
       else onError();
     });
 
@@ -617,35 +888,7 @@ function WaitingStep({ userText, onCancel, onDone, onError }: WaitingStepProps) 
 
       {/* Status item */}
       <View style={{ width: '100%', maxWidth: 280, gap: 12 }}>
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 11,
-            paddingVertical: 12,
-            paddingHorizontal: 15,
-            borderRadius: 16,
-            backgroundColor: colors.surface,
-            borderWidth: 1,
-            borderColor: colors.line,
-            ...shadows.shadowSoft,
-          }}
-        >
-          <Tok who={YOU} you size={28} />
-          <Text
-            style={{
-              flex: 1,
-              fontSize: 14,
-              fontWeight: '600',
-              color: colors.ink,
-              textAlign: 'left',
-              fontFamily: fontFamily.ui,
-            }}
-          >
-            Your side is in
-          </Text>
-          <Icon d={ICONS.check} size={16} color={colors.matchDeep} sw={2.6} />
-        </View>
+        <SideInRow label="Your side is in" you />
       </View>
 
       {/* Loading dots */}
@@ -654,6 +897,40 @@ function WaitingStep({ userText, onCancel, onDone, onError }: WaitingStepProps) 
           <PulseDot key={i} delay={i * 0.18} />
         ))}
       </View>
+    </View>
+  );
+}
+
+function SideInRow({ label, you = false, who }: { label: string; you?: boolean; who?: { name: string; initial: string } }) {
+  return (
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 11,
+        paddingVertical: 12,
+        paddingHorizontal: 15,
+        borderRadius: 16,
+        backgroundColor: colors.surface,
+        borderWidth: 1,
+        borderColor: colors.line,
+        ...shadows.shadowSoft,
+      }}
+    >
+      <Tok who={who ?? YOU} you={you} size={28} />
+      <Text
+        style={{
+          flex: 1,
+          fontSize: 14,
+          fontWeight: '600',
+          color: colors.ink,
+          textAlign: 'left',
+          fontFamily: fontFamily.ui,
+        }}
+      >
+        {label}
+      </Text>
+      <Icon d={ICONS.check} size={16} color={colors.matchDeep} sw={2.6} />
     </View>
   );
 }
@@ -753,7 +1030,909 @@ function ErrorStep({ onRetry, onBack }: ErrorStepProps) {
   );
 }
 
-// ── RESULT STEP ──────────────────────────────────────────────────
+// ── SAFETY STEP (solo + together; renders server copy only) ──────
+
+function SafetyStep({
+  safety,
+  onBack,
+}: {
+  safety: RefocusSafety;
+  onBack: () => void;
+}) {
+  return (
+    <SafeAreaView style={{ flex: 1 }}>
+      <TopBar title="refocus" onBack={onBack} />
+      <ScrollView
+        scrollEnabled
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
+          paddingHorizontal: space.gutter,
+          paddingTop: 90,
+          paddingBottom: 60,
+        }}
+      >
+        <View style={{ alignItems: 'center', marginBottom: 20 }}>
+          <Float distance={7} duration={4000}>
+            <Peek size={96} mood="focus" />
+          </Float>
+        </View>
+        <Serif
+          s={30}
+          style={{
+            textAlign: 'center',
+            marginBottom: 14,
+            lineHeight: 30 * 1.09,
+          }}
+        >
+          {safety.title}
+        </Serif>
+        <Text
+          style={{
+            fontSize: 15,
+            lineHeight: 15 * 1.55,
+            color: colors.ink,
+            textAlign: 'center',
+            fontFamily: fontFamily.ui,
+            marginBottom: 24,
+          }}
+        >
+          {safety.message}
+        </Text>
+
+        <Card
+          style={{
+            borderRadius: 24,
+            paddingHorizontal: 18,
+            paddingVertical: 8,
+          }}
+        >
+          {safety.helplines.map((h, i) => (
+            <View
+              key={i}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 12,
+                paddingVertical: 13,
+                borderTopWidth: i > 0 ? 1 : 0,
+                borderTopColor: i > 0 ? colors.line : 'transparent',
+              }}
+            >
+              <Text
+                style={{
+                  flex: 1,
+                  fontSize: 13.5,
+                  color: colors.ink,
+                  fontWeight: '600',
+                  lineHeight: 13.5 * 1.35,
+                  fontFamily: fontFamily.ui,
+                }}
+              >
+                {h.name}
+              </Text>
+              <Text
+                style={{
+                  fontSize: 14.5,
+                  color: colors.p2Deep,
+                  fontWeight: '700',
+                  fontFamily: fontFamily.ui,
+                }}
+              >
+                {h.contact}
+              </Text>
+            </View>
+          ))}
+        </Card>
+
+        <Text
+          style={{
+            textAlign: 'center',
+            fontSize: 11.5,
+            color: colors.inkMute,
+            marginTop: 24,
+            lineHeight: 11.5 * 1.5,
+            paddingHorizontal: 10,
+            fontFamily: fontFamily.ui,
+          }}
+        >
+          {AI_DISCLOSURE} {THERAPY_DISCLAIMER}
+        </Text>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+// ── TOGETHER: TOPIC + MY SIDE ────────────────────────────────────
+
+function TogetherTopicStep({
+  onBack,
+  onSubmit,
+}: {
+  onBack: () => void;
+  onSubmit: (topic: string, side: string) => Promise<void>;
+}) {
+  const { partner } = useIdentity();
+  const [topic, setTopic] = useState('');
+  const [side, setSide] = useState('');
+  const [busy, setBusy] = useState(false);
+  const ready = topic.trim().length > 1 && side.trim().length > 3 && !busy;
+
+  return (
+    <SafeAreaView style={{ flex: 1 }}>
+      <TopBar title="untangle it together" onBack={onBack} />
+      <View style={{ flex: 1, paddingTop: 100, paddingBottom: 96 }}>
+        <View
+          style={{
+            marginHorizontal: space.gutter,
+            marginBottom: 10,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 8,
+            paddingHorizontal: 13,
+            paddingVertical: 10,
+            borderRadius: 14,
+            backgroundColor: colors.usSoft,
+            borderWidth: 1,
+            borderColor: 'rgba(157,149,245,0.22)',
+          }}
+        >
+          <Icon d={ICONS.lock} size={15} color={colors.p2Deep} />
+          <Text
+            style={{
+              fontSize: 12.5,
+              color: colors.p2Deep,
+              fontWeight: '600',
+              flex: 1,
+              lineHeight: 12.5 * 1.35,
+              fontFamily: fontFamily.ui,
+            }}
+          >
+            {`${partner.name} sees the topic and the middle ground, never your raw words.`}
+          </Text>
+        </View>
+
+        <View style={{ flex: 1, paddingHorizontal: space.gutter, gap: 10 }}>
+          <TextInput
+            value={topic}
+            onChangeText={setTopic}
+            autoFocus
+            placeholder="What's it about? (a few words)"
+            placeholderTextColor={colors.inkSoft}
+            maxLength={120}
+            style={{
+              width: '100%',
+              borderWidth: 1,
+              borderColor: colors.line,
+              borderRadius: 18,
+              backgroundColor: colors.surface,
+              paddingVertical: 14,
+              paddingHorizontal: 16,
+              fontSize: 15.5,
+              lineHeight: 15.5 * 1.4,
+              fontFamily: fontFamily.ui,
+              color: colors.ink,
+              ...shadows.shadowSoft,
+            }}
+          />
+          <TextInput
+            value={side}
+            onChangeText={setSide}
+            placeholder="Your side of it, honestly. Messy is fine."
+            placeholderTextColor={colors.inkSoft}
+            multiline
+            style={{
+              flex: 1,
+              width: '100%',
+              borderWidth: 1,
+              borderColor: colors.line,
+              borderRadius: 18,
+              backgroundColor: colors.surface,
+              paddingVertical: 15,
+              paddingHorizontal: 16,
+              fontSize: 15.5,
+              lineHeight: 15.5 * 1.55,
+              fontFamily: fontFamily.ui,
+              color: colors.ink,
+              ...shadows.shadowSoft,
+            }}
+          />
+        </View>
+      </View>
+
+      <View
+        style={{
+          position: 'absolute',
+          bottom: 22,
+          left: space.gutter,
+          right: space.gutter,
+          zIndex: 40,
+        }}
+      >
+        <Btn
+          kind="us"
+          onPress={async () => {
+            setBusy(true);
+            try {
+              await onSubmit(topic.trim(), side.trim());
+            } finally {
+              setBusy(false);
+            }
+          }}
+          disabled={!ready}
+          sub={`${partner.name} adds theirs, then we find the middle`}
+          testID="refocus-together-submit"
+        >
+          Send it to the middle
+        </Btn>
+      </View>
+    </SafeAreaView>
+  );
+}
+
+// ── TOGETHER: WAITING FOR THE PARTNER ────────────────────────────
+
+function TogetherWaitingStep({
+  topic,
+  onBack,
+}: {
+  topic: string;
+  onBack: () => void;
+}) {
+  const { partner } = useIdentity();
+  return (
+    <View
+      style={{
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 34,
+      }}
+    >
+      <TopBar title="untangling together" onBack={onBack} />
+
+      <View
+        style={{
+          width: 150,
+          height: 120,
+          marginBottom: 28,
+          alignItems: 'center',
+          justifyContent: 'center',
+          position: 'relative',
+        }}
+      >
+        <Float distance={7} duration={3500}>
+          <View
+            style={{
+              position: 'absolute',
+              width: 120,
+              height: 120,
+              borderRadius: radius.pill,
+              backgroundColor: colors.usSoft,
+            }}
+          />
+        </Float>
+        <Float distance={7} duration={4000}>
+          <Peek size={128} mood="search" />
+        </Float>
+      </View>
+
+      <Serif
+        s={28}
+        italic
+        style={{
+          textAlign: 'center',
+          marginBottom: 10,
+          maxWidth: 290,
+          lineHeight: 28 * 1.09,
+        }}
+      >
+        {`waiting for ${partner.name}…`}
+      </Serif>
+      <Text
+        style={{
+          fontSize: 13.5,
+          color: colors.inkSoft,
+          textAlign: 'center',
+          maxWidth: 290,
+          lineHeight: 13.5 * 1.5,
+          fontFamily: fontFamily.ui,
+          marginBottom: 24,
+        }}
+      >
+        {`We let them know about "${topic}". The moment their side is in, the middle ground appears here for both of you.`}
+      </Text>
+
+      <View style={{ width: '100%', maxWidth: 280, gap: 12 }}>
+        <SideInRow label="Your side is in" you />
+      </View>
+    </View>
+  );
+}
+
+// ── TOGETHER: THE PARTNER ADDS THEIR SIDE ────────────────────────
+
+function TogetherAddStep({
+  session,
+  onBack,
+  onSubmit,
+}: {
+  session: RefocusSession;
+  onBack: () => void;
+  onSubmit: (side: string) => Promise<void>;
+}) {
+  const { partner } = useIdentity();
+  const [side, setSide] = useState('');
+  const [busy, setBusy] = useState(false);
+  const ready = side.trim().length > 3 && !busy;
+
+  return (
+    <SafeAreaView style={{ flex: 1 }}>
+      <TopBar title="add your side" onBack={onBack} />
+      <View style={{ flex: 1, paddingTop: 100, paddingBottom: 96 }}>
+        <View
+          style={{
+            marginHorizontal: space.gutter,
+            marginBottom: 10,
+            paddingHorizontal: 13,
+            paddingVertical: 12,
+            borderRadius: 14,
+            backgroundColor: colors.usSoft,
+            borderWidth: 1,
+            borderColor: 'rgba(157,149,245,0.22)',
+          }}
+        >
+          <Text
+            style={{
+              fontSize: 13.5,
+              color: colors.p2Deep,
+              fontWeight: '700',
+              lineHeight: 13.5 * 1.4,
+              fontFamily: fontFamily.ui,
+            }}
+          >
+            {`${partner.name} wants to refocus: ${session.topic}`}
+          </Text>
+          <Text
+            style={{
+              fontSize: 12.5,
+              color: colors.p2Deep,
+              marginTop: 3,
+              lineHeight: 12.5 * 1.4,
+              fontFamily: fontFamily.ui,
+            }}
+          >
+            {`They can't read your raw words, only the middle ground you'll both see.`}
+          </Text>
+        </View>
+
+        <View style={{ flex: 1, paddingHorizontal: space.gutter }}>
+          <TextInput
+            value={side}
+            onChangeText={setSide}
+            autoFocus
+            placeholder="Your side of it, honestly. Messy is fine."
+            placeholderTextColor={colors.inkSoft}
+            multiline
+            style={{
+              flex: 1,
+              width: '100%',
+              borderWidth: 1,
+              borderColor: colors.line,
+              borderRadius: 18,
+              backgroundColor: colors.surface,
+              paddingVertical: 15,
+              paddingHorizontal: 16,
+              fontSize: 15.5,
+              lineHeight: 15.5 * 1.55,
+              fontFamily: fontFamily.ui,
+              color: colors.ink,
+              ...shadows.shadowSoft,
+            }}
+          />
+        </View>
+      </View>
+
+      <View
+        style={{
+          position: 'absolute',
+          bottom: 22,
+          left: space.gutter,
+          right: space.gutter,
+          zIndex: 40,
+        }}
+      >
+        <Btn
+          kind="us"
+          onPress={async () => {
+            setBusy(true);
+            try {
+              await onSubmit(side.trim());
+            } finally {
+              setBusy(false);
+            }
+          }}
+          disabled={!ready}
+          sub="then we find the middle, together"
+          testID="refocus-add-side"
+        >
+          Add my side
+        </Btn>
+      </View>
+    </SafeAreaView>
+  );
+}
+
+// ── TOGETHER: MEDIATING ──────────────────────────────────────────
+
+function TogetherMediatingStep({
+  sessionId,
+  onCancel,
+  onDone,
+  onError,
+}: {
+  sessionId: string;
+  onCancel: () => void;
+  onDone: (result: RefocusAiResult) => void;
+  onError: () => void;
+}) {
+  const { partner } = useIdentity();
+  const mounted = useRef(true);
+
+  useEffect(() => {
+    mounted.current = true;
+    const min = new Promise((r) => setTimeout(r, 2500));
+
+    // The server is idempotent: whichever partner calls first pays for the
+    // mediation, everyone else gets the SAME stored result back.
+    Promise.all([mediateSession(sessionId), min]).then(([res]) => {
+      if (!mounted.current) return;
+      if (res) onDone(res);
+      else onError();
+    });
+
+    return () => {
+      mounted.current = false;
+    };
+  }, [sessionId]);
+
+  return (
+    <View
+      style={{
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 34,
+      }}
+    >
+      <TopBar title="finding the middle" onBack={onCancel} />
+
+      <View
+        style={{
+          width: 150,
+          height: 120,
+          marginBottom: 28,
+          alignItems: 'center',
+          justifyContent: 'center',
+          position: 'relative',
+        }}
+      >
+        <Float distance={7} duration={3500}>
+          <View
+            style={{
+              position: 'absolute',
+              width: 120,
+              height: 120,
+              borderRadius: radius.pill,
+              backgroundColor: colors.usSoft,
+            }}
+          />
+        </Float>
+        <Float distance={7} duration={4000}>
+          <Peek size={128} mood="focus" />
+        </Float>
+      </View>
+
+      <Serif
+        s={28}
+        italic
+        style={{
+          textAlign: 'center',
+          marginBottom: 24,
+          maxWidth: 280,
+          lineHeight: 28 * 1.09,
+        }}
+      >
+        both sides are in…
+      </Serif>
+
+      <View style={{ width: '100%', maxWidth: 280, gap: 12 }}>
+        <SideInRow label="Your side is in" you />
+        <SideInRow
+          label={`${partner.name}'s side is in`}
+          who={{ name: partner.name, initial: partner.initial }}
+        />
+      </View>
+
+      <View style={{ marginTop: 22, flexDirection: 'row', gap: 6 }}>
+        {[0, 1, 2].map((i) => (
+          <PulseDot key={i} delay={i * 0.18} />
+        ))}
+      </View>
+    </View>
+  );
+}
+
+// ── TOGETHER: EXPIRED ────────────────────────────────────────────
+
+function TogetherExpiredStep({
+  onStartFresh,
+  onBack,
+}: {
+  onStartFresh: () => void;
+  onBack: () => void;
+}) {
+  return (
+    <SafeAreaView style={{ flex: 1 }}>
+      <TopBar title="refocus" onBack={onBack} />
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingHorizontal: 34,
+        }}
+      >
+        <Float distance={7} duration={4000}>
+          <Peek size={104} mood="search" />
+        </Float>
+        <Serif
+          s={28}
+          italic
+          style={{
+            textAlign: 'center',
+            marginTop: 24,
+            marginBottom: 12,
+            maxWidth: 280,
+            lineHeight: 28 * 1.09,
+          }}
+        >
+          This one faded.
+        </Serif>
+        <Text
+          style={{
+            fontSize: 14.5,
+            lineHeight: 14.5 * 1.55,
+            color: colors.inkSoft,
+            textAlign: 'center',
+            maxWidth: 290,
+            fontFamily: fontFamily.ui,
+            marginBottom: 28,
+          }}
+        >
+          The other side never came in, so this session quietly closed. If
+          it still matters, start it fresh — or untangle your side solo.
+        </Text>
+        <View style={{ width: '100%', maxWidth: 300, gap: 10 }}>
+          <Btn kind="us" onPress={onStartFresh} testID="refocus-start-fresh">
+            Start it fresh
+          </Btn>
+          <Btn kind="soft" onPress={onBack}>
+            Back
+          </Btn>
+        </View>
+      </View>
+    </SafeAreaView>
+  );
+}
+
+// ── TOGETHER: RESULT ─────────────────────────────────────────────
+
+function TogetherResultStep({
+  insets,
+  mediation,
+  session,
+  myId,
+  onBack,
+  onShowToast,
+  onOpenLoveMap,
+}: {
+  insets: ReturnType<typeof useSafeAreaInsets>;
+  mediation: RefocusMediation;
+  session: RefocusSession;
+  myId: string | null;
+  onBack: () => void;
+  onShowToast: (msg: string) => void;
+  onOpenLoveMap: () => void;
+}) {
+  const { partner } = useIdentity();
+  const iAmInitiator = session.initiator === myId;
+  const myUnderneath = iAmInitiator
+    ? mediation.initiator_underneath
+    : mediation.partner_underneath;
+  const theirUnderneath = iAmInitiator
+    ? mediation.partner_underneath
+    : mediation.initiator_underneath;
+  const myBridge = iAmInitiator
+    ? mediation.initiator_bridge
+    : mediation.partner_bridge;
+
+  const [msg, setMsg] = useState(myBridge);
+  const [copied, setCopied] = useState(false);
+  const { couple } = useCouple();
+
+  const PAR = { name: partner.name, initial: partner.initial };
+
+  return (
+    <SafeAreaView style={{ flex: 1 }}>
+      <TopBar title="the middle ground" onBack={onBack} />
+      <ScrollView
+        scrollEnabled
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
+          paddingHorizontal: space.gutter,
+          paddingTop: 70,
+          paddingBottom: 40,
+        }}
+      >
+        {/* Hero */}
+        <View style={{ alignItems: 'center', marginBottom: 32 }}>
+          <Float distance={7} duration={4000}>
+            <Peek size={84} mood="focus" />
+          </Float>
+          <Kick c={colors.matchDeep} style={{ marginTop: 8 }}>
+            refocused, together
+          </Kick>
+          <Serif
+            s={32}
+            italic
+            style={{
+              marginTop: 8,
+              marginBottom: 14,
+              textAlign: 'center',
+              maxWidth: 300,
+              lineHeight: 32 * 1.09,
+            }}
+          >
+            {`"${session.topic}"`}
+          </Serif>
+          <Text
+            style={{
+              fontSize: 13.5,
+              color: colors.inkSoft,
+              textAlign: 'center',
+              maxWidth: 290,
+              lineHeight: 13.5 * 1.5,
+              fontFamily: fontFamily.ui,
+            }}
+          >
+            {`You're both looking at the same middle ground. Raw words stayed private, on both sides.`}
+          </Text>
+        </View>
+
+        {/* Shared ground */}
+        <Card
+          style={{
+            borderRadius: 24,
+            paddingHorizontal: 18,
+            paddingVertical: 20,
+            backgroundColor: colors.usSoft,
+            borderWidth: 1,
+            borderColor: 'rgba(157,149,245,0.25)',
+          }}
+        >
+          <Kick c={colors.p2Deep}>what you share underneath</Kick>
+          <Text
+            style={{
+              fontSize: 15.5,
+              color: colors.ink,
+              lineHeight: 15.5 * 1.55,
+              marginTop: 8,
+              fontFamily: fontFamily.disp,
+              fontStyle: 'italic',
+            }}
+          >
+            {mediation.shared_ground}
+          </Text>
+        </Card>
+
+        {/* Each side's underneath */}
+        <ResultSection icon="💗" label="what's really underneath">
+          <View style={{ gap: 12 }}>
+            <NeedCard who={YOU} youSide text={myUnderneath} />
+            <NeedCard who={PAR} text={theirUnderneath} />
+          </View>
+        </ResultSection>
+
+        {/* My bridge */}
+        <Card
+          style={{
+            borderRadius: 24,
+            paddingHorizontal: 16,
+            paddingVertical: 18,
+            marginTop: 16,
+          }}
+        >
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 8,
+              marginBottom: 12,
+            }}
+          >
+            <Tok who={YOU} you size={22} />
+            <Text
+              style={{
+                flex: 1,
+                fontSize: 14,
+                fontWeight: '700',
+                color: colors.ink,
+                fontFamily: fontFamily.ui,
+              }}
+            >
+              your bridge, if you want it
+            </Text>
+            <Text
+              style={{
+                fontFamily: fontFamily.mono,
+                fontSize: 9.5,
+                letterSpacing: 0.1 * 9.5,
+                color: colors.inkMute,
+              }}
+            >
+              AI DRAFT · YOURS TO EDIT
+            </Text>
+          </View>
+          <TextInput
+            value={msg}
+            onChangeText={setMsg}
+            multiline
+            numberOfLines={3}
+            placeholderTextColor={colors.inkSoft}
+            style={{
+              width: '100%',
+              borderWidth: 1,
+              borderColor: colors.line,
+              borderRadius: 16,
+              backgroundColor: colors.sunken,
+              paddingVertical: 13,
+              paddingHorizontal: 14,
+              fontSize: 14.5,
+              lineHeight: 14.5 * 1.5,
+              fontFamily: fontFamily.ui,
+              color: colors.ink,
+            }}
+          />
+          <View style={{ marginTop: 12 }}>
+            <Btn
+              kind={copied ? 'soft' : 'us'}
+              onPress={async () => {
+                await Clipboard.setStringAsync(msg);
+                setCopied(true);
+                onShowToast('Copied, share it when you’re ready 🤍');
+              }}
+              sub={`${partner.name} got their own bridge too`}
+            >
+              {copied ? 'Copied 🤍' : 'Copy to share'}
+            </Btn>
+          </View>
+        </Card>
+
+        {/* Love map capture — each of you saves your own underneath */}
+        <Card
+          style={{
+            borderRadius: 24,
+            paddingHorizontal: 18,
+            paddingVertical: 18,
+            marginTop: 16,
+            backgroundColor: colors.usSoft,
+            borderWidth: 1,
+            borderColor: 'rgba(157,149,245,0.25)',
+          }}
+        >
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 8,
+              marginBottom: 10,
+            }}
+          >
+            <Text style={{ fontSize: 17, color: colors.ink }}>🗺️</Text>
+            <Text
+              style={{
+                fontFamily: fontFamily.mono,
+                fontSize: 10.5,
+                letterSpacing: 0.14 * 10.5,
+                textTransform: 'uppercase',
+                color: colors.p2Deep,
+              }}
+            >
+              add it to your love map
+            </Text>
+          </View>
+          <Text
+            style={{
+              fontSize: 14,
+              color: colors.ink,
+              lineHeight: 14 * 1.5,
+              marginBottom: 14,
+              fontFamily: fontFamily.ui,
+            }}
+          >
+            Parallax will gently weave this into your next few drops, so next
+            time, it&apos;s something you both just{' '}
+            <Text style={{ fontStyle: 'italic' }}>know</Text>.
+          </Text>
+          <View style={{ gap: 10, marginBottom: 14 }}>
+            <NeedCard who={YOU} youSide text={myUnderneath} />
+          </View>
+          <Btn
+            kind="soft"
+            onPress={async () => {
+              if (myId && couple) {
+                try {
+                  await addLearning({
+                    coupleId: couple.id,
+                    aboutId: myId,
+                    emoji: '🤍',
+                    need: myUnderneath.split('\n')[0] || 'Underlying need',
+                    detail: myUnderneath,
+                    source: 'refocus',
+                    // Stable per session + member (add_learning upserts on
+                    // couple/about/origin) so re-taps never duplicate, and
+                    // BOTH partners get their own entry.
+                    origin: `refocus-session-${session.id}`,
+                  });
+                  onShowToast('Added to Love Map 🗺️');
+                } catch {
+                  onShowToast('Failed to save learnings');
+                }
+              }
+              onOpenLoveMap();
+            }}
+            sub="see what you're learning"
+          >
+            Open your Love Map
+          </Btn>
+        </Card>
+
+        {/* Disclosure + disclaimer (+ the honest fail-open note) */}
+        {mediation.screening_unavailable && (
+          <Text
+            style={{
+              textAlign: 'center',
+              fontSize: 11.5,
+              color: colors.inkSoft,
+              marginTop: 20,
+              lineHeight: 11.5 * 1.5,
+              paddingHorizontal: 10,
+              fontFamily: fontFamily.ui,
+            }}
+          >
+            {SCREENING_UNAVAILABLE_NOTE}
+          </Text>
+        )}
+        <Text
+          style={{
+            textAlign: 'center',
+            fontSize: 11.5,
+            color: colors.inkMute,
+            marginTop: mediation.screening_unavailable ? 10 : 20,
+            lineHeight: 11.5 * 1.5,
+            paddingHorizontal: 10,
+            fontFamily: fontFamily.ui,
+          }}
+        >
+          {AI_DISCLOSURE} {THERAPY_DISCLAIMER}
+        </Text>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+// ── RESULT STEP (solo) ───────────────────────────────────────────
 
 interface ResultStepProps {
   insets: ReturnType<typeof useSafeAreaInsets>;
@@ -1074,20 +2253,34 @@ function ResultStep({
           </Btn>
         </Card>
 
-        {/* Disclaimer */}
+        {/* Disclosure + disclaimer (+ the honest fail-open note) */}
+        {result.screening_unavailable && (
+          <Text
+            style={{
+              textAlign: 'center',
+              fontSize: 11.5,
+              color: colors.inkSoft,
+              marginTop: 20,
+              lineHeight: 11.5 * 1.5,
+              paddingHorizontal: 10,
+              fontFamily: fontFamily.ui,
+            }}
+          >
+            {SCREENING_UNAVAILABLE_NOTE}
+          </Text>
+        )}
         <Text
           style={{
             textAlign: 'center',
             fontSize: 11.5,
             color: colors.inkMute,
-            marginTop: 20,
+            marginTop: result.screening_unavailable ? 10 : 20,
             lineHeight: 11.5 * 1.5,
             paddingHorizontal: 10,
             fontFamily: fontFamily.ui,
           }}
         >
-          Refocus helps you talk it through, it isn&apos;t therapy. For the heavy
-          stuff, please reach for a real pro. 🤍
+          {AI_DISCLOSURE} {THERAPY_DISCLAIMER}
         </Text>
       </ScrollView>
     </SafeAreaView>
@@ -1196,23 +2389,35 @@ function NeedCard({
   );
 }
 
-// ── AI analysis (real implementation: Supabase edge function) ────
+// ── AI analysis (solo; real implementation: Supabase edge function) ────
+
+type SoloOutcome =
+  | { reflection: RefocusResult }
+  | { safety: RefocusSafety };
 
 async function analyze(
   userText: string,
   partnerName: string
-): Promise<RefocusResult | null> {
+): Promise<SoloOutcome | null> {
   // Live Claude reflection via the `refocus` Supabase edge function (key is
   // server-side). A failure or malformed shape returns null so the screen can
-  // show an honest error state — never a canned result.
+  // show an honest error state — never a canned result. A safety verdict
+  // (crisis/abuse) routes to the helplines screen instead of a reflection.
   try {
-    const { data, error } = await supabase.functions.invoke<RefocusResult>(
-      'refocus',
-      { body: { userText, partnerName } }
-    );
+    const { data, error } = await supabase.functions.invoke<
+      RefocusResult & { safety?: RefocusSafety }
+    >('refocus', { body: { userText, partnerName } });
+    if (error || !data) return null;
     if (
-      error ||
-      !data ||
+      data.safety &&
+      (data.safety.type === 'crisis' || data.safety.type === 'abuse') &&
+      typeof data.safety.title === 'string' &&
+      typeof data.safety.message === 'string' &&
+      Array.isArray(data.safety.helplines)
+    ) {
+      return { safety: data.safety };
+    }
+    if (
       !Array.isArray(data.happened) ||
       !Array.isArray(data.angles) ||
       !data.underneath ||
@@ -1221,7 +2426,7 @@ async function analyze(
     ) {
       return null;
     }
-    return data;
+    return { reflection: data };
   } catch {
     return null;
   }

@@ -37,13 +37,22 @@ const TWELVE_THIS_MONTH = WAVES.map((wavelength, i) => ({
 function mockData({
   history = TWELVE_THIS_MONTH,
   streak = 9,
-}: { history?: typeof TWELVE_THIS_MONTH; streak?: number } = {}) {
+  loading = false,
+  error = null as Error | null,
+  refetch = jest.fn(),
+}: {
+  history?: typeof TWELVE_THIS_MONTH;
+  streak?: number;
+  loading?: boolean;
+  error?: Error | null;
+  refetch?: jest.Mock;
+} = {}) {
   useCouple.mockReturnValue({
     couple: { id: 'c-1', streak, status: 'active' },
     loading: false,
     status: 'active',
   });
-  useCoupleHistory.mockReturnValue({ history, loading: false, isSample: false, error: null });
+  useCoupleHistory.mockReturnValue({ history, loading, isSample: false, error, refetch });
 }
 
 // The progress bar starts an Animated.timing on every slide mount; its frame
@@ -142,6 +151,30 @@ describe('WrappedScreen', () => {
     expect(getByText('back to today')).toBeTruthy();
     expect(queryByText(/Your month/)).toBeNull();
     expect(queryByText(`parallax · ${month}`)).toBeNull();
+  });
+
+  it('holds on the loading state while history loads — no premature not-yet copy', async () => {
+    mockData({ history: [], loading: true });
+    const { getByText, queryByText } = await render(<WrappedScreen />);
+
+    expect(getByText('pulling your month together…')).toBeTruthy();
+    expect(queryByText('your first month is still writing itself')).toBeNull();
+    expect(queryByText(/Your month/)).toBeNull();
+  });
+
+  it('shows the honest retryable error state when history fails to load', async () => {
+    const refetch = jest.fn();
+    mockData({ history: [], error: new Error('offline'), refetch });
+    const user = userEvent.setup();
+    const { getByText, queryByText } = await render(<WrappedScreen />);
+
+    expect(getByText("hmm, that didn't load")).toBeTruthy();
+    expect(getByText("your month with Jordan is safe — we just couldn't reach it.")).toBeTruthy();
+    // Never the "play more drops" copy when the story simply didn't load.
+    expect(queryByText('your first month is still writing itself')).toBeNull();
+
+    await user.press(getByText('try again'));
+    expect(refetch).toHaveBeenCalledTimes(1);
   });
 
   it('does not count reveals from a previous month', async () => {

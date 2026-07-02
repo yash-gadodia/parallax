@@ -91,11 +91,11 @@ export default function PacksScreen() {
                   >
                     Plus
                   </Text>
-                  {`, every pack is unlocked. Send ${partner.name} any drop you like.`}
+                  {`, every pack is open to browse — their questions land in your daily rotation with ${partner.name}.`}
                 </>
               ) : (
                 <>
-                  {`Send ${partner.name} a themed drop whenever you want, the daily one's free, the rest are `}
+                  {`Themed questions that land in your daily rotation with ${partner.name} — Deep end's open to browse, the rest are `}
                   <Text
                     style={{
                       color: colors.p1Deep,

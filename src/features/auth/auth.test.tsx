@@ -12,6 +12,7 @@ import {
   requestPasswordReset,
   updatePassword,
   isValidEmail,
+  humanAuthError,
 } from './authActions';
 import { useSession } from './useSession';
 
@@ -430,5 +431,54 @@ describe('useSession Hook', () => {
     });
 
     expect(mockUnsubscribe).toHaveBeenCalled();
+  });
+});
+
+describe('humanAuthError', () => {
+  it('translates "Invalid login credentials" into the warm mismatch message', () => {
+    expect(humanAuthError(new Error('Invalid login credentials'), 'fallback')).toBe(
+      "that email and password don't match — double-check, or reset it below"
+    );
+  });
+
+  it('translates "Email not confirmed" into the confirmation nudge', () => {
+    expect(humanAuthError(new Error('Email not confirmed'), 'fallback')).toBe(
+      'almost in — tap the confirmation link we emailed you first'
+    );
+  });
+
+  it('translates "User already registered" into the log-in-instead message', () => {
+    expect(humanAuthError(new Error('User already registered'), 'fallback')).toBe(
+      'you two have met before — that email already has an account, log in instead'
+    );
+  });
+
+  it('translates rate-limit errors into the give-it-a-minute message', () => {
+    expect(
+      humanAuthError(new Error('Email rate limit exceeded'), 'fallback')
+    ).toBe('a few too many tries — give it a minute, then go again');
+  });
+
+  it('translates network failures into the check-your-connection message', () => {
+    expect(humanAuthError(new Error('Network request failed'), 'fallback')).toBe(
+      "couldn't reach us — check your connection and try again"
+    );
+  });
+
+  it('translates the same-password error into the pick-a-fresh-one message', () => {
+    expect(
+      humanAuthError(
+        new Error('New password should be different from the old password.'),
+        'fallback'
+      )
+    ).toBe("that's the same password as before — pick a fresh one");
+  });
+
+  it('returns the screen fallback for unknown errors and non-Error values', () => {
+    expect(humanAuthError(new Error('weird 500 from upstream'), 'warm fallback')).toBe(
+      'warm fallback'
+    );
+    expect(humanAuthError('string error', 'warm fallback')).toBe('warm fallback');
+    expect(humanAuthError(undefined, 'warm fallback')).toBe('warm fallback');
   });
 });

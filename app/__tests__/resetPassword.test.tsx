@@ -9,6 +9,7 @@ jest.mock('expo-router', () => ({
 
 jest.mock('../../src/features/auth/authActions', () => ({
   updatePassword: jest.fn(),
+  humanAuthError: jest.requireActual('../../src/features/auth/authActions').humanAuthError,
 }));
 
 // The real ui store's toast timer (1.9s) outlives the test worker; mock it.

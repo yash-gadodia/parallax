@@ -20,42 +20,9 @@ import { DawnBlobs } from '../src/components/DawnBlobs';
 import { Icon, ICONS } from '../src/components/Icon';
 import { colors, gradients, radius, shadows, space } from '../src/design/tokens';
 import { fontFamily } from '../src/design/typography';
-import { MASTERY } from '../src/content/us';
+import { Skeleton } from '../src/components/Skeleton';
 import { useLearnings } from '../src/features/lovemap/useLearnings';
 import { useIdentity, Person } from '../src/features/profile/useIdentity';
-
-function Mastery({ level }: { level: 0 | 1 | 2 | 3 }) {
-  return (
-    <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-      <View style={{ display: 'flex', flexDirection: 'row', gap: 4 }}>
-        {[0, 1, 2, 3].map(i => (
-          <View
-            key={i}
-            style={{
-              width: 22,
-              height: 5,
-              borderRadius: 3,
-              backgroundColor: i <= level ? colors.p2 : colors.sunken,
-            }}
-          />
-        ))}
-      </View>
-      <Text
-        allowFontScaling={false}
-        style={{
-          fontFamily: fontFamily.mono,
-          fontSize: 10,
-          letterSpacing: 0.8,
-          textTransform: 'uppercase',
-          color: level >= 2 ? colors.matchDeep : colors.inkMute,
-          fontWeight: '700',
-        }}
-      >
-        {MASTERY[level]}
-      </Text>
-    </View>
-  );
-}
 
 function WhoChip({ who, me, partner }: { who: 'you' | 'dani'; me: Person; partner: Person }) {
   const isYou = who === 'you';
@@ -174,12 +141,8 @@ function LearnCard({
         {l.detail}
       </Text>
 
-      {/* Divider + Mastery meter */}
-      <View style={{ marginTop: 13, paddingTop: 13, borderTopWidth: 1, borderTopColor: colors.line }}>
-        <Mastery level={(l.mastery as 0 | 1 | 2 | 3) || 0} />
-      </View>
-
-      {/* Became Q card (optional) */}
+      {/* Became Q card (optional). (The mastery meter is gone until mastery is
+          actually reinforced server-side — no decorative progress.) */}
       {l.became_prompt_id && (
         <LinearGradient
           colors={gradients.usSoft.colors}
@@ -238,7 +201,7 @@ function LearnCard({
 export default function LovemapScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { items: learnings, loading, isSample } = useLearnings();
+  const { items: learnings, loading, isSample, error, refetch } = useLearnings();
   const { me, partner } = useIdentity();
   const fightCount = learnings.filter(l => l.source === 'refocus').length;
 
@@ -422,35 +385,67 @@ export default function LovemapScreen() {
           </LinearGradient>
         </View>
 
-        {/* Learnings section header */}
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginHorizontal: 2,
-            marginBottom: 12,
-          }}
-        >
-          <Kick c={colors.inkMute}>the map · {learnings.length} learnings</Kick>
-          <Text
-            allowFontScaling={false}
+        {/* Learnings section header (counts only make sense once loaded) */}
+        {!loading && !error && (
+          <View
             style={{
-              fontFamily: fontFamily.mono,
-              fontSize: 10,
-              color: colors.inkMute,
-              fontWeight: '400',
-              letterSpacing: 1.8,
-              textTransform: 'uppercase',
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginHorizontal: 2,
+              marginBottom: 12,
             }}
           >
-            {fightCount} from fights
-          </Text>
-        </View>
+            <Kick c={colors.inkMute}>the map · {learnings.length} learnings</Kick>
+            <Text
+              allowFontScaling={false}
+              style={{
+                fontFamily: fontFamily.mono,
+                fontSize: 10,
+                color: colors.inkMute,
+                fontWeight: '400',
+                letterSpacing: 1.8,
+                textTransform: 'uppercase',
+              }}
+            >
+              {fightCount} from fights
+            </Text>
+          </View>
+        )}
 
-        {/* Learning cards (or empty state before anything's been learned) */}
+        {/* Learning cards, with honest loading / error / empty states */}
         <View style={{ gap: space.gap }}>
-          {learnings.length === 0 && !loading ? (
+          {loading ? (
+            <>
+              <Skeleton h={132} br={22} testID="lovemap-skeleton-card" />
+              <Skeleton h={132} br={22} testID="lovemap-skeleton-card" />
+            </>
+          ) : error ? (
+            <View style={{ alignItems: 'center', paddingVertical: 30, paddingHorizontal: 24 }}>
+              <Text allowFontScaling={false} style={{ fontSize: 30, marginBottom: 10 }}>
+                🫧
+              </Text>
+              <Serif s={21} style={{ textAlign: 'center', marginBottom: 6 }}>
+                hmm, that didn't load
+              </Serif>
+              <Text
+                allowFontScaling={false}
+                style={{
+                  fontSize: 13.5,
+                  lineHeight: 13.5 * 1.45,
+                  color: colors.inkMute,
+                  textAlign: 'center',
+                  fontFamily: fontFamily.ui,
+                  marginBottom: 16,
+                }}
+              >
+                Your map is safe — we just couldn't reach it.
+              </Text>
+              <Btn kind="soft" onPress={refetch} style={{ alignSelf: 'stretch' }}>
+                try again
+              </Btn>
+            </View>
+          ) : learnings.length === 0 ? (
             <View style={{ alignItems: 'center', paddingVertical: 30, paddingHorizontal: 24 }}>
               <Text allowFontScaling={false} style={{ fontSize: 30, marginBottom: 10 }}>
                 🌱

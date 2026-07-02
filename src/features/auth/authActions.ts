@@ -6,6 +6,34 @@ export function isValidEmail(email: string): boolean {
   return EMAIL_RE.test(email.trim());
 }
 
+// Supabase auth errors are terse and technical ("Invalid login credentials").
+// Translate the common ones into warm, actionable copy before they reach a
+// toast; anything unrecognised falls back to the screen's own warm message
+// rather than leaking raw API text.
+export function humanAuthError(err: unknown, fallback: string): string {
+  const raw = err instanceof Error ? err.message : '';
+  const msg = raw.toLowerCase();
+  if (msg.includes('invalid login credentials')) {
+    return "that email and password don't match — double-check, or reset it below";
+  }
+  if (msg.includes('email not confirmed')) {
+    return 'almost in — tap the confirmation link we emailed you first';
+  }
+  if (msg.includes('already registered') || msg.includes('already been registered')) {
+    return 'you two have met before — that email already has an account, log in instead';
+  }
+  if (msg.includes('rate limit') || msg.includes('too many requests')) {
+    return 'a few too many tries — give it a minute, then go again';
+  }
+  if (msg.includes('network') || msg.includes('failed to fetch') || msg.includes('fetch failed')) {
+    return "couldn't reach us — check your connection and try again";
+  }
+  if (msg.includes('should be different from the old password')) {
+    return "that's the same password as before — pick a fresh one";
+  }
+  return fallback;
+}
+
 function authCallbackUrl(): string {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const Linking = require('expo-linking');

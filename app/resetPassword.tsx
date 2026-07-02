@@ -11,7 +11,7 @@ import { Wordmark } from '../src/components/Wordmark';
 import { DawnBlobs } from '../src/components/DawnBlobs';
 import Toast from '../src/components/Toast';
 import { useUiStore } from '../src/store/ui';
-import { updatePassword } from '../src/features/auth/authActions';
+import { updatePassword, humanAuthError } from '../src/features/auth/authActions';
 
 export default function ResetPasswordScreen() {
   const router = useRouter();
@@ -30,7 +30,7 @@ export default function ResetPasswordScreen() {
       fireToast('Password updated');
       router.replace('/');
     } catch (err) {
-      fireToast(err instanceof Error ? err.message : 'Could not update your password');
+      fireToast(humanAuthError(err, "couldn't update your password — try again in a sec"));
     } finally {
       setLoading(false);
     }

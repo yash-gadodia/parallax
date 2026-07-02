@@ -1,5 +1,5 @@
 import * as Notifications from 'expo-notifications';
-import { requestPermissions, scheduleDailyNudge, cancelDailyNudge, registerPushToken, notifyPartner, notifyPaired, notifyNudge } from './index';
+import { requestPermissions, scheduleDailyNudge, cancelDailyNudge, registerPushToken, notifyPartner, notifyPaired, notifyNudge, notifyRefocus } from './index';
 
 jest.mock('expo-notifications');
 // Stub supabase so notifyPartner tests control functions.invoke independently.
@@ -242,6 +242,36 @@ describe('notifyNudge', () => {
     mockGetSession.mockResolvedValueOnce({ data: { session: { user: { id: 'u-1' } } } });
     mockInvoke.mockRejectedValueOnce(new Error('network failure'));
     await expect(notifyNudge('couple-7')).resolves.toBeUndefined();
+  });
+});
+
+describe('notifyRefocus', () => {
+  const mockInvoke = supabase.functions.invoke as jest.Mock;
+  const mockGetSession = supabase.auth.getSession as jest.Mock;
+
+  beforeEach(() => {
+    mockInvoke.mockClear();
+    mockGetSession.mockClear();
+  });
+
+  it('invokes notify-partner with event=refocus and the couple_id when signed in', async () => {
+    mockGetSession.mockResolvedValueOnce({ data: { session: { user: { id: 'u-1' } } } });
+    await notifyRefocus('couple-11');
+    expect(mockInvoke).toHaveBeenCalledWith('notify-partner', {
+      body: { couple_id: 'couple-11', event: 'refocus' },
+    });
+  });
+
+  it('is a no-op without a session (demo/solo mode)', async () => {
+    mockGetSession.mockResolvedValueOnce({ data: { session: null } });
+    await notifyRefocus('couple-11');
+    expect(mockInvoke).not.toHaveBeenCalled();
+  });
+
+  it('swallows errors so the refocus flow is never interrupted', async () => {
+    mockGetSession.mockResolvedValueOnce({ data: { session: { user: { id: 'u-1' } } } });
+    mockInvoke.mockRejectedValueOnce(new Error('network failure'));
+    await expect(notifyRefocus('couple-11')).resolves.toBeUndefined();
   });
 });
 

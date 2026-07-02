@@ -1,4 +1,4 @@
-import { render, fireEvent } from '@testing-library/react-native';
+import { render, fireEvent, act } from '@testing-library/react-native';
 import SpiceSheet from '../spice';
 
 const mockUpdateSpiceLevel = jest.fn(() => Promise.resolve());
@@ -61,6 +61,17 @@ describe('SpiceSheet', () => {
     const { getByText } = await render(<SpiceSheet />);
     fireEvent.press(getByText('Spicy'));
     expect(mockUpdateSpiceLevel).toHaveBeenCalledWith('Spicy');
+  });
+
+  it('shows the warm error toast (never the success toast) when the save fails', async () => {
+    mockUpdateSpiceLevel.mockImplementationOnce(() => Promise.reject(new Error('offline')));
+    const { getByText, queryByText } = await render(<SpiceSheet />);
+
+    await fireEvent.press(getByText('Spicy'));
+    await act(async () => {});
+
+    expect(getByText("couldn't save that — try again in a sec")).toBeDefined();
+    expect(queryByText(/Spice level set to/)).toBeNull();
   });
 
   it('initialises selection from profile spiceLevel', async () => {

@@ -15,9 +15,11 @@ import TopBar from '../src/components/TopBar';
 import Press from '../src/components/Press';
 import Tok from '../src/components/Tok';
 import Toast from '../src/components/Toast';
+import Btn from '../src/components/Btn';
 import { Icon, ICONS } from '../src/components/Icon';
-import { Kick } from '../src/components/Text';
+import { Kick, Serif } from '../src/components/Text';
 import { DawnBlobs } from '../src/components/DawnBlobs';
+import { Skeleton } from '../src/components/Skeleton';
 
 import { ACTIVITY } from '../src/content/us';
 import { colors, gradients, radius, shadows, space } from '../src/design/tokens';
@@ -34,7 +36,13 @@ export default function ActivityScreen() {
   const { session } = useSession();
   const { couple } = useCouple();
   const { me, partner } = useIdentity();
-  const { items: dbItems, markAllRead: markAllReadDb, loading: activityLoading } = useActivity(couple?.id || null);
+  const {
+    items: dbItems,
+    markAllRead: markAllReadDb,
+    loading: activityLoading,
+    error: activityError,
+    refetch: refetchActivity,
+  } = useActivity(couple?.id || null);
 
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
@@ -80,7 +88,7 @@ export default function ActivityScreen() {
         setToastMsg('All caught up');
         setTimeout(() => setToastMsg(null), 2000);
       } catch {
-        setToastMsg('Failed to mark as read');
+        setToastMsg("Couldn't mark those read — try again in a sec");
         setTimeout(() => setToastMsg(null), 2000);
       }
     } else {
@@ -128,6 +136,41 @@ export default function ActivityScreen() {
         >
           <View style={styles.topSpacer} />
 
+          {paired && activityLoading ? (
+            /* Skeleton rows keep the feed's shape while it loads — never a
+               blank frame or a premature "Nothing yet". */
+            <View style={styles.itemsContainer}>
+              <Skeleton h={72} br={20} testID="activity-skeleton-row" />
+              <Skeleton h={72} br={20} testID="activity-skeleton-row" />
+              <Skeleton h={72} br={20} testID="activity-skeleton-row" />
+            </View>
+          ) : paired && activityError ? (
+            <View style={{ alignItems: 'center', paddingVertical: 44, paddingHorizontal: 24 }}>
+              <Text allowFontScaling={false} style={{ fontSize: 30, marginBottom: 10 }}>
+                🫧
+              </Text>
+              <Serif s={21} style={{ textAlign: 'center', marginBottom: 6 }}>
+                hmm, that didn't load
+              </Serif>
+              <Text
+                allowFontScaling={false}
+                style={{
+                  fontSize: 13.5,
+                  lineHeight: 13.5 * 1.45,
+                  color: colors.inkMute,
+                  textAlign: 'center',
+                  fontFamily: fontFamily.ui,
+                  marginBottom: 16,
+                }}
+              >
+                {`Whatever you and ${partner.name} have been up to is safe — we just couldn't reach it.`}
+              </Text>
+              <Btn kind="soft" onPress={refetchActivity} style={{ alignSelf: 'stretch' }}>
+                try again
+              </Btn>
+            </View>
+          ) : (
+          <>
           <View style={styles.itemsContainer}>
             {(displayItems as DisplayActivity[]).map(a => {
               const tappable = !!a.cta;
@@ -285,6 +328,8 @@ export default function ActivityScreen() {
             </View>
           ) : (
             <Text style={styles.footer}>that's everything · just you two</Text>
+          )}
+          </>
           )}
 
           <View style={styles.bottomSpacer} />

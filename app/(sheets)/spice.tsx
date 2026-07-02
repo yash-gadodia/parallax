@@ -21,16 +21,26 @@ export default function SpiceSheet() {
   const router = useRouter();
   const { spiceLevel, updateSpiceLevel } = useProfile();
   const [showToast, setShowToast] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [current, setCurrent] = useState<SpiceLevel>((spiceLevel as SpiceLevel) || 'Flirty');
 
   const handlePick = async (level: SpiceLevel) => {
+    const previous = current;
     setCurrent(level);
-    // Persist to supabase when session exists; updateSpiceLevel is a no-op for no-session
-    await updateSpiceLevel(level);
-    setShowToast(true);
-    setTimeout(() => {
-      safeBack(router);
-    }, 400);
+    try {
+      // Persist to supabase when session exists; updateSpiceLevel is a no-op for no-session
+      await updateSpiceLevel(level);
+      setShowToast(true);
+      setTimeout(() => {
+        safeBack(router);
+      }, 400);
+    } catch {
+      // The save didn't land — roll the selection back and say so, instead of
+      // a success toast over a silent failure.
+      setCurrent(previous);
+      setErrorMsg("couldn't save that — try again in a sec");
+      setTimeout(() => setErrorMsg(null), 2200);
+    }
   };
 
   return (
@@ -131,6 +141,7 @@ export default function SpiceSheet() {
         </View>
       </Sheet>
       {showToast && <Toast msg={`Spice level set to ${current}`} />}
+      {errorMsg && <Toast msg={errorMsg} />}
     </>
   );
 }

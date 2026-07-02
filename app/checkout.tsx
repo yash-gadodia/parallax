@@ -3,9 +3,7 @@ import {
   View,
   Text,
   ScrollView,
-  TextInput,
   Animated,
-  useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -27,13 +25,11 @@ import { track, EVENTS } from '../src/lib/analytics';
 import { useIdentity } from '../src/features/profile/useIdentity';
 
 type PlanId = 'year' | 'month';
-type PaymentMethod = 'apple' | 'card';
 
 export default function CheckoutScreen() {
   const router = useRouter();
   const { partner } = useIdentity();
   const [plan, setPlan] = useState<PlanId>('year');
-  const [method, setMethod] = useState<PaymentMethod>('apple');
   const [confirming, setConfirming] = useState(false);
   const [failMsg, setFailMsg] = useState<string | null>(null);
   const offering = usePurchases((s) => s.offering);
@@ -260,101 +256,29 @@ export default function CheckoutScreen() {
             />
           </View>
 
-          {/* Payment Section Label */}
-          <Kick style={{ marginBottom: 10, marginLeft: 4 }}>
-            payment
-          </Kick>
-
-          {/* Payment Method Toggle */}
-          <View style={{ flexDirection: 'row', gap: 10, marginBottom: 14 }}>
-            <PaymentMethodButton
-              id="apple"
-              label="Apple Pay"
-              icon={ICONS.apple}
-              selected={method === 'apple'}
-              onSelect={() => setMethod('apple')}
-            />
-            <PaymentMethodButton
-              id="card"
-              label="Card"
-              icon={ICONS.card}
-              selected={method === 'card'}
-              onSelect={() => setMethod('card')}
-            />
+          {/* The honest payment story: everything goes through the App Store
+              (RevenueCat) — no card forms in-app, ever. */}
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 6,
+              justifyContent: 'center',
+              marginTop: 2,
+            }}
+          >
+            <Icon d={ICONS.lock} size={12} color={colors.inkMute} />
+            <Text
+              allowFontScaling={false}
+              style={{
+                fontSize: 11.5,
+                color: colors.inkMute,
+                fontFamily: fontFamily.ui,
+              }}
+            >
+              Billed through the App Store — confirm with Face ID. Cancel anytime.
+            </Text>
           </View>
-
-          {/* Card Fields (shown only if Card method selected) */}
-          {method === 'card' && (
-            <View
-              style={{
-                backgroundColor: colors.surface,
-                borderRadius: radius.cardXs,
-                paddingHorizontal: 14,
-                paddingVertical: 14,
-                gap: 10,
-                marginBottom: 6,
-                ...shadows.shadowSoft,
-              }}
-            >
-              <CardField
-                label="Card number"
-                placeholder="1234  5678  9012  3456"
-                icon={ICONS.card}
-              />
-              <View style={{ flexDirection: 'row', gap: 10 }}>
-                <View style={{ flex: 1 }}>
-                  <CardField
-                    label="Expiry"
-                    placeholder="MM / YY"
-                  />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <CardField
-                    label="CVC"
-                    placeholder="123"
-                  />
-                </View>
-              </View>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 }}>
-                <Icon d={ICONS.lock} size={12} color={colors.inkMute} />
-                <Text
-                  allowFontScaling={false}
-                  style={{
-                    fontSize: 11,
-                    color: colors.inkMute,
-                    fontFamily: fontFamily.ui,
-                  }}
-                >
-                  Encrypted & secure. Cancel anytime.
-                </Text>
-              </View>
-            </View>
-          )}
-
-          {/* Apple Pay Info */}
-          {method === 'apple' && (
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 6,
-                justifyContent: 'center',
-                marginTop: 2,
-              }}
-            >
-              <Icon d={ICONS.lock} size={12} color={colors.inkMute} />
-              <Text
-                allowFontScaling={false}
-                style={{
-                  fontSize: 11.5,
-                  color: colors.inkMute,
-                  fontFamily: fontFamily.ui,
-                }}
-              >
-                Confirm with Face ID. Cancel anytime.
-              </Text>
-            </View>
-          )}
 
           {/* Restore purchases (App Store requirement) */}
           <Press onPress={handleRestore} scale={false} style={{ marginTop: 18 }}>
@@ -396,9 +320,7 @@ export default function CheckoutScreen() {
             sub={`7 days free, then ${pl.price}${pl.per}`}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              {method === 'apple' && (
-                <Icon d={ICONS.apple} size={18} color="#fff" fill="#fff" sw={0} />
-              )}
+              <Icon d={ICONS.apple} size={18} color="#fff" fill="#fff" sw={0} />
               <Text
                 allowFontScaling={false}
                 style={{
@@ -606,119 +528,3 @@ function PlanCard({ id, selected, onSelect }: PlanCardProps) {
   );
 }
 
-interface PaymentMethodButtonProps {
-  id: PaymentMethod;
-  label: string;
-  icon: string;
-  selected: boolean;
-  onSelect: () => void;
-}
-
-function PaymentMethodButton({
-  id,
-  label,
-  icon,
-  selected,
-  onSelect,
-}: PaymentMethodButtonProps) {
-  const isFilled = id === 'apple';
-
-  return (
-    <Press onPress={onSelect} style={{ flex: 1 }}>
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 8,
-          paddingVertical: 14,
-          paddingHorizontal: 8,
-          borderRadius: radius.input,
-          backgroundColor: selected ? colors.ink : colors.surface,
-          borderWidth: 1.5,
-          borderColor: selected ? colors.ink : colors.line,
-          ...shadows.shadowSoft,
-        }}
-      >
-        <Icon
-          d={icon}
-          size={18}
-          color={selected ? '#fff' : colors.ink}
-          fill={isFilled ? (selected ? '#fff' : colors.ink) : 'none'}
-          sw={isFilled ? 0 : 1.6}
-        />
-        <Text
-          allowFontScaling={false}
-          style={{
-            fontSize: 14.5,
-            fontWeight: '700',
-            color: selected ? '#fff' : colors.ink,
-            fontFamily: fontFamily.ui,
-          }}
-        >
-          {label}
-        </Text>
-      </View>
-    </Press>
-  );
-}
-
-interface CardFieldProps {
-  label: string;
-  placeholder: string;
-  icon?: string;
-}
-
-function CardField({ label, placeholder, icon }: CardFieldProps) {
-  const [value, setValue] = React.useState('');
-
-  return (
-    <View>
-      <Text
-        allowFontScaling={false}
-        style={{
-          fontSize: 9.5,
-          letterSpacing: 1,
-          textTransform: 'uppercase',
-          color: colors.inkMute,
-          fontFamily: fontFamily.mono,
-          marginBottom: 5,
-        }}
-      >
-        {label}
-      </Text>
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 8,
-          paddingHorizontal: 13,
-          paddingVertical: 12,
-          borderRadius: radius.sm,
-          backgroundColor: colors.sunken,
-          borderWidth: 1,
-          borderColor: colors.line,
-        }}
-      >
-        {icon && (
-          <Icon d={icon} size={16} color={colors.inkMute} />
-        )}
-        <TextInput
-          placeholder={placeholder}
-          placeholderTextColor={colors.inkMute}
-          value={value}
-          onChangeText={setValue}
-          style={{
-            flex: 1,
-            fontSize: 14.5,
-            fontWeight: '600',
-            fontFamily: fontFamily.ui,
-            color: colors.ink,
-            minWidth: 0,
-            padding: 0,
-          }}
-        />
-      </View>
-    </View>
-  );
-}

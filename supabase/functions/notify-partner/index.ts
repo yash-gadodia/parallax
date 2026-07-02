@@ -105,19 +105,20 @@ Deno.serve(async (req: Request) => {
     event === "played" ||
     event === "revealed" ||
     event === "paired" ||
-    event === "nudge";
-  // 'paired' fires at pairing time (no couple_drop exists yet) and 'nudge' is
-  // not tied to a drop — both carry the couple_id directly; 'played'/'revealed'
-  // carry the couple_drop_id.
-  const needsCoupleId = event === "paired" || event === "nudge";
+    event === "nudge" ||
+    event === "refocus";
+  // 'paired' fires at pairing time (no couple_drop exists yet) and 'nudge'/
+  // 'refocus' are not tied to a drop — these carry the couple_id directly;
+  // 'played'/'revealed' carry the couple_drop_id.
+  const needsCoupleId = event === "paired" || event === "nudge" || event === "refocus";
   if (!validEvent || (needsCoupleId ? !couple_id_in : !couple_drop_id)) {
     return json({ error: "missing_or_invalid_params" }, 400);
   }
 
-  // 'played' and 'nudge' target THE OTHER member, so they need the actor —
-  // taken from the verified JWT, never from the request body.
+  // 'played', 'nudge' and 'refocus' target THE OTHER member, so they need the
+  // actor — taken from the verified JWT, never from the request body.
   const actor = jwtSub(req);
-  if ((event === "played" || event === "nudge") && !actor) {
+  if ((event === "played" || event === "nudge" || event === "refocus") && !actor) {
     return json({ error: "unauthenticated" }, 401);
   }
 
@@ -145,7 +146,7 @@ Deno.serve(async (req: Request) => {
 
     // Server-side actor verification: the caller must be a member of this couple.
     if (
-      (event === "played" || event === "nudge") &&
+      (event === "played" || event === "nudge" || event === "refocus") &&
       !memberIds.includes(actor as string)
     ) {
       return json({ error: "not_a_member" }, 403);
@@ -203,6 +204,20 @@ Deno.serve(async (req: Request) => {
         to: partner.push_token,
         title: `a nudge from ${nudgerName} 💛`,
         body: nudgeBody(nudgerName),
+        sound: "default",
+      });
+    } else if (event === "refocus") {
+      // A refocus session just started — gently ping the initiator's partner
+      // to add their side (IMPROVEMENT_PLAN.md 4.6).
+      const partnerId = memberIds.find((id) => id !== actor);
+      if (!partnerId) return json({ sent: 0 });
+      const partner = profileMap.get(partnerId);
+      if (!partner?.push_token) return json({ sent: 0 });
+      const initiatorName = nameOf(actor);
+      messages.push({
+        to: partner.push_token,
+        title: `${initiatorName} wants to refocus something 💛`,
+        body: "add your side when you're ready",
         sound: "default",
       });
     } else {

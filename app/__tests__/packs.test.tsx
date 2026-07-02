@@ -27,13 +27,16 @@ describe('PacksScreen', () => {
   });
 
   it('renders the packs screen with key sections', async () => {
-    const { getByText } = await render(<PacksScreen />);
+    const { getByText, queryByText } = await render(<PacksScreen />);
 
     // Check main heading
     expect(getByText('Packs')).toBeTruthy();
 
-    // Check that description mentions sending packs (appears in both Plus and non-Plus)
-    expect(getByText(/Send Dani/)).toBeTruthy();
+    // Honest copy: packs surface via the daily rotation — there is no send.
+    expect(
+      getByText(/Themed questions that land in your daily rotation with Dani/)
+    ).toBeTruthy();
+    expect(queryByText(/Send Dani/)).toBeNull();
 
     // Check pack titles are rendered
     expect(getByText('Deep end')).toBeTruthy();

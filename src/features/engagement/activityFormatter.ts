@@ -16,8 +16,9 @@ export interface DisplayActivity {
 
 // Only kinds with a real server-side producer get copy (audit item (c)12/15 —
 // no dead promises): 'played' + 'milestone' from _increment_streak (0014/0017),
-// 'nudge' from nudge_partner. 'pack'/'refocus'/'reveal' were removed until
-// something actually emits them; unknown kinds fall through to the generic map.
+// 'nudge' from nudge_partner, 'refocus' from start_refocus (0020 — re-added now
+// that it has a real producer). 'pack'/'reveal' stay removed until something
+// actually emits them; unknown kinds fall through to the generic map.
 const ACTIVITY_KINDS: Record<string, {
   emoji: string;
   title: (actor?: string | null) => string;
@@ -44,6 +45,16 @@ const ACTIVITY_KINDS: Record<string, {
     title: () => 'You hit a milestone',
     body: () => 'Keep the streak alive.',
     cta: 'streak',
+    who: 'us',
+  },
+  refocus: {
+    emoji: '💛',
+    title: () => 'A refocus session started',
+    body: (payload) =>
+      typeof payload?.topic === 'string' && payload.topic
+        ? `"${payload.topic}" — untangling it together.`
+        : 'Untangling something together.',
+    cta: null,
     who: 'us',
   },
 };

@@ -28,6 +28,7 @@ import {
   signInWithGoogle,
   resendConfirmationEmail,
   isValidEmail,
+  humanAuthError,
 } from '../src/features/auth/authActions';
 import { track, EVENTS } from '../src/lib/analytics';
 
@@ -100,8 +101,7 @@ export default function SignupScreen() {
       track(EVENTS.SIGNUP_COMPLETED);
       setSent(true);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Sign up failed';
-      fireToast(msg);
+      fireToast(humanAuthError(err, "couldn't create your account — try again in a sec"));
     } finally {
       setLoading(false);
     }
@@ -113,7 +113,7 @@ export default function SignupScreen() {
       await resendConfirmationEmail(email.trim());
       fireToast('Confirmation email re-sent');
     } catch (err) {
-      fireToast(err instanceof Error ? err.message : 'Could not resend the email');
+      fireToast(humanAuthError(err, "couldn't resend the email — try again in a sec"));
     }
   };
 
@@ -127,8 +127,10 @@ export default function SignupScreen() {
       router.replace('/');
     } catch (err) {
       const fallback =
-        provider === 'apple' ? 'Apple sign-in failed' : 'Google sign-in failed';
-      fireToast(err instanceof Error ? err.message : fallback);
+        provider === 'apple'
+          ? "Apple sign-in didn't finish — try again in a sec"
+          : "Google sign-in didn't finish — try again in a sec";
+      fireToast(humanAuthError(err, fallback));
     } finally {
       setLoading(false);
     }

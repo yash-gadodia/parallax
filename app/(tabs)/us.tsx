@@ -12,8 +12,10 @@ import Tok from '../../src/components/Tok';
 import Press from '../../src/components/Press';
 import { Icon, ICONS } from '../../src/components/Icon';
 import Card from '../../src/components/Card';
+import Btn from '../../src/components/Btn';
 import { Kick, Serif } from '../../src/components/Text';
 import GradientText from '../../src/components/GradientText';
+import { Skeleton } from '../../src/components/Skeleton';
 import { colors, gradients, radius, shadows, space } from '../../src/design/tokens';
 import { fontFamily } from '../../src/design/typography';
 import { ARCHIVE } from '../../src/content/drop';
@@ -25,7 +27,13 @@ import { useProfile } from '../../src/features/profile/useProfile';
 export default function UsScreen() {
   const router = useRouter();
   const { items: learningItems, isSample: learningsSample } = useLearnings();
-  const { history, isSample: historySample } = useCoupleHistory();
+  const {
+    history,
+    isSample: historySample,
+    loading: historyLoading,
+    error: historyError,
+    refetch: refetchHistory,
+  } = useCoupleHistory();
   // Real drops carry their emoji in the DB (first prompt); the static ARCHIVE
   // only covers the demo codes, so it stays as the demo fallback below.
   const dropEmojis = useDropEmojis(history.map((h) => h.code));
@@ -302,7 +310,53 @@ export default function UsScreen() {
             </Card>
           </Press>
 
-          {history.length > 0 ? (
+          {historyLoading ? (
+            /* Skeleton: the chart card, stat trio and first history rows keep
+               their shape while the real story loads — never a blank pop-in. */
+            <View style={{ marginTop: 18 }}>
+              <Skeleton h={196} br={26} testID="us-skeleton-chart" />
+              <View style={{ flexDirection: 'row', gap: 12, marginTop: 14 }}>
+                {[0, 1, 2].map((i) => (
+                  <Skeleton key={i} h={92} br={20} testID="us-skeleton-stat" style={{ flex: 1 }} />
+                ))}
+              </View>
+              <View style={{ marginTop: 24, gap: 10 }}>
+                <Skeleton h={70} br={20} testID="us-skeleton-row" />
+                <Skeleton h={70} br={20} testID="us-skeleton-row" />
+              </View>
+            </View>
+          ) : historyError ? (
+            <Card
+              style={{
+                borderRadius: 26,
+                paddingHorizontal: 18,
+                paddingVertical: 20,
+                marginTop: 18,
+                alignItems: 'center',
+              }}
+            >
+              <Text style={{ fontSize: 30 }}>🫧</Text>
+              <Serif s={22} style={{ marginTop: 8, textAlign: 'center' }}>
+                hmm, that didn't load
+              </Serif>
+              <Text
+                style={{
+                  fontSize: 13.5,
+                  lineHeight: 13.5 * 1.45,
+                  color: colors.inkSoft,
+                  fontFamily: fontFamily.ui,
+                  textAlign: 'center',
+                  marginTop: 6,
+                  marginBottom: 14,
+                }}
+              >
+                {`your story with ${partnerName} is safe — we just couldn't reach it.`}
+              </Text>
+              <Btn kind="soft" onPress={refetchHistory} style={{ alignSelf: 'stretch' }}>
+                try again
+              </Btn>
+            </Card>
+          ) : history.length > 0 ? (
           <>
           {/* Wavelength card with chart */}
           <Card
@@ -449,17 +503,18 @@ export default function UsScreen() {
                   marginTop: 8,
                 }}
               >
-                Your wavelength history shows up after your first reveal.
+                {`Your wavelength with ${partnerName} shows up after your first reveal.`}
               </Text>
             </View>
           )}
 
-          {/* Drop history label */}
+          {/* Drop history (only once there's a story to list) */}
+          {history.length > 0 && (
+          <>
           <View style={{ marginTop: 24, marginBottom: 10 }}>
             <Kick>your drop history</Kick>
           </View>
 
-          {/* History list */}
           <View style={{ flexDirection: 'column', gap: 10 }}>
             {history.map((h) => {
               // Real emoji from the drops data first; ARCHIVE covers the demo
@@ -535,6 +590,8 @@ export default function UsScreen() {
               );
             })}
           </View>
+          </>
+          )}
         </ScrollView>
       </SafeAreaView>
     </LinearGradient>
