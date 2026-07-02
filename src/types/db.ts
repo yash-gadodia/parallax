@@ -52,6 +52,7 @@ export interface CoupleDrop {
   date: string;
   state: 'open' | 'one_done' | 'revealed';
   wave_pct: number | null;
+  caught_up: boolean;
   created_at: string;
 }
 
@@ -64,6 +65,9 @@ export interface TodayState {
   i_answered?: boolean;
   partner_answered?: boolean;
   held?: boolean;
+  // 0021: yesterday's drop is still answerable today (scored at 80%).
+  catch_up_available?: boolean;
+  yesterday_state?: 'open' | 'one_done' | 'revealed' | null;
 }
 
 // get_streak_surface (0017): the honest streak screen in one round-trip.
@@ -213,6 +217,10 @@ export interface Database {
         Returns: Couple;
       };
       ensure_today_drop: {
+        Args: { p_couple: string };
+        Returns: string;
+      };
+      ensure_yesterday_drop: {
         Args: { p_couple: string };
         Returns: string;
       };

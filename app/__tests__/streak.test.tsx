@@ -71,7 +71,7 @@ describe('StreakScreen', () => {
     // Freezes shown honestly from freezes_remaining; the fake Arm flow is gone.
     expect(getByText('Streak freeze · 1 equipped')).toBeTruthy();
     expect(
-      getByText('Auto-used if you miss a day. Life happens — a freeze saves the streak for both of you.')
+      getByText('Auto-used if you miss a day. Life happens — a freeze saves the streak for both of you. Every full week earns one back (max 2).')
     ).toBeTruthy();
     expect(queryByText('Arm')).toBeNull();
     expect(queryByText('Armed')).toBeNull();

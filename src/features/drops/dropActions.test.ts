@@ -1,4 +1,4 @@
-import { ensureTodayDrop, submitMyAnswers, fetchReveal, getTodayState } from './dropActions';
+import { ensureTodayDrop, ensureYesterdayDrop, submitMyAnswers, fetchReveal, getTodayState } from './dropActions';
 
 jest.mock('../../lib/supabase', () => ({
   supabase: {
@@ -75,6 +75,51 @@ describe('dropActions', () => {
     });
   });
 
+  describe('ensureYesterdayDrop', () => {
+    it('calls the ensure_yesterday_drop RPC and returns the couple_drop id', async () => {
+      mockSupabase.rpc.mockResolvedValue({ data: 'cd-y1', error: null });
+      const id = await ensureYesterdayDrop('couple-1');
+      expect(mockSupabase.rpc).toHaveBeenCalledWith('ensure_yesterday_drop', { p_couple: 'couple-1' });
+      expect(id).toBe('cd-y1');
+    });
+
+    it('throws when the window is closed (server error surfaces, no fake id)', async () => {
+      mockSupabase.rpc.mockResolvedValue({ data: null, error: { message: 'yesterday is already revealed' } });
+      await expect(ensureYesterdayDrop('couple-1')).rejects.toBeDefined();
+    });
+  });
+
+  describe('submitMyAnswers (catch-up, 0021)', () => {
+    it("targets YESTERDAY's drop when catchUp is set and reports the flag from the server", async () => {
+      mockSupabase.rpc
+        .mockResolvedValueOnce({ data: 'cd-y2', error: null }) // ensure_yesterday_drop
+        .mockResolvedValueOnce({
+          data: { success: true, couple_drop_id: 'cd-y2', new_state: 'revealed', wave_pct: 80, caught_up: true },
+          error: null,
+        });
+      mockSubmitTables(['p1']);
+
+      const result = await submitMyAnswers('couple-1', [0], [1], { catchUp: true });
+
+      expect(mockSupabase.rpc).toHaveBeenNthCalledWith(1, 'ensure_yesterday_drop', { p_couple: 'couple-1' });
+      expect(result).toEqual({ coupleDropId: 'cd-y2', state: 'revealed', wavePct: 80, caughtUp: true });
+    });
+
+    it('never touches ensure_yesterday_drop on a normal submit', async () => {
+      mockSupabase.rpc
+        .mockResolvedValueOnce({ data: 'cd-10', error: null })
+        .mockResolvedValueOnce({
+          data: { success: true, couple_drop_id: 'cd-10', new_state: 'one_done', wave_pct: null },
+          error: null,
+        });
+      mockSubmitTables(['p1']);
+
+      await submitMyAnswers('couple-1', [0], [1]);
+
+      expect(mockSupabase.rpc).toHaveBeenNthCalledWith(1, 'ensure_today_drop', { p_couple: 'couple-1' });
+    });
+  });
+
   describe('submitMyAnswers', () => {
     it('submits one answer per prompt of THIS drop and returns the server state — no partner sim, no client streak', async () => {
       mockSupabase.rpc
@@ -87,7 +132,7 @@ describe('dropActions', () => {
 
       const result = await submitMyAnswers('couple-1', [0, 1, 2], [2, 1, 0]);
 
-      expect(result).toEqual({ coupleDropId: 'cd-9', state: 'one_done', wavePct: null });
+      expect(result).toEqual({ coupleDropId: 'cd-9', state: 'one_done', wavePct: null, caughtUp: false });
 
       expect(mockSupabase.rpc).toHaveBeenNthCalledWith(2, 'submit_answers', {
         p_couple_drop: 'cd-9',
@@ -128,7 +173,7 @@ describe('dropActions', () => {
 
       const result = await submitMyAnswers('couple-1', [0], [1]);
 
-      expect(result).toEqual({ coupleDropId: 'cd-7', state: 'revealed', wavePct: 67 });
+      expect(result).toEqual({ coupleDropId: 'cd-7', state: 'revealed', wavePct: 67, caughtUp: false });
       expect(notifyPartner).toHaveBeenCalledWith('cd-7', 'revealed');
       expect(notifyPartner).toHaveBeenCalledTimes(1);
     });

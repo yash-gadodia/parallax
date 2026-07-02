@@ -1,5 +1,12 @@
-import { render } from '@testing-library/react-native';
+import { render, fireEvent } from '@testing-library/react-native';
 import TodayScreen from '../(tabs)/today';
+
+const mockPush = jest.fn();
+jest.mock('expo-router', () => ({
+  __esModule: true,
+  useRouter: () => ({ push: mockPush, replace: jest.fn(), back: jest.fn(), navigate: jest.fn(), dismiss: jest.fn() }),
+  useLocalSearchParams: () => ({}),
+}));
 
 jest.mock('../../src/features/pairing/useCouple', () => ({
   useCouple: jest.fn(),
@@ -59,6 +66,7 @@ function mockLive({
   state = 'open' as 'open' | 'one_done' | 'revealed',
   history = [] as (typeof HISTORY_ROW)[],
   now = MORNING,
+  catchUp = false,
 } = {}) {
   mockUseSession.mockReturnValue({ session: { user: { id: 'u1' } }, loading: false });
   mockUseCouple.mockReturnValue({
@@ -82,6 +90,7 @@ function mockLive({
       wave_pct: state === 'revealed' ? 80 : null,
       i_answered: iAnswered,
       partner_answered: partnerAnswered,
+      catch_up_available: catchUp,
     },
     content: null,
     loading: false,
@@ -96,7 +105,7 @@ function mockLive({
 }
 
 const STREAK_RULE_LINE =
-  'streak rule: you both play, it grows. miss a day, it resets — you have 2 freezes.';
+  'streak rule: you both play, it grows. miss a day? catch it up by midnight, or a freeze saves you — you have 2.';
 
 describe('Today Screen', () => {
   beforeEach(() => {
@@ -111,6 +120,26 @@ describe('Today Screen', () => {
       partner: { name: 'Jordan', initial: 'J', hasPartner: true },
       loading: false,
     });
+  });
+
+  it('offers the catch-up card when the server says yesterday is still open (0021)', async () => {
+    mockLive({ catchUp: true });
+    const { getByText } = await render(<TodayScreen now={() => MORNING} />);
+    expect(getByText('Yesterday got away? Catch it up')).toBeTruthy();
+    expect(getByText('open till midnight · scored at 80% · saves your streak')).toBeTruthy();
+  });
+
+  it('routes the catch-up card into play in catch-up mode', async () => {
+    mockLive({ catchUp: true });
+    const { getByText } = await render(<TodayScreen now={() => MORNING} />);
+    fireEvent.press(getByText('Yesterday got away? Catch it up'));
+    expect(mockPush).toHaveBeenCalledWith('/play?catchup=1');
+  });
+
+  it('never guilt-trips: no catch-up card when yesterday is done or the couple is new', async () => {
+    mockLive({ catchUp: false });
+    const { queryByText } = await render(<TodayScreen now={() => MORNING} />);
+    expect(queryByText('Yesterday got away? Catch it up')).toBeNull();
   });
 
   it('renders the daily drop and the play CTA', async () => {

@@ -7,7 +7,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { safeBack } from "../src/lib/nav";
 import { usePlayStore } from '../src/store/play';
 import { DROP } from '../src/content/drop';
@@ -21,19 +21,24 @@ import { DawnBlobs } from '../src/components/DawnBlobs';
 import { useSession } from '../src/features/auth/useSession';
 import { useCouple } from '../src/features/pairing/useCouple';
 import { useIdentity } from '../src/features/profile/useIdentity';
-import { submitMyAnswers } from '../src/features/drops/dropActions';
+import { submitMyAnswers, ensureYesterdayDrop, getDropContent } from '../src/features/drops/dropActions';
+import type { DropContent } from '../src/features/drops/dropActions';
 import { useTodayState } from '../src/features/drops/useTodayState';
 import { useUiStore } from '../src/store/ui';
 import { track, EVENTS } from '../src/lib/analytics';
 
 export default function PlayScreen() {
   const router = useRouter();
+  const { catchup } = useLocalSearchParams<{ catchup?: string }>();
   const { session } = useSession();
   const { couple } = useCouple();
   const { me, partner } = useIdentity();
   const { idx, phase, myPicks, myHunches, reset } = usePlayStore();
   const { content } = useTodayState(session && couple ? couple.id : null);
   const [submitting, setSubmitting] = useState(false);
+  // Catch-up mode (0021): playing YESTERDAY's drop, scored at 80%.
+  const isCatchUp = catchup === '1';
+  const [catchUpContent, setCatchUpContent] = useState<DropContent | null>(null);
   // Guards the answer→hunch / hunch→next-prompt transition: a tap landing
   // during the re-render otherwise binds to the NEW phase's option at the
   // same position (E2E finding F6).
@@ -41,7 +46,10 @@ export default function PlayScreen() {
   const isLive = !!(session && couple);
   // Live couples play the drop the server assigned (rotation-aware); the
   // unauthenticated demo plays the static content. Never mix mid-session.
-  const prompts = isLive ? content?.prompts ?? null : DROP.prompts;
+  // A catch-up plays yesterday's assigned drop instead of today's.
+  const prompts = isLive
+    ? (isCatchUp ? catchUpContent?.prompts ?? null : content?.prompts ?? null)
+    : DROP.prompts;
   const prompt = prompts ? prompts[idx] : null;
   const isPick = phase === 'pick';
   const color = isPick ? colors.p1 : colors.p2;
@@ -55,6 +63,27 @@ export default function PlayScreen() {
   useEffect(() => {
     reset();
   }, [reset]);
+
+  // Catch-up: open yesterday's drop (minted server-side if never opened) and
+  // load ITS prompts. On failure, fall back honestly to Today.
+  useEffect(() => {
+    if (!isCatchUp || !isLive || !couple) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const yesterdayId = await ensureYesterdayDrop(couple.id);
+        const yesterdayContent = await getDropContent(yesterdayId);
+        if (cancelled) return;
+        if (!yesterdayContent) throw new Error('no content');
+        setCatchUpContent(yesterdayContent);
+      } catch {
+        if (!cancelled) safeBack(router);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isCatchUp, isLive, couple, router]);
 
   const choose = async (optionIdx: number) => {
     if (transitionLock.current) return;
@@ -86,7 +115,8 @@ export default function PlayScreen() {
             const result = await submitMyAnswers(
               couple.id,
               currentState.myPicks,
-              currentState.myHunches
+              currentState.myHunches,
+              { catchUp: isCatchUp }
             );
             track(EVENTS.DROP_SUBMITTED);
             usePlayStore.setState({ done: true, coupleDropId: result.coupleDropId });
@@ -139,7 +169,9 @@ export default function PlayScreen() {
         <SafeAreaView
           style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}
         >
-          <Kick c={colors.inkSoft}>loading today's drop…</Kick>
+          <Kick c={colors.inkSoft}>
+            {isCatchUp ? "opening yesterday's drop…" : "loading today's drop…"}
+          </Kick>
         </SafeAreaView>
       </LinearGradient>
     );
@@ -200,6 +232,13 @@ export default function PlayScreen() {
             {idx + 1}/{prompts?.length ?? 3}
           </Kick>
         </View>
+
+        {/* Catch-up rounds say so up front — the 80% rule is never a surprise */}
+        {isCatchUp && (
+          <View style={{ paddingHorizontal: space.gutter, paddingTop: 10 }}>
+            <Kick c={colors.p2Deep}>yesterday's drop · scored at 80%</Kick>
+          </View>
+        )}
 
         {/* Main content */}
         <ScrollView

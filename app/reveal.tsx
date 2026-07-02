@@ -169,6 +169,7 @@ export default function RevealScreen() {
     reveal: RevealScore;
     promptAnswers: PromptAnswers[];
     prompts: Array<{ id: string; emoji: string | null; question: string | null; options: string[] }>;
+    caughtUp: boolean;
   } | null>(null);
   const [fetchFailed, setFetchFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
@@ -224,6 +225,7 @@ export default function RevealScreen() {
           reveal: result.reveal,
           promptAnswers: result.promptAnswers,
           prompts: result.prompts,
+          caughtUp: result.caughtUp,
         });
       })
       .catch(() => {
@@ -389,7 +391,9 @@ export default function RevealScreen() {
                 >
                   {`${reveal.wave}%`}
                 </GradientText>
-                <Kick style={{ marginTop: 4 }}>in sync</Kick>
+                <Kick style={{ marginTop: 4 }}>
+                  {serverReveal?.caughtUp ? 'in sync · caught up at 80%' : 'in sync'}
+                </Kick>
               </View>
               {/* A high wave earns a one-shot gentle sparkle as the ring lands */}
               {reveal.wave >= 70 && (

@@ -227,6 +227,10 @@ export default function TodayScreen({
     router.push('/packs');
   };
 
+  const handleCatchUp = () => {
+    router.push('/play?catchup=1');
+  };
+
   const handleStreakPress = () => {
     router.push('/streak');
   };
@@ -779,6 +783,53 @@ export default function TodayScreen({
             </View>
           </Card>
 
+          {/* Catch-up (0021): yesterday slipped — one bad day ≠ death. Warm,
+              never guilt; the 80% rule is stated up front. */}
+          {isLive && today?.catch_up_available && (
+            <Press onPress={handleCatchUp} accessibilityLabel="Catch up on yesterday's drop">
+              <Card
+                style={{
+                  borderRadius: 22,
+                  paddingHorizontal: 16,
+                  paddingVertical: 14,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 12,
+                  marginTop: 12,
+                }}
+              >
+                <View
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 11,
+                    backgroundColor: colors.sunken,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Text style={{ fontSize: 20 }}>🌙</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      fontWeight: '700',
+                      color: colors.ink,
+                      fontFamily: fontFamily.ui,
+                    }}
+                  >
+                    Yesterday got away? Catch it up
+                  </Text>
+                  <Kick style={{ marginTop: 3 }}>
+                    open till midnight · scored at 80% · saves your streak
+                  </Kick>
+                </View>
+                <Icon d={ICONS.chevR} size={17} color={colors.inkMute} />
+              </Card>
+            </Press>
+          )}
+
           {/* Day 1: the streak rule in one quiet sentence (Duolingo's lesson) */}
           {streak === 1 && (
             <Text
@@ -791,8 +842,8 @@ export default function TodayScreen({
                 textAlign: 'center',
               }}
             >
-              streak rule: you both play, it grows. miss a day, it resets — you
-              have {freezes} freeze{freezes === 1 ? '' : 's'}.
+              streak rule: you both play, it grows. miss a day? catch it up by
+              midnight, or a freeze saves you — you have {freezes}.
             </Text>
           )}
 

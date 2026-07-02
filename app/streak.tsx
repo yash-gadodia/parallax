@@ -425,7 +425,7 @@ export default function StreakScreen() {
                 marginTop: 2,
               }}
             >
-              Auto-used if you miss a day. Life happens — a freeze saves the streak for both of you.
+              Auto-used if you miss a day. Life happens — a freeze saves the streak for both of you. Every full week earns one back (max 2).
             </Text>
           </View>
         </View>

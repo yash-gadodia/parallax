@@ -32,6 +32,34 @@ export async function ensureTodayDrop(coupleId: string): Promise<string> {
   }
 }
 
+/**
+ * Open the catch-up door (0021): yesterday's couple_drop, minted from the
+ * catalog if it was never opened. The server rejects it once revealed, for
+ * pending couples, and after the 24h window.
+ */
+export async function ensureYesterdayDrop(coupleId: string): Promise<string> {
+  try {
+    // @ts-expect-error supabase-js RPC overload limitation with multiple function signatures
+    const { data, error } = await supabase.rpc('ensure_yesterday_drop', {
+      p_couple: coupleId,
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    if (!data) {
+      throw new Error('ensure_yesterday_drop returned no data');
+    }
+
+    return data;
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Failed to open yesterday';
+    useUiStore.getState().fireToast(`Error: ${msg}`);
+    throw err;
+  }
+}
+
 interface AnswerPayload {
   prompt_id: string;
   pick: number | null;
@@ -42,6 +70,7 @@ export interface SubmitResult {
   coupleDropId: string;
   state: 'open' | 'one_done' | 'revealed';
   wavePct: number | null;
+  caughtUp: boolean;
 }
 
 /**
@@ -53,11 +82,14 @@ export interface SubmitResult {
 export async function submitMyAnswers(
   coupleId: string,
   picks: (number | null)[],
-  hunches: (number | null)[]
+  hunches: (number | null)[],
+  opts?: { catchUp?: boolean }
 ): Promise<SubmitResult> {
   try {
-    // First, ensure today's drop exists
-    const coupleDropId = await ensureTodayDrop(coupleId);
+    // Ensure the target drop exists: today's, or yesterday's for a catch-up.
+    const coupleDropId = opts?.catchUp
+      ? await ensureYesterdayDrop(coupleId)
+      : await ensureTodayDrop(coupleId);
 
     // Fetch the prompts of THIS drop (not the whole catalog), in order
     const { data: coupleDrop, error: cdError } = await supabase
@@ -110,6 +142,7 @@ export async function submitMyAnswers(
     const result = (submitData ?? {}) as {
       new_state?: 'open' | 'one_done' | 'revealed';
       wave_pct?: number | null;
+      caught_up?: boolean;
     };
     const newState = result.new_state ?? 'one_done';
 
@@ -129,6 +162,7 @@ export async function submitMyAnswers(
       coupleDropId,
       state: newState,
       wavePct: result.wave_pct ?? null,
+      caughtUp: result.caught_up ?? false,
     };
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Failed to submit answers';
@@ -219,7 +253,7 @@ export async function fetchReveal(coupleDropId: string) {
     // Read couple_drop metadata
     const { data: coupleDrop, error: dropError } = await supabase
       .from('couple_drops')
-      .select('id, couple_id, state, drop_id, wave_pct')
+      .select('id, couple_id, state, drop_id, wave_pct, caught_up')
       .eq('id', coupleDropId)
       .maybeSingle();
 
@@ -227,7 +261,7 @@ export async function fetchReveal(coupleDropId: string) {
       throw dropError;
     }
 
-    type CoupleDropRow = { id: string; couple_id: string; state: 'open' | 'one_done' | 'revealed'; drop_id: string; wave_pct: number | null };
+    type CoupleDropRow = { id: string; couple_id: string; state: 'open' | 'one_done' | 'revealed'; drop_id: string; wave_pct: number | null; caught_up: boolean | null };
     const drop = coupleDrop as CoupleDropRow | null;
     if (!drop) {
       throw new Error('Couple drop not found');
@@ -311,6 +345,8 @@ export async function fetchReveal(coupleDropId: string) {
       reveal: drop.wave_pct != null ? { ...reveal, wave: drop.wave_pct } : reveal,
       promptAnswers,
       prompts: promptList,
+      // 0021: a late (catch-up) round — the reveal labels the 80% scoring.
+      caughtUp: drop.caught_up === true,
     };
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Failed to fetch reveal';
