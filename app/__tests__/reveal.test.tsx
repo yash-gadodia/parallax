@@ -239,3 +239,130 @@ describe('Reveal Screen — server mode (session + couple + coupleDropId)', () =
     expect(queryAllByText('⭐️')).toHaveLength(0);
   });
 });
+
+describe('Reveal Screen — 1.5 escalation + conversation spark', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockSession = { user: { id: 'me' } };
+    mockCouple = { id: 'couple-1', member_a: 'me', member_b: 'them' };
+    mockReactions = [];
+    usePlayStore.setState({
+      myPicks: [null, null, null],
+      myHunches: [null, null, null],
+      coupleDropId: 'cd-42',
+      done: true,
+      idx: 0,
+      phase: 'pick',
+    });
+  });
+
+  it('spark card names the biggest miss with the REAL question and options', async () => {
+    mockFetchReveal.mockResolvedValue({
+      state: 'revealed',
+      reveal: { yourHits: 1, theirHits: 1, twins: 1, wave: 67 },
+      promptAnswers: [
+        { youPick: 0, youHunch: 1, themPick: 0, themHunch: 0 },
+        { youPick: 2, youHunch: 0, themPick: 1, themHunch: 2 },
+        { youPick: 3, youHunch: 1, themPick: 3, themHunch: 1 }, // both miss → the spark
+      ],
+      prompts: SERVER_PROMPTS,
+      caughtUp: false,
+    });
+
+    const { getByText, getByLabelText } = await render(<RevealScreen />);
+    await act(async () => {});
+
+    expect(getByText("tonight's conversation")).toBeTruthy();
+    expect(getByText('🌙 Late night?')).toBeTruthy();
+    expect(getByText(/you guessed "B" — .+ actually picked "D"\./)).toBeTruthy();
+
+    // Tappable: the opener appears on press. NOTE: a press that must RE-RENDER
+    // (vs just call a mock) needs the async act wrapper in RNTL v14.
+    await act(async () => {
+      fireEvent.press(getByLabelText("Tonight's conversation spark"));
+    });
+    expect(getByText(/what made it true for you/)).toBeTruthy();
+  });
+
+  it('no spark card on a perfect round — nothing to unpack', async () => {
+    mockFetchReveal.mockResolvedValue({
+      state: 'revealed',
+      reveal: { yourHits: 3, theirHits: 3, twins: 3, wave: 100 },
+      promptAnswers: [
+        { youPick: 0, youHunch: 0, themPick: 0, themHunch: 0 },
+        { youPick: 1, youHunch: 1, themPick: 1, themHunch: 1 },
+        { youPick: 2, youHunch: 2, themPick: 2, themHunch: 2 },
+      ],
+      prompts: SERVER_PROMPTS,
+      caughtUp: false,
+    });
+
+    const { queryByText, getByText } = await render(<RevealScreen />);
+    await act(async () => {});
+
+    expect(queryByText("tonight's conversation")).toBeNull();
+    // …and three mutual reads in a row earn the escalation line instead
+    expect(getByText('3 hunches in a row 🔥')).toBeTruthy();
+  });
+
+  it('asks for the widget at the post-reveal peak from day 3 (2.3 D3), dismissibly', async () => {
+    mockCouple = {
+      id: 'couple-1',
+      member_a: 'me',
+      member_b: 'them',
+      created_at: new Date(Date.now() - 3 * 86400000).toISOString(),
+    };
+    mockFetchReveal.mockResolvedValue({
+      state: 'revealed',
+      reveal: { yourHits: 2, theirHits: 2, twins: 1, wave: 67 },
+      promptAnswers: [{ youPick: 0, youHunch: 0, themPick: 0, themHunch: 0 }],
+      prompts: [SERVER_PROMPTS[0]],
+      caughtUp: false,
+    });
+
+    const { getByText, queryByText } = await render(<RevealScreen />);
+    await act(async () => {});
+
+    expect(getByText(/Put .+ on your home screen/)).toBeTruthy();
+
+    await act(async () => {
+      fireEvent.press(getByText('Not now'));
+    });
+    expect(queryByText(/Put .+ on your home screen/)).toBeNull();
+  });
+
+  it('never asks for the widget on day 0-2 (too early to interrupt)', async () => {
+    mockCouple = { id: 'couple-1', member_a: 'me', member_b: 'them', created_at: new Date().toISOString() };
+    mockFetchReveal.mockResolvedValue({
+      state: 'revealed',
+      reveal: { yourHits: 1, theirHits: 1, twins: 0, wave: 50 },
+      promptAnswers: [{ youPick: 0, youHunch: 0, themPick: 0, themHunch: 1 }],
+      prompts: [SERVER_PROMPTS[0]],
+      caughtUp: false,
+    });
+
+    const { queryByText } = await render(<RevealScreen />);
+    await act(async () => {});
+
+    expect(queryByText(/Put .+ on your home screen/)).toBeNull();
+  });
+
+  it('labels a caught-up round honestly next to the wave', async () => {
+    mockFetchReveal.mockResolvedValue({
+      state: 'revealed',
+      reveal: { yourHits: 2, theirHits: 2, twins: 1, wave: 53 },
+      promptAnswers: [
+        { youPick: 0, youHunch: 0, themPick: 0, themHunch: 0 },
+        { youPick: 1, youHunch: 0, themPick: 0, themHunch: 0 },
+        { youPick: 2, youHunch: 0, themPick: 0, themHunch: 1 },
+      ],
+      prompts: SERVER_PROMPTS,
+      caughtUp: true,
+    });
+
+    const { getByText } = await render(<RevealScreen />);
+    await act(async () => {});
+
+    expect(getByText('in sync · caught up at 80%')).toBeTruthy();
+  });
+});

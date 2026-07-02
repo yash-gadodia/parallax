@@ -47,7 +47,12 @@ import ReactionRow from '../src/features/reactions/ReactionRow';
 import * as haptics from '../src/lib/haptics';
 import type { RevealScore } from '../src/domain/reveal';
 import type { PromptAnswers } from '../src/domain/reveal';
+import { mutualReadRun, biggestMissIndex } from '../src/domain/reveal';
+import { coupleAgeDays } from '../src/features/drops/useTodayState';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { track, EVENTS } from '../src/lib/analytics';
+
+const WIDGET_PROMPT_DISMISSED_KEY = 'reveal-widget-prompt-dismissed';
 
 // Ring (src/components/Ring) climbs for 1100ms after `show` flips at 80ms.
 const RING_START_MS = 80;
@@ -262,6 +267,41 @@ export default function RevealScreen() {
         ? 'Mostly in focus.'
         : "A little blurry, that's the fun part.";
 
+  // --- 1.5: the reveal is the reward ---------------------------------------
+  // Escalation + conversation spark come from the REAL answer pairs (live only).
+  const liveAnswers = isLive ? serverReveal?.promptAnswers ?? [] : [];
+  const readRun = mutualReadRun(liveAnswers);
+  const missIdx = liveAnswers.length ? biggestMissIndex(liveAnswers) : null;
+  const missPrompt = missIdx != null ? renderPrompts[missIdx] : null;
+  const missAnswers = missIdx != null ? liveAnswers[missIdx] : null;
+  const [sparkOpen, setSparkOpen] = useState(false);
+
+  // --- 2.3: first-week beats on the reveal ----------------------------------
+  const ageDays = coupleAgeDays(couple?.created_at ?? null, new Date());
+  const dayTwoTwin = isLive && ageDays === 2 && reveal.twins > 0;
+  // D3+: promote the widget at the post-reveal peak, once, dismissible.
+  const [widgetPromptHidden, setWidgetPromptHidden] = useState(true);
+  useEffect(() => {
+    if (!isLive || ageDays < 3) return;
+    let cancelled = false;
+    AsyncStorage.getItem(WIDGET_PROMPT_DISMISSED_KEY)
+      .then((v) => {
+        if (!cancelled && v !== '1') setWidgetPromptHidden(false);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [isLive, ageDays]);
+  const dismissWidgetPrompt = () => {
+    setWidgetPromptHidden(true);
+    AsyncStorage.setItem(WIDGET_PROMPT_DISMISSED_KEY, '1').catch(() => {});
+  };
+  const handleWidgetPrompt = () => {
+    dismissWidgetPrompt();
+    router.push('/widgetSetup');
+  };
+
   const peekMood = peekMoodForWave(reveal.wave);
 
   const handleShare = () => {
@@ -458,6 +498,19 @@ export default function RevealScreen() {
               <View style={{ width: 1, backgroundColor: colors.line }} />
               <Stat big={String(reveal.twins)} label="twin moments" grad />
             </View>
+
+            {/* 1.5: back-to-back mutual reads get the escalation line */}
+            {readRun >= 3 && (
+              <View style={{ marginTop: 12, alignItems: 'center' }}>
+                <Kick c={colors.matchDeep}>{readRun} hunches in a row 🔥</Kick>
+              </View>
+            )}
+            {/* 2.3 D2: the first twin moment gets named on day two */}
+            {dayTwoTwin && (
+              <View style={{ marginTop: readRun >= 3 ? 6 : 12, alignItems: 'center' }}>
+                <Kick c={colors.p2Deep}>day two and already twinning 👯</Kick>
+              </View>
+            )}
           </View>
 
           {/* Per-prompt compare cards */}
@@ -683,6 +736,97 @@ export default function RevealScreen() {
               );
             })}
           </View>
+
+          {/* 1.5: the conversation spark — the biggest miss IS the payload */}
+          {missPrompt && missAnswers && (
+            <Press
+              onPress={() => setSparkOpen((v) => !v)}
+              scale={false}
+              accessibilityLabel="Tonight's conversation spark"
+            >
+              <Card style={{ marginTop: 20, paddingHorizontal: 16, paddingVertical: 15, borderRadius: 22 }}>
+                <Kick c={colors.p1Deep}>tonight's conversation</Kick>
+                <Text
+                  allowFontScaling={false}
+                  style={{
+                    marginTop: 6,
+                    fontSize: 14.5,
+                    lineHeight: 20,
+                    fontWeight: '700',
+                    color: colors.ink,
+                    fontFamily: fontFamily.ui,
+                  }}
+                >
+                  {missPrompt.emoji} {missPrompt.q}
+                </Text>
+                <Text
+                  allowFontScaling={false}
+                  style={{
+                    marginTop: 5,
+                    fontSize: 13,
+                    lineHeight: 18.5,
+                    color: colors.inkSoft,
+                    fontFamily: fontFamily.ui,
+                  }}
+                >
+                  {missAnswers.youHunch !== missAnswers.themPick &&
+                  missPrompt.opts[missAnswers.youHunch] != null &&
+                  missPrompt.opts[missAnswers.themPick] != null
+                    ? `you guessed "${missPrompt.opts[missAnswers.youHunch]}" — ${partner.name} actually picked "${missPrompt.opts[missAnswers.themPick]}".`
+                    : `${partner.name} read you differently on this one.`}
+                </Text>
+                {sparkOpen && (
+                  <Text
+                    allowFontScaling={false}
+                    style={{
+                      marginTop: 8,
+                      fontSize: 13,
+                      lineHeight: 18.5,
+                      fontStyle: 'italic',
+                      color: colors.inkSoft,
+                      fontFamily: fontFamily.ui,
+                    }}
+                  >
+                    opener: “okay, what made it true for you?” — the why is the good part.
+                  </Text>
+                )}
+                <Kick style={{ marginTop: 8 }}>{sparkOpen ? 'tap to tuck away' : 'tap for an opener'}</Kick>
+              </Card>
+            </Press>
+          )}
+
+          {/* 2.3 D3+: the widget ask lands at the post-reveal peak, once */}
+          {isLive && !widgetPromptHidden && (
+            <Card style={{ marginTop: 12, paddingHorizontal: 16, paddingVertical: 15, borderRadius: 22 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                <Text style={{ fontSize: 22 }}>📱</Text>
+                <View style={{ flex: 1 }}>
+                  <Text
+                    allowFontScaling={false}
+                    style={{
+                      fontSize: 14,
+                      fontWeight: '700',
+                      color: colors.ink,
+                      fontFamily: fontFamily.ui,
+                    }}
+                  >
+                    Put {partner.name} on your home screen
+                  </Text>
+                  <Kick style={{ marginTop: 3 }}>
+                    the widget flips the moment they play
+                  </Kick>
+                </View>
+              </View>
+              <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
+                <View style={{ flex: 1 }}>
+                  <Btn kind="us" onPress={handleWidgetPrompt}>Add the widget</Btn>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Btn kind="soft" onPress={dismissWidgetPrompt}>Not now</Btn>
+                </View>
+              </View>
+            </Card>
+          )}
 
           {/* Action buttons */}
           <View style={{ marginTop: 20 }}>
