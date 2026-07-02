@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, fireEvent, waitFor } from '@testing-library/react-native';
+import { render, fireEvent, waitFor, act } from '@testing-library/react-native';
 import EditProfileScreen from '../editProfile';
 
 jest.mock('../../src/lib/nav', () => ({
@@ -57,11 +57,15 @@ describe('EditProfileScreen', () => {
     );
     const { getByText, findByText } = await render(<EditProfileScreen />);
 
-    fireEvent.press(getByText('Save changes'));
+    await act(async () => {
+      fireEvent.press(getByText('Save changes'));
+    });
     expect(await findByText('Saving…')).toBeTruthy();
     expect(mockUpdateProfile).toHaveBeenCalledWith('Alex', 'March 2023');
 
-    resolveSave();
+    await act(async () => {
+      resolveSave();
+    });
     expect(await findByText('Changes saved')).toBeTruthy();
   });
 
@@ -69,7 +73,9 @@ describe('EditProfileScreen', () => {
     mockUpdateProfile.mockRejectedValue(new Error('offline'));
     const { getByText, findByText } = await render(<EditProfileScreen />);
 
-    fireEvent.press(getByText('Save changes'));
+    await act(async () => {
+      fireEvent.press(getByText('Save changes'));
+    });
 
     expect(await findByText("couldn't save that — try again in a sec")).toBeTruthy();
     await waitFor(() => expect(getByText('Save changes')).toBeTruthy());

@@ -12,7 +12,7 @@
 -- ============================================================================
 begin;
   create extension if not exists pgtap;
-  select plan(12);
+  select plan(13);
 
   -- ---- SETUP (as superuser) ------------------------------------------------
   insert into auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at)
@@ -133,20 +133,25 @@ begin;
     'last_played_on = couple-local today'
   );
 
-  -- ---- 3. Idempotency ---------------------------------------------------------
+  -- ---- 3. Post-reveal immutability (0022 hardening supersedes the old
+  -- resubmit-idempotency contract: answers can no longer be rewritten at all) --
   set local role authenticated;
   select set_config('request.jwt.claims', json_build_object('sub','b1b1b1b1-0000-0000-0000-000000000002','role','authenticated')::text, true);
-  select (public.submit_answers(
-    'b5b5b5b5-0000-0000-0000-000000000001'::uuid,
-    '[{"prompt_id":"b3b3b3b3-0000-0000-0000-000000000001","pick":1,"hunch":0},
-      {"prompt_id":"b3b3b3b3-0000-0000-0000-000000000002","pick":1,"hunch":1}]'::jsonb
-  ))->>'new_state';
+  select throws_ok(
+    $q$select public.submit_answers(
+      'b5b5b5b5-0000-0000-0000-000000000001'::uuid,
+      '[{"prompt_id":"b3b3b3b3-0000-0000-0000-000000000001","pick":1,"hunch":0},
+        {"prompt_id":"b3b3b3b3-0000-0000-0000-000000000002","pick":1,"hunch":1}]'::jsonb
+    )$q$,
+    'this drop is already revealed',
+    'a revealed drop rejects resubmission outright'
+  );
   reset role;
 
   select is(
     (select streak from public.couples where id = 'b4b4b4b4-0000-0000-0000-000000000001'::uuid),
     1,
-    'resubmission does not double-count the streak'
+    'the streak stays exactly 1 after the rejected resubmit'
   );
 
   -- ---- 4. Non-member rejected ---------------------------------------------------

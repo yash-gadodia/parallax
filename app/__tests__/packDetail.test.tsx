@@ -97,7 +97,7 @@ describe('PackDetailScreen', () => {
   });
 
   it('queues the pack through send_pack with the couple and DB theme, then confirms', async () => {
-    const { getByText, getAllByText, queryByText } = await render(<PackDetailScreen />);
+    const { getByText, getAllByText, queryByText, unmount } = await render(<PackDetailScreen />);
 
     await act(async () => {
       fireEvent.press(getByText('Queue for tomorrow'));
@@ -114,12 +114,15 @@ describe('PackDetailScreen', () => {
       getAllByText("queued — tomorrow's drop comes from Deep end").length
     ).toBe(2);
     expect(queryByText('Queue for tomorrow')).toBeNull();
+
+    // The toast auto-hide timer must not fire into a later test (pristine output).
+    await unmount();
   });
 
   it('shows the honest failure toast when send_pack errors, and keeps the CTA', async () => {
     mockRpc.mockResolvedValue({ data: null, error: { message: 'not a member' } });
 
-    const { getByText, queryByText } = await render(<PackDetailScreen />);
+    const { getByText, queryByText, unmount } = await render(<PackDetailScreen />);
 
     await act(async () => {
       fireEvent.press(getByText('Queue for tomorrow'));
@@ -128,6 +131,8 @@ describe('PackDetailScreen', () => {
     expect(getByText("Couldn't queue Deep end — try again.")).toBeTruthy();
     expect(queryByText(/queued — tomorrow's drop comes from/)).toBeNull();
     expect(getByText('Queue for tomorrow')).toBeTruthy();
+
+    await unmount();
   });
 
   it('shows the rotation note instead of a queue CTA when there is no couple (demo)', async () => {
@@ -174,7 +179,7 @@ describe('PackDetailScreen', () => {
     mockSamples.loading = true;
     const first = await render(<PackDetailScreen />);
     expect(first.getByText('loading real questions…')).toBeTruthy();
-    first.unmount();
+    await first.unmount();
 
     mockSamples.loading = false;
     mockSamples.error = new Error('offline');
