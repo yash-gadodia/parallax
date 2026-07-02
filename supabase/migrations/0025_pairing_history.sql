@@ -1,4 +1,4 @@
--- 0024_pairing_history.sql
+-- 0025_pairing_history.sql
 -- IMPROVEMENT_PLAN.md 2.2 + 0.4 server side:
 --
 --   2.2  Invite hygiene: invite codes expire after 14 days (a stale code in a

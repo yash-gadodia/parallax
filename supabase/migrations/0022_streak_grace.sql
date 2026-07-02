@@ -1,4 +1,4 @@
--- 0021_streak_grace.sql
+-- 0022_streak_grace.sql
 -- IMPROVEMENT_PLAN.md 3.4: streak mechanics for real — grace, not guilt.
 --
 --   1. Catch-up: yesterday's missed drop stays answerable for 24h (the whole

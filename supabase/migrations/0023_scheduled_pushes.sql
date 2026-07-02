@@ -1,4 +1,4 @@
--- 0022_scheduled_pushes.sql
+-- 0023_scheduled_pushes.sql
 -- IMPROVEMENT_PLAN.md 3.2 + 3.8 — the sanctioned scheduled outbound set
 -- (law #9: partner-triggered pushes plus exactly these, warm, zero guilt):
 --   * streak-saver push (~10pm couple-local): streak > 0 and exactly ONE

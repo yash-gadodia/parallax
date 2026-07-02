@@ -1,4 +1,4 @@
--- 0023_content_flywheel.sql
+-- 0024_content_flywheel.sql
 -- IMPROVEMENT_PLAN.md 1.3 + 1.4 + 5.3 server side:
 --
 --   1.3  Intents actually tune content: rotation prefers unplayed catalog
