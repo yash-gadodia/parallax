@@ -7,6 +7,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as Clipboard from 'expo-clipboard';
 import { SafeAreaView, useSafeAreaInsets  } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { DawnBlobs } from '../../src/components/DawnBlobs';
@@ -25,6 +26,7 @@ import { colors, gradients, radius, shadows, space } from '../../src/design/toke
 import { fontFamily } from '../../src/design/typography';
 import { DROP } from '../../src/content/drop';
 import { usePlayStore, computeReveal } from '../../src/store/play';
+import { useUiStore } from '../../src/store/ui';
 import { useTodayState } from '../../src/features/drops/useTodayState';
 import { useCouple } from '../../src/features/pairing/useCouple';
 import { useActivity } from '../../src/features/engagement/useActivity';
@@ -88,6 +90,13 @@ export default function TodayScreen() {
 
   const handlePlay = () => {
     router.push('/play');
+  };
+
+  const handleCopyCode = async () => {
+    const code = couple?.invite_code;
+    if (!code) return;
+    await Clipboard.setStringAsync(code);
+    useUiStore.getState().fireToast('Invite code copied');
   };
 
   const handleReveal = () => {
@@ -424,7 +433,40 @@ export default function TodayScreen() {
                   >
                     🔒 We'll score your wavelength the moment your partner joins.
                   </Text>
-                  <View style={{ marginTop: 16 }}>
+                  {couple?.invite_code ? (
+                    <Press
+                      onPress={handleCopyCode}
+                      scale={false}
+                      accessibilityLabel="Copy invite code"
+                    >
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          marginTop: 12,
+                          paddingVertical: 10,
+                          paddingHorizontal: 14,
+                          borderRadius: 14,
+                          backgroundColor: colors.sunken,
+                        }}
+                      >
+                        <Text
+                          style={{
+                            fontFamily: fontFamily.mono,
+                            fontSize: 15,
+                            fontWeight: '700',
+                            letterSpacing: 2,
+                            color: colors.ink,
+                          }}
+                        >
+                          {couple.invite_code}
+                        </Text>
+                        <Kick c={colors.p2Deep}>tap to copy</Kick>
+                      </View>
+                    </Press>
+                  ) : null}
+                  <View style={{ marginTop: 12 }}>
                     <Btn kind="us" onPress={handleInvite} sub="share your invite">
                       Invite your partner →
                     </Btn>

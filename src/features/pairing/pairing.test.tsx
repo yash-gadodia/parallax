@@ -122,6 +122,9 @@ describe('useCouple Hook', () => {
     const mockQuery = {
       select: jest.fn().mockReturnThis(),
       or: jest.fn().mockReturnThis(),
+      neq: jest.fn().mockReturnThis(),
+      order: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockReturnThis(),
       maybeSingle: jest.fn().mockImplementation(
         () =>
           new Promise(resolve =>
@@ -180,6 +183,9 @@ describe('useCouple Hook', () => {
     const mockQuery = {
       select: jest.fn().mockReturnThis(),
       or: jest.fn().mockReturnThis(),
+      neq: jest.fn().mockReturnThis(),
+      order: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockReturnThis(),
       maybeSingle: jest.fn().mockResolvedValue({
         data: activeCoupleData,
         error: null,
@@ -223,6 +229,9 @@ describe('useCouple Hook', () => {
     const mockQuery = {
       select: jest.fn().mockReturnThis(),
       or: jest.fn().mockReturnThis(),
+      neq: jest.fn().mockReturnThis(),
+      order: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockReturnThis(),
       maybeSingle: jest.fn().mockResolvedValue({
         data: mockCoupleData,
         error: null,
@@ -283,6 +292,9 @@ describe('useCouple Hook', () => {
     const mockQuery = {
       select: jest.fn().mockReturnThis(),
       or: jest.fn().mockReturnThis(),
+      neq: jest.fn().mockReturnThis(),
+      order: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockReturnThis(),
       maybeSingle: jest.fn().mockResolvedValue({
         data: null,
         error: null,
@@ -321,6 +333,9 @@ describe('useCouple Hook', () => {
     const mockQuery = {
       select: jest.fn().mockReturnThis(),
       or: jest.fn().mockReturnThis(),
+      neq: jest.fn().mockReturnThis(),
+      order: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockReturnThis(),
       maybeSingle: jest.fn().mockResolvedValue({
         data: mockCoupleData,
         error: null,

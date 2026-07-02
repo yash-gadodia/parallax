@@ -1,5 +1,9 @@
-// notify-partner: send an Expo push notification when a partner plays or the reveal is ready.
+// notify-partner: send an Expo push notification when a partner plays, nudges,
+// or the reveal is ready.
 // Uses the SERVICE ROLE key (never exposed to clients) to look up push tokens.
+// The ACTOR (who played / who nudged) is read from the caller's JWT `sub` —
+// the gateway has already verified the token (verify_jwt = true in config.toml),
+// so decoding the payload here is safe. Never trust an actor id in the body.
 // GATE: delivers only once Yash adds EAS/APNs creds + real push tokens in profiles.push_token.
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
@@ -31,6 +35,27 @@ async function dbGet(path: string) {
   return resp.json();
 }
 
+// Extract the authenticated user id from the caller's JWT.
+// verify_jwt = true means the gateway already validated signature + expiry;
+// we only need to decode the (base64url) payload. The anon key is a valid JWT
+// with no `sub`, so unauthenticated calls yield null here.
+function jwtSub(req: Request): string | null {
+  const auth = req.headers.get("Authorization") ?? "";
+  const token = auth.replace(/^Bearer\s+/i, "");
+  const parts = token.split(".");
+  if (parts.length !== 3) return null;
+  try {
+    const payload = JSON.parse(
+      atob(parts[1].replace(/-/g, "+").replace(/_/g, "/"))
+    );
+    return typeof payload.sub === "string" && payload.sub.length > 0
+      ? payload.sub
+      : null;
+  } catch {
+    return null;
+  }
+}
+
 interface ExpoPushMessage {
   to: string;
   title: string;
@@ -45,6 +70,17 @@ async function sendExpoPush(messages: ExpoPushMessage[]): Promise<void> {
     headers: { "Content-Type": "application/json", Accept: "application/json" },
     body: JSON.stringify(messages),
   });
+}
+
+// Warm nudge copy — rotated by day of month so consecutive days differ
+// (nudges are rate-limited to 1/couple/day server-side).
+function nudgeBody(nudgerName: string): string {
+  const variants = [
+    `${nudgerName} is waiting on your wavelength 👀`,
+    "your person played today's drop — your move 💌",
+    `${nudgerName} wants to know what you'd say today 🫶`,
+  ];
+  return variants[new Date().getDate() % variants.length];
 }
 
 Deno.serve(async (req: Request) => {
@@ -66,17 +102,29 @@ Deno.serve(async (req: Request) => {
 
   const { couple_drop_id, couple_id: couple_id_in, event } = body;
   const validEvent =
-    event === "played" || event === "revealed" || event === "paired";
-  // 'paired' fires at pairing time (no couple_drop exists yet) and carries the
-  // couple_id directly; 'played'/'revealed' carry the couple_drop_id.
-  if (!validEvent || (event === "paired" ? !couple_id_in : !couple_drop_id)) {
+    event === "played" ||
+    event === "revealed" ||
+    event === "paired" ||
+    event === "nudge";
+  // 'paired' fires at pairing time (no couple_drop exists yet) and 'nudge' is
+  // not tied to a drop — both carry the couple_id directly; 'played'/'revealed'
+  // carry the couple_drop_id.
+  const needsCoupleId = event === "paired" || event === "nudge";
+  if (!validEvent || (needsCoupleId ? !couple_id_in : !couple_drop_id)) {
     return json({ error: "missing_or_invalid_params" }, 400);
   }
 
+  // 'played' and 'nudge' target THE OTHER member, so they need the actor —
+  // taken from the verified JWT, never from the request body.
+  const actor = jwtSub(req);
+  if ((event === "played" || event === "nudge") && !actor) {
+    return json({ error: "unauthenticated" }, 401);
+  }
+
   try {
-    // 1. Resolve couple_id — directly for 'paired', else via the couple_drop.
+    // 1. Resolve couple_id — directly for 'paired'/'nudge', else via the couple_drop.
     let couple_id: string;
-    if (event === "paired") {
+    if (needsCoupleId) {
       couple_id = couple_id_in as string;
     } else {
       const drops: Array<{ couple_id: string; state: string }> = await dbGet(
@@ -95,6 +143,14 @@ Deno.serve(async (req: Request) => {
     const memberIds = [member_a, member_b].filter(Boolean) as string[];
     if (!memberIds.length) return json({ sent: 0 });
 
+    // Server-side actor verification: the caller must be a member of this couple.
+    if (
+      (event === "played" || event === "nudge") &&
+      !memberIds.includes(actor as string)
+    ) {
+      return json({ error: "not_a_member" }, 403);
+    }
+
     // 3. Load profiles for all members (push_token + display_name).
     const idList = memberIds.map((id) => `"${id}"`).join(",");
     const profiles: Array<{
@@ -106,6 +162,8 @@ Deno.serve(async (req: Request) => {
     );
 
     const profileMap = new Map(profiles.map((p) => [p.id, p]));
+    const nameOf = (id: string | null | undefined): string =>
+      (id && profileMap.get(id)?.display_name) || "your person";
 
     const messages: ExpoPushMessage[] = [];
 
@@ -114,14 +172,11 @@ Deno.serve(async (req: Request) => {
       // member_a, who created the invite code and has been waiting.
       const waiter = member_a ? profileMap.get(member_a) : undefined;
       if (!waiter?.push_token) return json({ sent: 0 });
-      const joinerName =
-        member_b && profileMap.get(member_b)?.display_name
-          ? profileMap.get(member_b)!.display_name!
-          : "Your partner";
+      const joinerName = nameOf(member_b);
       messages.push({
         to: waiter.push_token,
-        title: "You're paired 💞",
-        body: `${joinerName} joined you on Parallax. Your first drop is ready.`,
+        title: "you're paired 💞",
+        body: `${joinerName} joined you on Parallax. your first drop is ready.`,
         sound: "default",
       });
     } else if (event === "revealed") {
@@ -129,50 +184,41 @@ Deno.serve(async (req: Request) => {
       for (const id of memberIds) {
         const token = profileMap.get(id)?.push_token;
         if (!token) continue;
+        const partnerName = nameOf(memberIds.find((m) => m !== id));
         messages.push({
           to: token,
-          title: "You're in focus 💞",
-          body: "Today's reveal is ready. See how in-sync you were.",
+          title: `you + ${partnerName} are revealed 💞`,
+          body: "today's reveal is ready. see how in-sync you were.",
           sound: "default",
         });
       }
+    } else if (event === "nudge") {
+      // Push the actor's partner with warm rotating copy.
+      const partnerId = memberIds.find((id) => id !== actor);
+      if (!partnerId) return json({ sent: 0 });
+      const partner = profileMap.get(partnerId);
+      if (!partner?.push_token) return json({ sent: 0 });
+      const nudgerName = nameOf(actor);
+      messages.push({
+        to: partner.push_token,
+        title: `a nudge from ${nudgerName} 💛`,
+        body: nudgeBody(nudgerName),
+        sound: "default",
+      });
     } else {
-      // event === 'played': push only the partner who has NOT yet finished.
-      // state 'one_done' means one member submitted; we need to notify the OTHER one.
-      // We find who played by checking who the caller is — but we don't have caller
-      // identity here. Instead, 'played' is fired by the member who just submitted,
-      // so the partner is whoever hasn't caused state to move. When state is 'one_done'
-      // exactly one member has answered; the other is still waiting.
-      // We push member_b if state just moved to one_done (member_a likely played first),
-      // but to be safe we push any member whose push_token is set and who is NOT member_a
-      // when the couple has one_done. Since we can't know the caller here, we push BOTH
-      // tokens with a "your turn" message and let idempotency handle it — the one who
-      // already played will see it as a no-op nudge. For a real production implementation
-      // the caller should pass their own user_id so we can target precisely.
-      // Current approach: push member_b (the partner field) as the likely non-submitter.
-      // If there's only one member, no-op.
-      if (memberIds.length < 2) return json({ sent: 0 });
-
-      // The partner to notify is member_b (convention: member_a submits first in demo).
-      // When state is 'one_done' we notify member_b; when called with 'played' in any
-      // other state, skip (both submitted already or none have).
-      const partnerId = member_b ?? member_a;
+      // event === 'played': the submitter is the verified JWT caller; push the
+      // OTHER member (the one still waiting to answer).
+      const partnerId = memberIds.find((id) => id !== actor);
       if (!partnerId) return json({ sent: 0 });
 
       const partner = profileMap.get(partnerId);
       if (!partner?.push_token) return json({ sent: 0 });
 
-      // Find the submitter's display name for a personal message.
-      const submitterId = memberIds.find((id) => id !== partnerId) ?? null;
-      const submitterName =
-        submitterId && profileMap.get(submitterId)?.display_name
-          ? profileMap.get(submitterId)!.display_name!
-          : "Your partner";
-
+      const submitterName = nameOf(actor);
       messages.push({
         to: partner.push_token,
-        title: "Your turn 💛",
-        body: `${submitterName} played today's drop. No peeking — go answer yours.`,
+        title: `${submitterName} played today's drop 👀`,
+        body: "no peeking — answer yours to unlock the reveal 💛",
         sound: "default",
       });
     }

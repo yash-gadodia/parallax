@@ -28,7 +28,7 @@ import { useOnboardingStore } from '../../src/store/onboarding';
 import { useSession } from '../../src/features/auth/useSession';
 import { useCouple } from '../../src/features/pairing/useCouple';
 import { useIdentity } from '../../src/features/profile/useIdentity';
-import { createCouple, joinCouple } from '../../src/features/pairing/pairingActions';
+import { createCouple, joinCouple, unpairCouple } from '../../src/features/pairing/pairingActions';
 import { supabase } from '../../src/lib/supabase';
 import { requestPermissions, scheduleDailyNudge, registerPushToken } from '../../src/features/notifications';
 import { track, EVENTS } from '../../src/lib/analytics';
@@ -390,6 +390,7 @@ function Step3PairUp({
   fireToast: (msg: string) => void;
 }) {
   const [inviteCode, setInviteCode] = useState<string | null>(null);
+  const [createdCoupleId, setCreatedCoupleId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [creatingCouple, setCreatingCouple] = useState(true);
 
@@ -412,6 +413,7 @@ function Step3PairUp({
     try {
       const couple = await createCouple();
       setInviteCode(couple.invite_code ?? null);
+      setCreatedCoupleId(couple.id ?? null);
     } catch {
       setInviteCode(null);
       fireToast('Could not create your invite code. Check your connection and try again.');
@@ -420,9 +422,15 @@ function Step3PairUp({
     }
   }, [fireToast]);
 
+  // An invitee (arrived via join link/code) must NOT auto-create a couple —
+  // that orphan pending couple would outlive their join. Only the invite path
+  // creates one, lazily when it's actually shown.
   useEffect(() => {
-    createInvite();
-  }, [createInvite]);
+    if (!showJoinInput && !inviteCode) {
+      createInvite();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [createInvite, showJoinInput]);
 
   const handleShare = async () => {
     if (!inviteCode) return;
@@ -451,6 +459,18 @@ function Step3PairUp({
     }
     setLoading(true);
     try {
+      // If this user created their own invite couple before deciding to join
+      // their partner's instead, remove the orphan so it can't shadow the
+      // real couple.
+      if (createdCoupleId) {
+        try {
+          await unpairCouple(createdCoupleId);
+        } catch {
+          // Best-effort cleanup; joining still proceeds.
+        }
+        setCreatedCoupleId(null);
+        setInviteCode(null);
+      }
       await joinCouple(joinCode);
       track(EVENTS.COUPLE_PAIRED, { method: 'join' });
       onNext();

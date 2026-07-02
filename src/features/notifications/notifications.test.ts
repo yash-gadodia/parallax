@@ -1,5 +1,5 @@
 import * as Notifications from 'expo-notifications';
-import { requestPermissions, scheduleDailyNudge, cancelDailyNudge, registerPushToken, notifyPartner, notifyPaired } from './index';
+import { requestPermissions, scheduleDailyNudge, cancelDailyNudge, registerPushToken, notifyPartner, notifyPaired, notifyNudge } from './index';
 
 jest.mock('expo-notifications');
 // Stub supabase so notifyPartner tests control functions.invoke independently.
@@ -8,6 +8,7 @@ jest.mock('../../lib/supabase', () => ({
     functions: { invoke: jest.fn(() => Promise.resolve({ data: null, error: null })) },
     auth: {
       getUser: jest.fn(() => Promise.resolve({ data: { user: null } })),
+      getSession: jest.fn(() => Promise.resolve({ data: { session: null } })),
     },
     from: jest.fn(() => ({
       update: jest.fn().mockReturnThis(),
@@ -211,6 +212,36 @@ describe('notifyPartner', () => {
   it('swallows errors so the submit flow is never interrupted', async () => {
     mockInvoke.mockRejectedValueOnce(new Error('network failure'));
     await expect(notifyPartner('cd-3', 'played')).resolves.toBeUndefined();
+  });
+});
+
+describe('notifyNudge', () => {
+  const mockInvoke = supabase.functions.invoke as jest.Mock;
+  const mockGetSession = supabase.auth.getSession as jest.Mock;
+
+  beforeEach(() => {
+    mockInvoke.mockClear();
+    mockGetSession.mockClear();
+  });
+
+  it('invokes notify-partner with event=nudge and the couple_id when signed in', async () => {
+    mockGetSession.mockResolvedValueOnce({ data: { session: { user: { id: 'u-1' } } } });
+    await notifyNudge('couple-7');
+    expect(mockInvoke).toHaveBeenCalledWith('notify-partner', {
+      body: { couple_id: 'couple-7', event: 'nudge' },
+    });
+  });
+
+  it('is a no-op without a session (demo/solo mode)', async () => {
+    mockGetSession.mockResolvedValueOnce({ data: { session: null } });
+    await notifyNudge('couple-7');
+    expect(mockInvoke).not.toHaveBeenCalled();
+  });
+
+  it('swallows errors so the nudge flow is never interrupted', async () => {
+    mockGetSession.mockResolvedValueOnce({ data: { session: { user: { id: 'u-1' } } } });
+    mockInvoke.mockRejectedValueOnce(new Error('network failure'));
+    await expect(notifyNudge('couple-7')).resolves.toBeUndefined();
   });
 });
 

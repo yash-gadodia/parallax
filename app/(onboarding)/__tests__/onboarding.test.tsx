@@ -171,6 +171,7 @@ jest.mock('../../../src/features/pairing/pairingActions', () => ({
     invite_code: 'YASH-4827',
     status: 'active',
   })),
+  unpairCouple: jest.fn(async () => undefined),
 }));
 
 jest.mock('../../../src/store/ui', () => ({
@@ -186,9 +187,12 @@ jest.mock('../../../src/lib/analytics', () => ({
 }));
 
 const mockSetPendingIntents = jest.fn();
+let mockPendingInviteCode: string | null = null;
 jest.mock('../../../src/store/onboarding', () => ({
   useOnboardingStore: () => ({
     setPendingIntents: mockSetPendingIntents,
+    pendingInviteCode: mockPendingInviteCode,
+    setPendingInviteCode: jest.fn(),
   }),
 }));
 
@@ -212,6 +216,7 @@ describe('Onboarding', () => {
     (Share.share as jest.Mock).mockImplementation(async () => ({ action: Share.sharedAction }));
     (createCouple as jest.Mock).mockClear();
     (joinCouple as jest.Mock).mockClear();
+    mockPendingInviteCode = null;
   });
 
   // Constants tests
@@ -489,6 +494,40 @@ describe('Onboarding', () => {
     });
     expect(mockTrack).toHaveBeenCalledWith('couple_paired', { method: 'join' });
     expect(mockTrack).toHaveBeenCalledTimes(1);
+  });
+
+  it('an invitee arriving via join link does NOT auto-create an orphan couple', async () => {
+    mockSessionValue = { session: { user: { id: 'u1' } }, loading: false };
+    mockPendingInviteCode = 'REMY-1234';
+    const { getByDisplayValue } = await render(<OnboardingScreen />);
+
+    // Deep-linked invitees land on the join input with the code prefilled…
+    await waitFor(() => {
+      expect(getByDisplayValue('REMY-1234')).toBeTruthy();
+    });
+    // …and no couple is created on their behalf.
+    expect(createCouple).not.toHaveBeenCalled();
+  });
+
+  it('joining after having created an invite removes the orphan couple first', async () => {
+    const { unpairCouple } = require('../../../src/features/pairing/pairingActions');
+    mockSessionValue = { session: { user: { id: 'u1' } }, loading: false };
+    const { getByText, getByPlaceholderText } = await render(<OnboardingScreen />);
+
+    // Inviter path auto-creates (couple-1), then the user switches to joining.
+    await waitFor(() => {
+      expect(getByText(/YASH-4827/)).toBeTruthy();
+    });
+    await fireEvent.press(getByText(/Enter a code instead/i));
+    await act(async () => {
+      getByPlaceholderText('Enter invite code').props.onChangeText('REMY-1234');
+    });
+    await fireEvent.press(getByText(/^Join$/));
+
+    await waitFor(() => {
+      expect(joinCouple).toHaveBeenCalledWith('REMY-1234');
+    });
+    expect(unpairCouple).toHaveBeenCalledWith('couple-1');
   });
 
   it('a failed couple creation shows a tappable "Tap retry" that re-calls createCouple', async () => {

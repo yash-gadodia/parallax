@@ -88,6 +88,22 @@ export async function notifyPartner(
   }
 }
 
+// Push a nudge to the partner after nudge_partner succeeds. The edge function
+// identifies the nudger from the JWT `sub` and targets the OTHER member.
+// No-op without a session (demo/solo mode). Fire-and-forget.
+// GATE: delivers only once push tokens + the deployed edge fn are live.
+export async function notifyNudge(coupleId: string): Promise<void> {
+  try {
+    const { data } = await supabase.auth.getSession();
+    if (!data.session) return;
+    await supabase.functions.invoke('notify-partner', {
+      body: { couple_id: coupleId, event: 'nudge' },
+    });
+  } catch {
+    // No-op: push failure must never interrupt the nudge flow.
+  }
+}
+
 // Notify the waiting partner (member_a) that someone just joined their couple.
 // Fired right after join_couple succeeds. Fire-and-forget.
 // GATE: delivers only once push tokens + the deployed edge fn are live.

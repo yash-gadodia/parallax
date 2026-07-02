@@ -35,10 +35,17 @@ export function useCouple(): UseCoupleReturn {
         return;
       }
 
+      // A user can transiently hold more than one row (e.g. an orphan pending
+      // couple left behind before joining a partner's) — prefer the active
+      // one, never let a stray row error the whole lookup via maybeSingle.
       const result: PostgrestMaybeSingleResponse<Couple> = await supabase
         .from('couples')
         .select('*')
         .or(`member_a.eq.${uid},member_b.eq.${uid}`)
+        .neq('status', 'dissolved')
+        .order('status', { ascending: true }) // 'active' < 'pending'
+        .order('created_at', { ascending: false })
+        .limit(1)
         .maybeSingle();
 
       if (cancelled) return;
