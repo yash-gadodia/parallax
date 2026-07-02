@@ -4,9 +4,13 @@ export const EVENTS = {
   APP_OPEN: 'app_open',
   SIGNUP_STARTED: 'signup_started',
   SIGNUP_COMPLETED: 'signup_completed',
+  // 2.5 funnel: created (couple exists, partner pending) is distinct from
+  // paired (both in); first mutual reveal is the activation aha.
+  COUPLE_CREATED: 'couple_created',
   COUPLE_PAIRED: 'couple_paired',
   DROP_SUBMITTED: 'drop_submitted',
   REVEAL_VIEWED: 'reveal_viewed',
+  FIRST_MUTUAL_REVEAL: 'first_mutual_reveal',
   REFOCUS_COMPLETED: 'refocus_completed',
   PAYWALL_VIEWED: 'paywall_viewed',
   PURCHASE_COMPLETED: 'purchase_completed',

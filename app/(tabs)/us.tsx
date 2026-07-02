@@ -64,8 +64,16 @@ export default function UsScreen() {
     router.push('/streak');
   };
 
-  const handleDropPress = (code: string) => {
-    router.push(`/dropDetail?code=${code}`);
+  // Real history rows carry couple_drop_id (0024) so the detail screen renders
+  // the REAL drop; the demo sample rows have no id and fall back to ARCHIVE.
+  const handleDropPress = (h: { code: string; couple_drop_id?: string; date?: string }) => {
+    if (!historySample && h.couple_drop_id) {
+      router.push(
+        `/dropDetail?code=${h.code}&cdid=${h.couple_drop_id}&day=${encodeURIComponent(h.date ?? '')}`
+      );
+    } else {
+      router.push(`/dropDetail?code=${h.code}`);
+    }
   };
 
   return (
@@ -524,7 +532,7 @@ export default function UsScreen() {
                 ARCHIVE.find((a) => a.code === h.code)?.emoji ??
                 '💬';
               return (
-                <Press key={h.code} onPress={() => handleDropPress(h.code)}>
+                <Press key={h.code} onPress={() => handleDropPress(h)}>
                   <Card
                     style={{
                       borderRadius: 20,

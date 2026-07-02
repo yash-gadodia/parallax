@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -18,15 +18,94 @@ import Chip from '../src/components/Chip';
 import GradientText from '../src/components/GradientText';
 import { DawnBlobs } from '../src/components/DawnBlobs';
 import { useIdentity } from '../src/features/profile/useIdentity';
+import { getDropContent, fetchReveal } from '../src/features/drops/dropActions';
+
+// The screen's render shape — ARCHIVE rows already match it; live drops are
+// mapped into it from the server (0.4: the REAL drop from history, no demo
+// stand-in for real couples).
+interface DetailDrop {
+  code: string;
+  emoji: string;
+  title: string;
+  day: string;
+  wave: number;
+  twins: number;
+  rows: [string, string, string, boolean][];
+}
 
 export default function DropDetailScreen() {
   const router = useRouter();
   const { partner } = useIdentity();
   const params = useLocalSearchParams();
   const code = typeof params.code === 'string' ? params.code : undefined;
+  // cdid = the real couple_drop id (couple_history, 0024). Present → live.
+  const cdid = typeof params.cdid === 'string' ? params.cdid : undefined;
+  const dayLabel = typeof params.day === 'string' ? params.day : '';
 
-  // Look up drop in ARCHIVE by code — never substitute a different drop.
-  const d = code ? ARCHIVE.find((x) => x.code === code) ?? null : null;
+  const [live, setLive] = useState<DetailDrop | null>(null);
+  const [liveFailed, setLiveFailed] = useState(false);
+
+  useEffect(() => {
+    if (!cdid) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const [content, revealData] = await Promise.all([
+          getDropContent(cdid),
+          fetchReveal(cdid),
+        ]);
+        if (cancelled) return;
+        if (!content || content.prompts.length === 0) throw new Error('no content');
+        setLive({
+          code: content.code ?? code ?? 'drop',
+          emoji: content.prompts[0]?.emoji ?? '💬',
+          title: content.title ?? '',
+          day: dayLabel,
+          wave: revealData.reveal.wave,
+          twins: revealData.reveal.twins,
+          rows: content.prompts.map((p, i) => {
+            const a = revealData.promptAnswers[i];
+            const mine = a && a.youPick >= 0 ? p.opts[a.youPick] ?? '—' : '—';
+            const theirs = a && a.themPick >= 0 ? p.opts[a.themPick] ?? '—' : '—';
+            return [p.q, mine, theirs, !!a && a.youPick >= 0 && a.youPick === a.themPick];
+          }),
+        });
+      } catch {
+        if (!cancelled) setLiveFailed(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [cdid, code, dayLabel]);
+
+  // A real drop renders from the server; the static ARCHIVE only ever serves
+  // the unauthenticated demo codes. Never substitute a different drop.
+  const d: DetailDrop | null = cdid
+    ? live
+    : code
+      ? (ARCHIVE.find((x) => x.code === code) as DetailDrop | undefined) ?? null
+      : null;
+
+  // Live drop still loading (not failed): a quiet hold, never demo content.
+  if (cdid && !live && !liveFailed) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.bg0 }}>
+        <LinearGradient
+          colors={gradients.dawn.colors}
+          locations={gradients.dawn.locations}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={{ position: 'absolute', inset: 0 }}
+        />
+        <DawnBlobs />
+        <TopBar title={code ?? 'drop'} onBack={() => safeBack(router)} />
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+          <Kick c={colors.inkSoft}>opening this drop…</Kick>
+        </View>
+      </View>
+    );
+  }
 
   const handleBack = () => {
     safeBack(router);

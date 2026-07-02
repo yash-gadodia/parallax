@@ -1,6 +1,7 @@
 import { supabase, Couple } from '../../lib/supabase';
 import { normalizeInviteCode, isValidInviteCode } from '../../domain/inviteCode';
 import { notifyPaired } from '../notifications';
+import { track, EVENTS } from '../../lib/analytics';
 
 export async function unpairCouple(coupleId: string): Promise<void> {
   // @ts-expect-error supabase-js typed RPC resolves to never for void-returning functions
@@ -16,6 +17,10 @@ export async function createCouple(): Promise<Couple> {
   if (error) {
     throw error;
   }
+
+  // 2.5 funnel: a couple now EXISTS (partner still pending) — distinct from
+  // COUPLE_PAIRED, which fires when the partner actually joins.
+  track(EVENTS.COUPLE_CREATED);
 
   return data;
 }

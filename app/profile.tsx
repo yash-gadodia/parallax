@@ -414,7 +414,7 @@ export default function ProfileScreen() {
               </Text>
             </View>
             <Press
-              onPress={() => router.push('/checkout')}
+              onPress={() => router.push('/manageSub')}
               scale={false}
             >
               <View

@@ -72,6 +72,62 @@ export async function cancelDailyNudge(): Promise<void> {
   }
 }
 
+// 2.2: while pairing is pending, two gentle local reminders to the INVITER
+// (+24h and +72h) — the second-partner window is where activation dies.
+// Warm, never guilt; cancelled the moment the partner joins.
+const PENDING_REMINDER_IDS = ['pending-invite-24h', 'pending-invite-72h'] as const;
+
+export async function schedulePendingReminders(partnerHint?: string): Promise<void> {
+  if (!isAvailable()) return;
+  try {
+    const granted = await requestPermissions();
+    if (!granted) return;
+
+    await cancelPendingReminders();
+
+    const who = partnerHint?.trim() ? partnerHint.trim() : 'your person';
+    const plans: Array<{ id: (typeof PENDING_REMINDER_IDS)[number]; seconds: number; body: string }> = [
+      {
+        id: 'pending-invite-24h',
+        seconds: 24 * 60 * 60,
+        body: `${who} hasn't joined yet — want to resend your invite?`,
+      },
+      {
+        id: 'pending-invite-72h',
+        seconds: 72 * 60 * 60,
+        body: `your invite is still waiting for ${who}. a nudge in person works wonders 💛`,
+      },
+    ];
+    for (const p of plans) {
+      await Notifications.scheduleNotificationAsync({
+        identifier: p.id,
+        content: {
+          title: 'Still just you in here',
+          body: p.body,
+          sound: true,
+        },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+          seconds: p.seconds,
+        },
+      });
+    }
+  } catch {
+    // no-op: local scheduling failure must never crash the app
+  }
+}
+
+export async function cancelPendingReminders(): Promise<void> {
+  if (!isAvailable()) return;
+  try {
+    for (const id of PENDING_REMINDER_IDS) {
+      await Notifications.cancelScheduledNotificationAsync(id);
+    }
+  } catch {
+    // ignore — notifications may not exist yet
+  }
+}
+
 // Invoke the notify-partner edge function after a drop submission.
 // Fire-and-forget — errors are swallowed so they never interrupt the submit flow.
 // GATE: delivers only once Yash adds EAS/APNs creds + real push tokens.

@@ -26,11 +26,15 @@ export function useCoupleHistory(): UseCoupleHistoryReturn {
         // No session or no couple: use sample
         if (!session || !couple) {
           const sampleHistory = ARCHIVE.map((d) => ({
+            // Demo rows have no real couple_drop — detail views fall back to
+            // the static ARCHIVE by code.
+            couple_drop_id: '',
             date: new Date().toISOString().split('T')[0],
             code: d.code,
             title: d.title,
             wavelength: d.wave,
             twins_count: d.twins,
+            caught_up: false,
           }));
           setHistory(sampleHistory);
           setLoading(false);

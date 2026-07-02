@@ -144,11 +144,15 @@ export interface RefocusSession {
 }
 
 export interface CoupleHistoryRow {
+  // 0024: real id so detail views render the actual drop; wavelength is the
+  // STORED server score (a caught-up round's 80% holds everywhere).
+  couple_drop_id: string;
   date: string;
   code: string;
   title: string;
   wavelength: number;
   twins_count: number;
+  caught_up: boolean;
 }
 
 export type Json = unknown;
@@ -224,6 +228,10 @@ export interface Database {
         Args: { p_couple: string };
         Returns: string;
       };
+      regenerate_invite: {
+        Args: { p_couple: string };
+        Returns: string;
+      };
       submit_answers: {
         Args: {
           p_couple_drop: string;
@@ -293,6 +301,17 @@ export interface Database {
           p_side: string;
         };
         Returns: void;
+      };
+      send_pack: {
+        Args: {
+          p_couple: string;
+          p_theme: string;
+        };
+        Returns: void;
+      };
+      repair_streak: {
+        Args: { p_couple: string };
+        Returns: Json;
       };
       unpair: {
         Args: { p_couple: string };

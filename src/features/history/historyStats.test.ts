@@ -2,11 +2,13 @@ import { waveDot, weeklyDots, monthStats, monthLabel, dayLabel, pickOnThisDay } 
 import type { CoupleHistoryRow } from '../../types/db';
 
 const row = (date: string, wavelength: number, title = 'a drop'): CoupleHistoryRow => ({
+  couple_drop_id: 'cd-1',
   date,
   code: 'W1',
   title,
   wavelength,
   twins_count: 0,
+  caught_up: false,
 });
 
 describe('waveDot', () => {

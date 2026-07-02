@@ -55,6 +55,11 @@ import { useIdentity } from '../../src/features/profile/useIdentity';
 import { selectDropForSpice, normaliseSpiceLevel } from '../../src/domain/spice';
 import type { SpiceLevel } from '../../src/domain/spice';
 import { syncWidgetFromToday } from '../../src/features/widget';
+import {
+  schedulePendingReminders,
+  cancelPendingReminders,
+} from '../../src/features/notifications';
+import { track, EVENTS } from '../../src/lib/analytics';
 
 // One-per-day dedupe keys (device-local day, see localDayKey).
 const STREAK_PULSE_SEEN_KEY = 'parallax:streak_pulse_seen_on';
@@ -112,6 +117,39 @@ export default function TodayScreen({
     if (!isLive) return;
     syncWidgetFromToday(today, couple, partner.name);
   }, [isLive, today, couple, partner.name]);
+
+  // 2.5 funnel: the first mutual reveal is THE activation moment. history
+  // counts revealed drops, so exactly 1 + today revealed = the first one.
+  useEffect(() => {
+    if (!isLive || today?.state !== 'revealed' || history.length !== 1) return;
+    const KEY = `first-reveal-tracked-${couple?.id ?? ''}`;
+    AsyncStorage.getItem(KEY)
+      .then((seen) => {
+        if (seen === '1') return;
+        track(EVENTS.FIRST_MUTUAL_REVEAL);
+        return AsyncStorage.setItem(KEY, '1');
+      })
+      .catch(() => {});
+  }, [isLive, today?.state, history.length, couple?.id]);
+
+  // 2.2: pending → schedule the 24/72h invite reminders once per pending
+  // spell; the moment the couple goes active they're cancelled.
+  useEffect(() => {
+    if (!isLive) return;
+    if (isPending) {
+      const KEY = `pending-reminders-${couple?.id ?? ''}`;
+      AsyncStorage.getItem(KEY)
+        .then((set) => {
+          if (set === '1') return;
+          return schedulePendingReminders().then(() =>
+            AsyncStorage.setItem(KEY, '1')
+          );
+        })
+        .catch(() => {});
+    } else {
+      cancelPendingReminders();
+    }
+  }, [isLive, isPending, couple?.id]);
 
   // --- first-week beats (IMPROVEMENT_PLAN 2.3) -----------------------------
   const nowDate = now();
