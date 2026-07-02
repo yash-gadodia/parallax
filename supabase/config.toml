@@ -65,3 +65,16 @@ verify_jwt = true
 # exactly the service-role key — anon/user JWTs are rejected with 401.
 [functions.generate-drops]
 verify_jwt = false
+
+# scheduled-pushes: hourly ops cron — streak-saver + drift-reminder pushes
+# (IMPROVEMENT_PLAN 3.2). Same service-role-bearer gate as generate-drops
+# (verify_jwt off because the in-function gate is stricter). The dedupe
+# ledger + cron contract live in migrations/0022_scheduled_pushes.sql.
+[functions.scheduled-pushes]
+verify_jwt = false
+
+# email-reengage: hourly ops cron — one warm re-engagement email per silence
+# spell (IMPROVEMENT_PLAN 3.8, Resend). Same service-role-bearer gate;
+# no-ops with a clear log line until RESEND_API_KEY is set.
+[functions.email-reengage]
+verify_jwt = false

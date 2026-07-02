@@ -124,15 +124,23 @@ Deno.serve(async (req: Request) => {
 
   try {
     // 1. Resolve couple_id — directly for 'paired'/'nudge', else via the couple_drop.
+    // wave_pct is read server-side from the drop (stored by submit_answers,
+    // 0014) so the 'revealed' copy is honest — never trusted from the body.
     let couple_id: string;
+    let wavePct: number | null = null;
     if (needsCoupleId) {
       couple_id = couple_id_in as string;
     } else {
-      const drops: Array<{ couple_id: string; state: string }> = await dbGet(
-        `couple_drops?id=eq.${couple_drop_id}&select=couple_id,state`
+      const drops: Array<{
+        couple_id: string;
+        state: string;
+        wave_pct: number | null;
+      }> = await dbGet(
+        `couple_drops?id=eq.${couple_drop_id}&select=couple_id,state,wave_pct`
       );
       if (!drops.length) return json({ error: "couple_drop_not_found" }, 404);
       couple_id = drops[0].couple_id;
+      wavePct = typeof drops[0].wave_pct === "number" ? drops[0].wave_pct : null;
     }
 
     // 2. Load the couple to get both member UUIDs.
@@ -181,7 +189,9 @@ Deno.serve(async (req: Request) => {
         sound: "default",
       });
     } else if (event === "revealed") {
-      // Push both members — reveal is ready for everyone.
+      // Push both members — reveal-shaped and honest: the real stored
+      // wave_pct when the drop has one, a warm generic otherwise. Never
+      // fabricate specifics (per-prompt misses aren't derivable here).
       for (const id of memberIds) {
         const token = profileMap.get(id)?.push_token;
         if (!token) continue;
@@ -189,7 +199,10 @@ Deno.serve(async (req: Request) => {
         messages.push({
           to: token,
           title: `you + ${partnerName} are revealed 💞`,
-          body: "today's reveal is ready. see how in-sync you were.",
+          body:
+            wavePct === null
+              ? "today's reveal is ready. see how in-sync you were."
+              : `${partnerName} guessed your answers — ${wavePct}% on the same wavelength today 👀`,
           sound: "default",
         });
       }
