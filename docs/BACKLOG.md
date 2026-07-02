@@ -58,7 +58,7 @@ _From the 2026-07-02 E2E pass — details in `docs/E2E_FINDINGS_2026-07-02.md`._
 - [x] **(Claude)** F6: transition lock in play.tsx — taps during the 360ms phase advance are ignored
 - [x] **(Claude)** F7: act() warnings eliminated (signup: direct onChangeText inside one act; wrapped: fake timers) — full suite 0 warnings
 - [ ] **(Claude)** Android fidelity pass once iOS is solid: `eas build -p android` works from the same codebase; needs shadows→elevation, blur + font/lineHeight checks per screen (first preview APK built 2026-07-02).
-- [~] **(Claude)** F1: reanimated 4.3.1→4.5.0 + worklets 0.8.3→0.10.1 committed (tsc/jest/export green). REMAINING (Yash/next dev session): native rebuild (`npm run ios`) + crash-soak on the waiting screen to confirm the SIGSEGV is gone.
+- [~] **(Claude)** F1: reanimated 4.3.1→4.5.0 + worklets 0.10.1 committed AND shipped — EAS production build `a64c5ec5` (2026-07-02) submitted to TestFlight with the fix + push wiring. REMAINING (Yash): crash-soak the TestFlight build on the waiting screen to confirm the SIGSEGV is gone.
 
 ### (Dani) — from the E2E pass
 - [ ] **(Dani)** F5: today's drop is hardcoded ("DROP 27 · soft launch", fake archive) — decide the real daily-content rotation (ties into the existing prompt-packs item + IMPROVEMENT_PLAN Phase 1). The day label now shows the real weekday (fixed).
