@@ -49,6 +49,8 @@ import type { RevealScore } from '../src/domain/reveal';
 import type { PromptAnswers } from '../src/domain/reveal';
 import { mutualReadRun, biggestMissIndex } from '../src/domain/reveal';
 import { coupleAgeDays } from '../src/features/drops/useTodayState';
+import { usePurchases } from '../src/features/purchases/usePurchases';
+import { shouldOfferPlus } from '../src/features/purchases/paywallMoments';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { track, EVENTS } from '../src/lib/analytics';
 
@@ -300,6 +302,24 @@ export default function RevealScreen() {
   const handleWidgetPrompt = () => {
     dismissWidgetPrompt();
     router.push('/widgetSetup');
+  };
+
+  // 5.4: the Plus ask lands only at the moment of delight — post-reveal, past
+  // day 0 — and never stacks on top of the widget ask.
+  const isPro = usePurchases((s) => s.isPro);
+  const offerPlus =
+    isLive &&
+    liveReady &&
+    widgetPromptHidden &&
+    shouldOfferPlus({
+      coupleAgeDays: ageDays,
+      hadFirstReveal: true,
+      isPro,
+      context: 'post_reveal',
+    });
+  const handlePlusOffer = () => {
+    track(EVENTS.PAYWALL_VIEWED, { context: 'post_reveal' });
+    router.push('/(sheets)/plus');
   };
 
   const peekMood = peekMoodForWave(reveal.wave);
@@ -839,6 +859,26 @@ export default function RevealScreen() {
               Done for today
             </Btn>
           </View>
+
+          {/* 5.4: quiet Plus line at the moment of delight — never blocks the
+              loop, never day-0, never pre-first-reveal, never for Pro */}
+          {offerPlus && (
+            <Press onPress={handlePlusOffer} scale={false} accessibilityLabel="See Parallax Plus">
+              <Text
+                allowFontScaling={false}
+                style={{
+                  marginTop: 16,
+                  textAlign: 'center',
+                  fontSize: 12.5,
+                  lineHeight: 18,
+                  color: colors.inkMute,
+                  fontFamily: fontFamily.ui,
+                }}
+              >
+                loved tonight's reveal? Plus adds themed packs + your full archive →
+              </Text>
+            </Press>
+          )}
         </ScrollView>
 
         {/* Close button - absolute positioned */}

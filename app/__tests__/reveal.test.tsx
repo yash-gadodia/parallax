@@ -329,6 +329,26 @@ describe('Reveal Screen — 1.5 escalation + conversation spark', () => {
       fireEvent.press(getByText('Not now'));
     });
     expect(queryByText(/Put .+ on your home screen/)).toBeNull();
+
+    // 5.4: with the widget ask gone (and day >= 1, first reveal had), the
+    // quiet Plus line may appear — the two asks never stack.
+    expect(getByText(/Plus adds themed packs/)).toBeTruthy();
+  });
+
+  it('never offers Plus on day 0 (5.4 law: never before the loop has proven itself)', async () => {
+    mockCouple = { id: 'couple-1', member_a: 'me', member_b: 'them', created_at: new Date().toISOString() };
+    mockFetchReveal.mockResolvedValue({
+      state: 'revealed',
+      reveal: { yourHits: 2, theirHits: 2, twins: 2, wave: 100 },
+      promptAnswers: [{ youPick: 0, youHunch: 0, themPick: 0, themHunch: 0 }],
+      prompts: [SERVER_PROMPTS[0]],
+      caughtUp: false,
+    });
+
+    const { queryByText } = await render(<RevealScreen />);
+    await act(async () => {});
+
+    expect(queryByText(/Plus adds themed packs/)).toBeNull();
   });
 
   it('never asks for the widget on day 0-2 (too early to interrupt)', async () => {
