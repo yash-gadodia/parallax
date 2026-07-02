@@ -12,6 +12,7 @@ export interface Plan {
 export interface PlanMap {
   year: Plan;
   month: Plan;
+  life: Plan;
 }
 
 export const PLANS: PlanMap = {
@@ -29,6 +30,13 @@ export const PLANS: PlanMap = {
     tag: '',
     badge: '',
   },
+  life: {
+    price: '$79.99',
+    per: ' once',
+    mo: 'one price covers you both',
+    tag: '',
+    badge: 'LIFETIME',
+  },
 };
 
 export interface Perk {
@@ -41,7 +49,7 @@ export const PERKS: Perk[] = [
   {
     emoji: '🎁',
     title: 'Every themed pack',
-    desc: 'After dark, Chaos hour, Someday & more',
+    desc: 'After dark, Chaos hour, Rewind & more',
   },
   {
     emoji: '♾️',

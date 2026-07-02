@@ -30,7 +30,7 @@ export default function PacksScreen() {
   };
 
   const handleTryPlus = () => {
-    router.push('/checkout');
+    router.push('/(sheets)/plus');
   };
 
   const handleManagePlus = () => {

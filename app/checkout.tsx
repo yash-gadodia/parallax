@@ -24,7 +24,7 @@ import Toast from '../src/components/Toast';
 import { track, EVENTS } from '../src/lib/analytics';
 import { useIdentity } from '../src/features/profile/useIdentity';
 
-type PlanId = 'year' | 'month';
+type PlanId = 'year' | 'month' | 'life';
 
 export default function CheckoutScreen() {
   const router = useRouter();
@@ -65,10 +65,16 @@ export default function CheckoutScreen() {
     outputRange: ['0deg', '360deg'],
   });
 
-  const handleStartFreeTrial = async () => {
+  const handlePurchase = async () => {
     setConfirming(true);
     try {
-      const pkg = offering ? (plan === 'year' ? offering.annual : offering.monthly) : null;
+      const pkg = offering
+        ? plan === 'year'
+          ? offering.annual
+          : plan === 'month'
+          ? offering.monthly
+          : offering.lifetime
+        : null;
       if (pkg) {
         const unlocked = await purchase(pkg);
         if (!unlocked) {
@@ -254,6 +260,11 @@ export default function CheckoutScreen() {
               selected={plan === 'month'}
               onSelect={() => setPlan('month')}
             />
+            <PlanCard
+              id="life"
+              selected={plan === 'life'}
+              onSelect={() => setPlan('life')}
+            />
           </View>
 
           {/* The honest payment story: everything goes through the App Store
@@ -315,9 +326,13 @@ export default function CheckoutScreen() {
         >
           <Btn
             kind="us"
-            onPress={handleStartFreeTrial}
+            onPress={handlePurchase}
             disabled={confirming}
-            sub={`7 days free, then ${pl.price}${pl.per}`}
+            sub={
+              plan === 'life'
+                ? `${pl.price} once · one price covers you both`
+                : `7 days free, then ${pl.price}${pl.per}`
+            }
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <Icon d={ICONS.apple} size={18} color="#fff" fill="#fff" sw={0} />
@@ -330,7 +345,7 @@ export default function CheckoutScreen() {
                   fontFamily: fontFamily.ui,
                 }}
               >
-                Start free trial
+                {plan === 'life' ? 'Unlock lifetime' : 'Start free trial'}
               </Text>
             </View>
           </Btn>
@@ -397,7 +412,7 @@ interface PlanCardProps {
 
 function PlanCard({ id, selected, onSelect }: PlanCardProps) {
   const p = PLANS[id];
-  const planName = id === 'year' ? 'Annual' : 'Monthly';
+  const planName = id === 'year' ? 'Annual' : id === 'month' ? 'Monthly' : 'Lifetime';
 
   return (
     <Press onPress={onSelect}>

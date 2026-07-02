@@ -1,10 +1,23 @@
 import React from 'react';
-import { render, waitFor } from '@testing-library/react-native';
+import { render, fireEvent, waitFor, act } from '@testing-library/react-native';
 import StreakScreen from '../streak';
 import type { Couple } from '../../src/types/db';
 
 jest.mock('../../src/lib/nav', () => ({
   safeBack: jest.fn(),
+}));
+
+const mockPush = jest.fn();
+jest.mock('expo-router', () => ({
+  __esModule: true,
+  useRouter: () => ({ push: mockPush, replace: jest.fn(), back: jest.fn() }),
+}));
+
+const mockPurchases = { isPro: false };
+jest.mock('../../src/features/purchases/usePurchases', () => ({
+  usePurchases: jest.fn(
+    (selector: (s: { isPro: boolean }) => unknown) => selector(mockPurchases)
+  ),
 }));
 
 const mockRpc = jest.fn();
@@ -34,9 +47,31 @@ const pairedCouple = {
   freezes_remaining: 2,
 } as Couple;
 
+const lapsedCouple = {
+  id: 'couple-1',
+  streak: 0,
+  longest_streak: 9,
+  freezes_remaining: 1,
+  lapsed_streak: 5,
+  lapsed_on: '2026-07-01',
+} as unknown as Couple;
+
+const zeroSurface = {
+  streak: 0,
+  longest_streak: 9,
+  freezes_remaining: 1,
+  week: [false, false, false, false, false, false, false],
+};
+
 describe('StreakScreen', () => {
   beforeEach(() => {
+    jest.useFakeTimers();
     jest.clearAllMocks();
+    mockPurchases.isPro = false;
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
   it('paired: renders the real server surface — exact week grid, freezes, longest streak', async () => {
@@ -78,6 +113,68 @@ describe('StreakScreen', () => {
 
     // Longest streak is the real longest_streak, not the current streak.
     expect(getByText('longest streak together · 20 days')).toBeTruthy();
+
+    // Nothing lapsed -> no repair card at all.
+    expect(queryByText('Repair your streak')).toBeNull();
+  });
+
+  it('lapsed streak, non-Plus: shows the repair card and routes to the paywall, never repairs silently', async () => {
+    mockUseCouple.mockReturnValue({ couple: lapsedCouple, loading: false, status: 'active' });
+    mockRpc.mockResolvedValue({ data: zeroSurface, error: null });
+
+    const { getByText } = await render(<StreakScreen />);
+
+    expect(getByText('Repair your streak')).toBeTruthy();
+    expect(
+      getByText('Your 5-day streak lapsed. Repair it within 7 days and it comes back — for both of you.')
+    ).toBeTruthy();
+
+    fireEvent.press(getByText('Repair with Plus'));
+
+    expect(mockPush).toHaveBeenCalledWith('/(sheets)/plus');
+    // Only the surface fetch hit the server — repair_streak was never called.
+    expect(mockRpc).toHaveBeenCalledTimes(1);
+    expect(mockRpc).toHaveBeenCalledWith('get_streak_surface', { p_couple: 'couple-1' });
+  });
+
+  it('lapsed streak, Plus: repairs for real through repair_streak and confirms', async () => {
+    mockPurchases.isPro = true;
+    mockUseCouple.mockReturnValue({ couple: lapsedCouple, loading: false, status: 'active' });
+    mockRpc.mockImplementation((fn: unknown) =>
+      fn === 'repair_streak'
+        ? Promise.resolve({ data: { streak: 5 }, error: null })
+        : Promise.resolve({ data: zeroSurface, error: null })
+    );
+
+    const { getByText, queryByText } = await render(<StreakScreen />);
+
+    await act(async () => {
+      fireEvent.press(getByText('Repair it — free with Plus'));
+    });
+
+    expect(mockRpc).toHaveBeenCalledWith('repair_streak', { p_couple: 'couple-1' });
+    expect(getByText('streak repaired — 5 days back')).toBeTruthy();
+    expect(queryByText('Repair your streak')).toBeNull();
+    expect(mockPush).not.toHaveBeenCalled();
+  });
+
+  it('lapsed streak, Plus: a failed repair shows the honest toast and keeps the card', async () => {
+    mockPurchases.isPro = true;
+    mockUseCouple.mockReturnValue({ couple: lapsedCouple, loading: false, status: 'active' });
+    mockRpc.mockImplementation((fn: unknown) =>
+      fn === 'repair_streak'
+        ? Promise.resolve({ data: null, error: { message: 'window passed' } })
+        : Promise.resolve({ data: zeroSurface, error: null })
+    );
+
+    const { getByText } = await render(<StreakScreen />);
+
+    await act(async () => {
+      fireEvent.press(getByText('Repair it — free with Plus'));
+    });
+
+    expect(getByText("Couldn't repair the streak — try again.")).toBeTruthy();
+    expect(getByText('Repair your streak')).toBeTruthy();
   });
 
   it('paired but RPC fails: falls back to couple row values with the synthetic week fill', async () => {

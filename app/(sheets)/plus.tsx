@@ -67,7 +67,7 @@ export default function PlusSheet() {
               fontFamily: fontFamily.ui,
             }}
           >
-            {`$4.99/mo · covers you and ${partner.name}`}
+            {`$4.99/mo or $79.99 lifetime · one price covers you and ${partner.name}`}
           </Text>
         </View>
 

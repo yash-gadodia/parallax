@@ -70,11 +70,11 @@ describe('ManageSubScreen', () => {
     expect(queryByText('Cancel subscription')).toBeNull();
   });
 
-  it('routes the free-user CTA to the checkout', async () => {
+  it('routes the free-user CTA to the single paywall entry', async () => {
     const { getByText } = await render(<ManageSubScreen />);
 
     fireEvent.press(getByText('See Plus plans'));
-    expect(mockPush).toHaveBeenCalledWith('/checkout');
+    expect(mockPush).toHaveBeenCalledWith('/(sheets)/plus');
   });
 
   it('labels a local demo unlock as a demo, with no billing details', async () => {

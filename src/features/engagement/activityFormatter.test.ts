@@ -99,10 +99,46 @@ describe('activityFormatter', () => {
       expect(result.body).toBe('Untangling something together.');
     });
 
-    // 'pack' / 'reveal' have no server-side producer, so their
-    // bespoke copy was removed (no dead promises). If such a row ever appears
-    // they render via the generic fallback, never invented copy.
-    it.each(['pack', 'reveal'])(
+    it('maps "pack" kind (real producer: send_pack, 0023) with the theme in the body', () => {
+      const activity: Activity = {
+        id: 'activity-pack',
+        couple_id: 'couple-1',
+        kind: 'pack',
+        actor: 'dani-id',
+        payload: { theme: 'spicy' },
+        read_by: [],
+        created_at: '2026-06-22T10:00:00Z',
+      };
+
+      const result = mapActivityToDisplay(activity);
+
+      expect(result.emoji).toBe('🎁');
+      expect(result.title).toBe('Partner queued a pack');
+      expect(result.body).toBe("Tomorrow's drop comes from the spicy pack.");
+      expect(result.cta).toBeNull();
+      expect(result.who).toBe('dani');
+    });
+
+    it('maps a "pack" row without a theme payload to the generic body', () => {
+      const activity: Activity = {
+        id: 'activity-pack-2',
+        couple_id: 'couple-1',
+        kind: 'pack',
+        actor: 'dani-id',
+        payload: null,
+        read_by: [],
+        created_at: '2026-06-22T10:00:00Z',
+      };
+
+      const result = mapActivityToDisplay(activity);
+
+      expect(result.body).toBe("Tomorrow's drop comes from it.");
+    });
+
+    // 'reveal' has no server-side producer, so its bespoke copy was removed
+    // (no dead promises). If such a row ever appears it renders via the
+    // generic fallback, never invented copy.
+    it.each(['reveal'])(
       'maps producer-less "%s" kind to the generic fallback',
       (kind) => {
         const activity: Activity = {

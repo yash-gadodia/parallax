@@ -23,6 +23,11 @@ describe('PlusSheet', () => {
     // Assert the main heading
     expect(getByText('One sub, both of you.')).toBeTruthy();
 
+    // Pricing line: lifetime SKU + the per-couple trust copy stay prominent.
+    expect(
+      getByText('$4.99/mo or $79.99 lifetime · one price covers you and Dani')
+    ).toBeTruthy();
+
     // Assert the primary CTA
     expect(getByText('Start 7 days free')).toBeTruthy();
 

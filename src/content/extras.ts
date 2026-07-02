@@ -2,7 +2,9 @@
 // Ported from design_handoff_parallax/design_files (couples-core.jsx + couples-viral.jsx)
 
 // ── PACKS ──────────────────────────────────────────────────────
-// Themed question sets: deep (free), rest locked behind Plus
+// Themed question sets: deep (free), rest locked behind Plus.
+// `theme` is the drops.theme value in the live catalog (0015) — samples and
+// send_pack both key off it, so every pack maps to real content.
 
 export interface Pack {
   id: string;
@@ -11,6 +13,7 @@ export interface Pack {
   tag: string;
   tint: string;
   locked: boolean;
+  theme: string;
 }
 
 export const PACKS: Pack[] = [
@@ -21,6 +24,7 @@ export const PACKS: Pack[] = [
     tag: 'the real ones',
     tint: 'var(--p2)',
     locked: false,
+    theme: 'deeper',
   },
   {
     id: 'spicy',
@@ -29,6 +33,7 @@ export const PACKS: Pack[] = [
     tag: 'flirty · 18+',
     tint: 'var(--p1)',
     locked: true,
+    theme: 'spicy',
   },
   {
     id: 'silly',
@@ -37,44 +42,18 @@ export const PACKS: Pack[] = [
     tag: 'unserious',
     tint: 'var(--match)',
     locked: true,
+    theme: 'fun',
   },
   {
-    id: 'future',
-    emoji: '🔮',
-    title: 'Someday',
-    tag: 'the big stuff',
+    id: 'memory',
+    emoji: '📼',
+    title: 'Rewind',
+    tag: 'the way back',
     tint: 'var(--p2-deep)',
     locked: true,
+    theme: 'memory',
   },
 ];
-
-// Sample questions for each pack
-export interface PackSampleMap {
-  [packId: string]: string[];
-}
-
-export const PACK_SAMPLE: PackSampleMap = {
-  deep: [
-    'What do you think I worry about most?',
-    'When did you know you liked me?',
-    'What does "home" mean to you now?',
-  ],
-  spicy: [
-    "Boldest place you'd want to kiss me?",
-    "One thing you've wanted to try together?",
-    'Describe last night in three words.',
-  ],
-  silly: [
-    "If we were a sitcom couple, who's the chaos?",
-    'Weirdest thing you find cute about me?',
-    'Our toxic trait as a duo?',
-  ],
-  future: [
-    'City we eventually end up in?',
-    'Kids, pets, or plants first?',
-    'Where do you see us in five years?',
-  ],
-};
 
 // ── THREAD ────────────────────────────────────────────────────
 // Comment thread seeded on a single-prompt answer

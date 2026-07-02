@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -12,7 +12,8 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { safeBack } from "../src/lib/nav";
 import { usePurchases } from '../src/features/purchases/usePurchases';
 import { SafeAreaView, useSafeAreaInsets  } from 'react-native-safe-area-context';
-import { PACKS, PACK_SAMPLE } from '../src/content/extras';
+import { PACKS } from '../src/content/extras';
+import { usePackSamples } from '../src/features/packs/usePackSamples';
 import { colors, gradients, radius, shadows, space } from '../src/design/tokens';
 import { fontFamily } from '../src/design/typography';
 import { Kick, Serif } from '../src/components/Text';
@@ -20,29 +21,66 @@ import TopBar from '../src/components/TopBar';
 import Card from '../src/components/Card';
 import Btn from '../src/components/Btn';
 import Press from '../src/components/Press';
+import Toast from '../src/components/Toast';
 import { Icon, ICONS } from '../src/components/Icon';
 import { useIdentity } from '../src/features/profile/useIdentity';
+import { useCouple } from '../src/features/pairing/useCouple';
+import { supabase } from '../src/lib/supabase';
 
 export default function PackDetailScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams();
   const { partner } = useIdentity();
+  const { couple } = useCouple();
 
   // Resolve pack ID from params, fallback to 'deep'
   const packId = typeof params.id === 'string' ? params.id : 'deep';
   const pack = PACKS.find((p) => p.id === packId);
-  const samples = PACK_SAMPLE[packId] || [];
+  const {
+    samples,
+    loading: samplesLoading,
+    error: samplesError,
+    refetch: refetchSamples,
+  } = usePackSamples(pack?.theme ?? null);
 
   const plus = usePurchases((s) => s.isPro);
   const locked = pack && pack.locked && !plus;
+
+  const [queueing, setQueueing] = useState(false);
+  const [queued, setQueued] = useState(false);
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(null), 2600);
+  };
 
   const handleBack = () => {
     safeBack(router);
   };
 
   const handleUnlockPlus = () => {
-    router.push('/checkout');
+    router.push('/(sheets)/plus');
+  };
+
+  const handleQueuePack = async () => {
+    if (!pack || !couple?.id || queueing) return;
+    setQueueing(true);
+    try {
+      // @ts-expect-error supabase-js RPC overload limitation with multiple function signatures
+      const { error } = await supabase.rpc('send_pack', {
+        p_couple: couple.id,
+        p_theme: pack.theme,
+      });
+      if (error) throw error;
+      setQueued(true);
+      showToast(`queued — tomorrow's drop comes from ${pack.title}`);
+    } catch {
+      showToast(`Couldn't queue ${pack.title} — try again.`);
+    } finally {
+      setQueueing(false);
+    }
   };
 
   if (!pack) {
@@ -236,7 +274,7 @@ export default function PackDetailScreen() {
               >
                 {locked
                   ? `A themed drop for when you want to go there. Unlock Plus to peek at every question inside — drops like these land in your daily rotation.`
-                  : `Nothing to send — drops like these land in your daily rotation, and you and ${partner.name} both answer + place hunches, same as always.`}
+                  : `Queue it and tomorrow's drop comes from this pack — you and ${partner.name} both answer + place hunches, same as always.`}
               </Text>
             </View>
           </View>
@@ -246,7 +284,7 @@ export default function PackDetailScreen() {
             <Kick style={{ marginBottom: 8 }}>what's inside</Kick>
           </View>
 
-          {/* Sample questions list */}
+          {/* Sample questions list — the real catalog, honest states */}
           <View
             style={{
               marginHorizontal: space.gutter,
@@ -255,7 +293,67 @@ export default function PackDetailScreen() {
               gap: 10,
             }}
           >
-            {samples.map((question, i) => (
+            {samplesLoading ? (
+              <Card style={{ paddingVertical: 18, paddingHorizontal: 16, alignItems: 'center' }}>
+                <Text
+                  allowFontScaling={false}
+                  style={{
+                    fontFamily: fontFamily.mono,
+                    fontSize: 11,
+                    lineHeight: 16,
+                    color: colors.inkMute,
+                  }}
+                >
+                  loading real questions…
+                </Text>
+              </Card>
+            ) : samplesError ? (
+              <Card style={{ paddingVertical: 18, paddingHorizontal: 16, alignItems: 'center', gap: 8 }}>
+                <Text
+                  allowFontScaling={false}
+                  style={{
+                    fontSize: 13.5,
+                    lineHeight: 13.5 * 1.4,
+                    color: colors.inkSoft,
+                    fontFamily: fontFamily.ui,
+                    textAlign: 'center',
+                  }}
+                >
+                  Couldn't load this pack's questions.
+                </Text>
+                <Press onPress={refetchSamples} scale={false}>
+                  <Text
+                    allowFontScaling={false}
+                    style={{
+                      fontSize: 13,
+                      fontWeight: '700',
+                      lineHeight: 18,
+                      color: colors.p2Deep,
+                      fontFamily: fontFamily.ui,
+                      textDecorationLine: 'underline',
+                    }}
+                  >
+                    Try again
+                  </Text>
+                </Press>
+              </Card>
+            ) : samples.length === 0 ? (
+              <Card style={{ paddingVertical: 18, paddingHorizontal: 16, alignItems: 'center' }}>
+                <Text
+                  allowFontScaling={false}
+                  style={{
+                    fontSize: 13.5,
+                    lineHeight: 13.5 * 1.4,
+                    color: colors.inkSoft,
+                    fontFamily: fontFamily.ui,
+                    textAlign: 'center',
+                  }}
+                >
+                  No questions in this pack yet.
+                </Text>
+              </Card>
+            ) : (
+            samples.map((question, i) => (
               <Card
                 key={i}
                 style={{
@@ -312,7 +410,8 @@ export default function PackDetailScreen() {
                   />
                 )}
               </Card>
-            ))}
+            ))
+            )}
           </View>
         </SafeAreaView>
       </ScrollView>
@@ -344,43 +443,61 @@ export default function PackDetailScreen() {
               </Text>
             </View>
           </Btn>
+        ) : pack.id === 'spicy' ? (
+          /* The spice gate is server-side: spicy drops only enter the rotation
+             once both members allow them, so the honest state is a note. */
+          <PackNote
+            text={`these join your rotation once you and ${partner.name} both set your spice to spicy`}
+          />
+        ) : !couple?.id ? (
+          <PackNote text="these land in your daily rotation — no sending needed" />
+        ) : queued ? (
+          <PackNote text={`queued — tomorrow's drop comes from ${pack.title}`} />
         ) : (
-          /* No fake sends: drops arrive through the daily rotation, so the
-             honest state here is a note, not a button. */
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 8,
-              paddingVertical: 16,
-              paddingHorizontal: 18,
-              borderRadius: radius.pill,
-              backgroundColor: colors.surface,
-              borderWidth: 1,
-              borderColor: colors.line,
-              ...shadows.shadow,
-            }}
-          >
-            <Icon d={ICONS.spark} size={16} color={colors.p2Deep} sw={1.6} />
-            <Text
-              allowFontScaling={false}
-              style={{
-                flex: 1,
-                fontSize: 13.5,
-                lineHeight: 13.5 * 1.4,
-                fontWeight: '600',
-                color: colors.inkSoft,
-                fontFamily: fontFamily.ui,
-              }}
-            >
-              {pack.id === 'spicy'
-                ? `these join your rotation once you and ${partner.name} both set your spice to spicy`
-                : `these land in your daily rotation — no sending needed`}
-            </Text>
-          </View>
+          /* The real send: send_pack records the theme so tomorrow's drop
+             draws from this pack. No toast-only fakes. */
+          <Btn kind="us" onPress={handleQueuePack} disabled={queueing}>
+            {queueing ? 'Queueing…' : 'Queue for tomorrow'}
+          </Btn>
         )}
       </View>
+
+      {toastMsg && <Toast msg={toastMsg} />}
+    </View>
+  );
+}
+
+function PackNote({ text }: { text: string }) {
+  return (
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        paddingVertical: 16,
+        paddingHorizontal: 18,
+        borderRadius: radius.pill,
+        backgroundColor: colors.surface,
+        borderWidth: 1,
+        borderColor: colors.line,
+        ...shadows.shadow,
+      }}
+    >
+      <Icon d={ICONS.spark} size={16} color={colors.p2Deep} sw={1.6} />
+      <Text
+        allowFontScaling={false}
+        style={{
+          flex: 1,
+          fontSize: 13.5,
+          lineHeight: 13.5 * 1.4,
+          fontWeight: '600',
+          color: colors.inkSoft,
+          fontFamily: fontFamily.ui,
+        }}
+      >
+        {text}
+      </Text>
     </View>
   );
 }

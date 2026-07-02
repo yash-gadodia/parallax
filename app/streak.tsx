@@ -21,16 +21,31 @@ import { colors, gradients, radius, shadows, space } from '../src/design/tokens'
 import { fontFamily } from '../src/design/typography';
 import { MILES } from '../src/content/us';
 import { supabase } from '../src/lib/supabase';
-import type { StreakSurface } from '../src/types/db';
+import type { Couple, StreakSurface } from '../src/types/db';
 import { useCouple } from '../src/features/pairing/useCouple';
 import { useIdentity } from '../src/features/profile/useIdentity';
+import { usePurchases } from '../src/features/purchases/usePurchases';
+import Btn from '../src/components/Btn';
+import Toast from '../src/components/Toast';
+
+// 0021 records what reset_stale_streaks killed (repairable for 7 days); the
+// hand-written Couple type doesn't carry the columns yet.
+type CoupleWithLapse = Couple & {
+  lapsed_streak?: number | null;
+  lapsed_on?: string | null;
+};
 
 export default function StreakScreen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
   const { couple } = useCouple();
   const { me, partner } = useIdentity();
+  const isPro = usePurchases((s) => s.isPro);
   const [surface, setSurface] = useState<StreakSurface | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+  const [repairing, setRepairing] = useState(false);
+  const [repaired, setRepaired] = useState(false);
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
 
   useEffect(() => {
     if (!couple?.id) {
@@ -51,7 +66,7 @@ export default function StreakScreen() {
     return () => {
       cancelled = true;
     };
-  }, [couple?.id]);
+  }, [couple?.id, reloadKey]);
 
   const streak = surface?.streak ?? couple?.streak ?? 0;
   // Server truth: get_streak_surface.week is the real last-7-days history,
@@ -64,6 +79,40 @@ export default function StreakScreen() {
   const next = MILES.find((m) => m > streak) || 365;
   const prevM = [0, ...MILES].reverse().find((m) => m <= streak) || 0;
   const prog = next === prevM ? 1 : Math.min(1, (streak - prevM) / (next - prevM));
+
+  // 5.3: a lapsed streak is repairable (server checks the 7-day window).
+  // Hidden entirely when nothing lapsed; Plus repairs free; non-Plus sees the
+  // paywall first — never a silent repair.
+  const lapsedStreak = (couple as CoupleWithLapse | null)?.lapsed_streak ?? 0;
+  const showRepair = !!couple?.id && !repaired && streak === 0 && lapsedStreak > 0;
+
+  const showToast = (msg: string) => {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(null), 2600);
+  };
+
+  const handleRepair = async () => {
+    if (!couple?.id || repairing) return;
+    if (!isPro) {
+      router.push('/(sheets)/plus');
+      return;
+    }
+    setRepairing(true);
+    try {
+      // @ts-expect-error supabase-js RPC overload limitation with multiple function signatures
+      const { error } = await supabase.rpc('repair_streak', {
+        p_couple: couple.id,
+      });
+      if (error) throw error;
+      setRepaired(true);
+      setReloadKey((k) => k + 1);
+      showToast(`streak repaired — ${lapsedStreak} days back`);
+    } catch {
+      showToast("Couldn't repair the streak — try again.");
+    } finally {
+      setRepairing(false);
+    }
+  };
 
   const handleBack = () => safeBack(router);
 
@@ -180,6 +229,71 @@ export default function StreakScreen() {
             This one's <Text style={{ fontStyle: 'italic', color: colors.ink }}>shared</Text>. If <Text style={{ fontWeight: '700', color: colors.ink }}>either</Text> of you skips a day, it resets to zero, so you keep each other honest.
           </Text>
         </View>
+
+        {/* Streak repair (only when a streak actually lapsed) */}
+        {showRepair && (
+          <View
+            style={{
+              backgroundColor: colors.surface,
+              borderWidth: 1,
+              borderColor: colors.line,
+              borderRadius: 22,
+              padding: 16,
+              marginBottom: 22,
+              ...shadows.shadowSoft,
+            }}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 13 }}>
+              <View
+                style={{
+                  width: 46,
+                  height: 46,
+                  borderRadius: 14,
+                  backgroundColor: 'rgba(255,142,122,0.16)',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}
+              >
+                <Text style={{ fontSize: 22 }}>🩹</Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text
+                  style={{
+                    fontFamily: fontFamily.ui,
+                    fontSize: 14.5,
+                    lineHeight: 21.75,
+                    fontWeight: '700',
+                    color: colors.ink,
+                  }}
+                >
+                  Repair your streak
+                </Text>
+                <Text
+                  style={{
+                    fontFamily: fontFamily.ui,
+                    fontSize: 12.5,
+                    lineHeight: 17.5,
+                    color: colors.inkSoft,
+                    marginTop: 2,
+                  }}
+                >
+                  {`Your ${lapsedStreak}-day streak lapsed. Repair it within 7 days and it comes back — for both of you.`}
+                </Text>
+              </View>
+            </View>
+            <View style={{ marginTop: 12 }}>
+              {isPro ? (
+                <Btn kind="us" onPress={handleRepair} disabled={repairing}>
+                  {repairing ? 'Repairing…' : 'Repair it — free with Plus'}
+                </Btn>
+              ) : (
+                <Btn kind="us" onPress={handleRepair}>
+                  Repair with Plus
+                </Btn>
+              )}
+            </View>
+          </View>
+        )}
 
         {/* This week */}
         <View style={{ marginTop: 22, marginBottom: 10 }}>
@@ -444,6 +558,8 @@ export default function StreakScreen() {
           {`longest streak together · ${longest} days`}
         </Text>
       </ScrollView>
+
+      {toastMsg && <Toast msg={toastMsg} />}
     </View>
   );
 }

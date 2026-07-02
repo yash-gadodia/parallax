@@ -42,19 +42,20 @@ describe('PacksScreen', () => {
     expect(getByText('Deep end')).toBeTruthy();
     expect(getByText('After dark')).toBeTruthy();
     expect(getByText('Chaos hour')).toBeTruthy();
-    expect(getByText('Someday')).toBeTruthy();
+    expect(getByText('Rewind')).toBeTruthy();
 
     // Check upsell section exists
     expect(getByText('parallax plus')).toBeTruthy();
     expect(getByText('One sub, both of you.')).toBeTruthy();
   });
 
-  it('routes a free user from Try Plus to the checkout, not manageSub', async () => {
+  it('routes a free user from Try Plus to the single paywall entry, not manageSub', async () => {
     const { getByText } = await render(<PacksScreen />);
 
     fireEvent.press(getByText('Try Plus'));
-    expect(mockPush).toHaveBeenCalledWith('/checkout');
+    expect(mockPush).toHaveBeenCalledWith('/(sheets)/plus');
     expect(mockPush).not.toHaveBeenCalledWith('/manageSub');
+    expect(mockPush).not.toHaveBeenCalledWith('/checkout');
   });
 
   it('routes a Plus user from Manage Plus to manageSub', async () => {

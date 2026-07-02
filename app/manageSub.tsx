@@ -217,7 +217,7 @@ export default function ManageSubScreen() {
                 Parallax Plus unlocks every pack, for both of you.
               </Text>
             </Card>
-            <Btn kind="us" onPress={() => router.push('/checkout')}>
+            <Btn kind="us" onPress={() => router.push('/(sheets)/plus')}>
               See Plus plans
             </Btn>
           </>
