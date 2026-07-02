@@ -185,8 +185,8 @@ async function coupleContext(coupleId: string): Promise<{ context: string; avoid
   const intents = [...new Set(profiles.flatMap((p) => p.intents ?? []))];
 
   const learnings = (await dbGet(
-    `learnings?couple_id=eq.${coupleId}&select=emoji,need,detail&order=created_at.desc&limit=40`,
-  )) as { emoji: string | null; need: string | null; detail: string | null }[];
+    `learnings?couple_id=eq.${coupleId}&select=id,emoji,need,detail&order=created_at.desc&limit=40`,
+  )) as { id: string; emoji: string | null; need: string | null; detail: string | null }[];
 
   const coupleDrops = (await dbGet(
     `couple_drops?couple_id=eq.${coupleId}&state=eq.revealed&select=id,drop_id&order=date.desc&limit=30`,
@@ -408,6 +408,9 @@ Author exactly ${count} brand-new drops in the house voice. Call provide_drops.`
       prompts: d.prompts,
       source: "llm",
       status: "pending",
+      // 1.4 flywheel: publish stamps these learnings' became_prompt_id, making
+      // "now a question in your drops" literally true in the Love Map.
+      source_learning_ids: learnings.length > 0 ? learnings.map((l) => l.id) : null,
     });
     if (ok) inserted++;
     else rejected++;
