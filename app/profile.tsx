@@ -465,7 +465,7 @@ export default function ProfileScreen() {
           <Row
             icon={ICONS.spark}
             label="Replay intro"
-            onPress={() => router.push('/(onboarding)')}
+            onPress={() => router.push('/(onboarding)?replay=1')}
           />
         </Group>
 

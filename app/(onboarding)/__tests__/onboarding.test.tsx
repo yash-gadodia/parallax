@@ -5,11 +5,16 @@ import OnboardingScreen from '../index';
 // Mock dependencies BEFORE importing the component
 const mockPush = jest.fn();
 const mockReplace = jest.fn();
+const mockBack = jest.fn();
+let mockSearchParams: Record<string, string> = {};
 jest.mock('expo-router', () => ({
   useRouter: () => ({
     push: mockPush,
     replace: mockReplace,
+    back: mockBack,
+    canGoBack: () => true,
   }),
+  useLocalSearchParams: () => mockSearchParams,
 }));
 
 jest.mock('expo-linear-gradient', () => {
@@ -217,6 +222,8 @@ describe('Onboarding', () => {
     (createCouple as jest.Mock).mockClear();
     (joinCouple as jest.Mock).mockClear();
     mockPendingInviteCode = null;
+    mockBack.mockClear();
+    mockSearchParams = {};
   });
 
   // Constants tests
@@ -494,6 +501,39 @@ describe('Onboarding', () => {
     });
     expect(mockTrack).toHaveBeenCalledWith('couple_paired', { method: 'join' });
     expect(mockTrack).toHaveBeenCalledTimes(1);
+  });
+
+  it('replay mode: a signed-in (paired) user sees the intro instead of being skipped to pairing', async () => {
+    mockSessionValue = { session: { user: { id: 'u1' } }, loading: false };
+    mockSearchParams = { replay: '1' };
+    const { getByText } = await render(<OnboardingScreen />);
+
+    // Welcome stays on screen — no skip-to-pairing, no couple created.
+    expect(getByText(/mind the parallax error/i)).toBeTruthy();
+    expect(createCouple).not.toHaveBeenCalled();
+  });
+
+  it('replay mode: the guide ends at intents and returns back — pairing is unreachable', async () => {
+    mockSessionValue = { session: { user: { id: 'u1' } }, loading: false };
+    mockSearchParams = { replay: '1' };
+    const { getByText } = await render(<OnboardingScreen />);
+
+    await fireEvent.press(getByText(/Get started/));
+    await waitFor(() => {
+      expect(getByText(/Makes sense/i)).toBeTruthy();
+    });
+    await fireEvent.press(getByText(/Makes sense/));
+    await waitFor(() => {
+      expect(getByText(/What do you two want/i)).toBeTruthy();
+    });
+    await fireEvent.press(getByText(/Continue/));
+
+    // Exits back to Profile; never routes to signup and never creates a couple.
+    await waitFor(() => {
+      expect(mockBack).toHaveBeenCalled();
+    });
+    expect(mockPush).not.toHaveBeenCalledWith('/signup');
+    expect(createCouple).not.toHaveBeenCalled();
   });
 
   it('an invitee arriving via join link does NOT auto-create an orphan couple', async () => {

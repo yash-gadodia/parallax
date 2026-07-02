@@ -9,7 +9,7 @@ import {
   TextInput,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView as SafeAreaViewContext } from 'react-native-safe-area-context';
 import { colors, gradients, radius, shadows, space } from '../../src/design/tokens';
 import { fontFamily } from '../../src/design/typography';
@@ -902,22 +902,44 @@ export default function OnboardingScreen() {
   const router = useRouter();
   const { fireToast } = useUiStore();
   const { session, loading: sessionLoading } = useSession();
+  // Replay mode (Profile → "Replay intro"): a signed-in — usually paired —
+  // user re-walking the guide. Shows welcome → how-it-works → intents, then
+  // returns to where they came from. Pairing steps are never reachable here
+  // (a paired user must not re-enter couple creation).
+  const { replay } = useLocalSearchParams<{ replay?: string }>();
+  const isReplay = replay === '1';
 
   // A signed-in but unpaired user (e.g. just confirmed their email) skips the
-  // intro and lands on pairing. Active couples never reach here (root guard).
+  // intro and lands on pairing. Active couples never reach here (root guard)
+  // except in replay mode, where the intro is the whole point.
   useEffect(() => {
-    if (!sessionLoading && session && step === 0) {
+    if (!isReplay && !sessionLoading && session && step === 0) {
       setStep(3);
     }
-  }, [sessionLoading, session, step]);
+  }, [isReplay, sessionLoading, session, step]);
 
   const handleFinish = () => {
     router.replace('/(tabs)/today');
   };
 
+  const exitReplay = () => {
+    // Pushed from Profile — back returns there; fall back to Today for a
+    // deep-linked replay with no history.
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/(tabs)/today');
+    }
+  };
+
   // Pairing needs a real account; new users create one first.
+  // In replay the guide ends at intents (they can retune what they want) —
+  // never the pairing steps.
   const handleIntentNext = () => {
-    if (session) {
+    if (isReplay) {
+      fireToast('Tuned ✓');
+      exitReplay();
+    } else if (session) {
       setStep(3);
     } else {
       router.push('/signup');
