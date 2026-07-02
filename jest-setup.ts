@@ -238,6 +238,14 @@ jest.mock('expo-clipboard', () => ({
   getStringAsync: jest.fn(() => Promise.resolve('')),
 }));
 
+// react-native-view-shot is native — captureRef resolves a stable fake file uri
+// so the share card's image-capture path tests cleanly. Tests override with
+// mockRejectedValueOnce to exercise the text-share fallback.
+jest.mock('react-native-view-shot', () => ({
+  __esModule: true,
+  captureRef: jest.fn(() => Promise.resolve('file:///mock/share-card.png')),
+}));
+
 // expo-blur's BlurView is native — render it as a plain View in jest so screens
 // that frost content (reveal, checkout, packDetail, wrapped, homeScreen, Sheet) test cleanly.
 jest.mock('expo-blur', () => {

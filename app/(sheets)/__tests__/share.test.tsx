@@ -1,8 +1,24 @@
 import React from 'react';
-import { render, userEvent, act } from '@testing-library/react-native';
+import { render, userEvent, act, fireEvent } from '@testing-library/react-native';
+import { Share } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
+import { captureRef } from 'react-native-view-shot';
 import ShareSheet from '../share';
 import { useIdentity } from '../../../src/features/profile/useIdentity';
+
+// Local router mock: the share buttons close the sheet via safeBack, which
+// needs canGoBack (absent from the global expo-router mock).
+jest.mock('expo-router', () => ({
+  __esModule: true,
+  useRouter: () => ({
+    push: jest.fn(),
+    replace: jest.fn(),
+    back: jest.fn(),
+    navigate: jest.fn(),
+    dismiss: jest.fn(),
+    canGoBack: () => false,
+  }),
+}));
 
 jest.mock('../../../src/features/profile/useIdentity', () => ({
   useIdentity: jest.fn(),
@@ -21,6 +37,7 @@ jest.mock('../../../src/features/lovemap/useCoupleHistory', () => ({
 }));
 
 const mockUseIdentity = useIdentity as jest.Mock;
+const mockCaptureRef = captureRef as jest.Mock;
 const { useSession } = require('../../../src/features/auth/useSession');
 const { useCouple } = require('../../../src/features/pairing/useCouple');
 const { useTodayState } = require('../../../src/features/drops/useTodayState');
@@ -28,9 +45,9 @@ const { useCoupleHistory } = require('../../../src/features/lovemap/useCoupleHis
 
 // couple_history order: most recent first. 80 🟢, 75 🟢, 55 🟡.
 const LIVE_HISTORY = [
-  { date: '2026-07-02', code: 'W12', title: 'the hot seat', wavelength: 80, twins_count: 1 },
-  { date: '2026-07-01', code: 'W11', title: 'night moves', wavelength: 75, twins_count: 2 },
-  { date: '2026-06-30', code: 'W10', title: 'soft spots', wavelength: 55, twins_count: 0 },
+  { date: '2026-07-02', code: 'W12', title: 'the hot seat', wavelength: 80, twins_count: 1, caught_up: false },
+  { date: '2026-07-01', code: 'W11', title: 'night moves', wavelength: 75, twins_count: 2, caught_up: false },
+  { date: '2026-06-30', code: 'W10', title: 'soft spots', wavelength: 55, twins_count: 0, caught_up: false },
 ];
 
 function mockLive({ streak = 7, today, history = LIVE_HISTORY }: {
@@ -71,8 +88,11 @@ async function pressAndSettle(element: Parameters<ReturnType<typeof userEvent.se
 }
 
 describe('ShareSheet', () => {
+  let shareSpy: jest.SpyInstance;
+
   beforeEach(() => {
     jest.clearAllMocks();
+    shareSpy = jest.spyOn(Share, 'share').mockResolvedValue({ action: 'sharedAction' });
     mockUseIdentity.mockReturnValue({
       me: { name: 'Alex', initial: 'A' },
       partner: { name: 'Jordan', initial: 'J', hasPartner: true },
@@ -100,14 +120,18 @@ describe('ShareSheet', () => {
     expect(getByText('Copy')).toBeTruthy();
   });
 
-  it('renders the real couple names in the share-card footer', async () => {
+  it('renders the real couple names, partner-color-coded, on the card', async () => {
     const { getByText, queryByText } = await render(<ShareSheet />);
 
-    expect(getByText('Alex & Jordan · TODAY')).toBeTruthy();
+    expect(getByText('Alex & Jordan')).toBeTruthy();
+    // The two partner-colored Toks (p1 you / p2 partner) carry the initials;
+    // they're decorative (a11y-hidden), so include hidden elements.
+    expect(getByText('A', { includeHiddenElements: true })).toBeTruthy();
+    expect(getByText('J', { includeHiddenElements: true })).toBeTruthy();
     expect(queryByText(/YASH & DANI/)).toBeNull();
   });
 
-  it('drops the names from the footer when there is no partner yet', async () => {
+  it('drops the partner from the card when there is no partner yet', async () => {
     mockUseIdentity.mockReturnValue({
       me: { name: 'Alex', initial: 'A' },
       partner: { name: 'your partner', initial: '·', hasPartner: false },
@@ -116,31 +140,63 @@ describe('ShareSheet', () => {
 
     const { getByText, queryByText } = await render(<ShareSheet />);
 
-    expect(getByText('TODAY')).toBeTruthy();
+    expect(getByText('Alex')).toBeTruthy();
     expect(queryByText(/&/)).toBeNull();
   });
 
   it('keeps the demo score and grid when there is no session', async () => {
     // Demo play state (all nulls -> the seeded demo picks) scores 33%.
-    const { getByText } = await render(<ShareSheet />);
+    const { getByText, queryByText } = await render(<ShareSheet />);
 
     // Empty play store -> no twins/hits marked on the grid.
     expect(getByText('33%')).toBeTruthy();
     expect(getByText('☕🤍  🌧🤍  🔓🤍')).toBeTruthy();
+    // No couple -> no streak line on the card.
+    expect(queryByText(/🔥/)).toBeNull();
   });
 
   it('renders the server-stored wave_pct, not the local demo score, when signed in', async () => {
     mockLive();
-    const { getByText, queryByText } = await render(<ShareSheet />);
+    const { getByText, getByTestId, queryByText, queryByTestId } = await render(<ShareSheet />);
 
     expect(getByText('84%')).toBeTruthy();
     expect(queryByText('33%')).toBeNull();
     // The card shows the spoiler-free weekly dots instead of the demo grid.
-    expect(getByText('🟢🟢🟡')).toBeTruthy();
+    expect(getByTestId('share-dot-0')).toHaveTextContent('🟢');
+    expect(getByTestId('share-dot-1')).toHaveTextContent('🟢');
+    expect(getByTestId('share-dot-2')).toHaveTextContent('🟡');
+    expect(queryByTestId('share-dot-3')).toBeNull();
     expect(queryByText(/👯|💞|🤍/)).toBeNull();
   });
 
+  it('shows the streak on the card', async () => {
+    mockLive({ streak: 12 });
+    const { getByText } = await render(<ShareSheet />);
 
+    expect(getByText('12🔥')).toBeTruthy();
+  });
+
+  it('hides the streak line at streak 0', async () => {
+    mockLive({ streak: 0 });
+    const { queryByText } = await render(<ShareSheet />);
+
+    expect(queryByText(/🔥/)).toBeNull();
+  });
+
+  it('renders a caught-up day muted, a normal day full-strength', async () => {
+    mockLive({
+      history: [
+        { ...LIVE_HISTORY[0], caught_up: true },
+        LIVE_HISTORY[1],
+        LIVE_HISTORY[2],
+      ],
+    });
+    const { getByTestId } = await render(<ShareSheet />);
+
+    expect(getByTestId('share-dot-0')).toHaveTextContent('🟢');
+    expect(getByTestId('share-dot-0')).toHaveStyle({ opacity: 0.45 });
+    expect(getByTestId('share-dot-1')).toHaveStyle({ opacity: 1 });
+  });
 
   it('falls back to the latest revealed day when today has no stored wave yet', async () => {
     mockLive({
@@ -159,6 +215,38 @@ describe('ShareSheet', () => {
     expect(getByText('84%')).toBeTruthy();
     expect(queryByText(/the hot seat/)).toBeNull();
     expect(queryByText(/I feel most taken care of/)).toBeNull();
+  });
+
+  it('shares the captured 9:16 card image on Messages', async () => {
+    mockLive();
+    const { getByText } = await render(<ShareSheet />);
+
+    await act(async () => {
+      fireEvent.press(getByText('Messages'));
+    });
+
+    expect(mockCaptureRef).toHaveBeenCalledWith(expect.anything(), {
+      format: 'png',
+      quality: 1,
+      width: 1080,
+      height: 1920,
+    });
+    expect(shareSpy).toHaveBeenCalledWith({ url: 'file:///mock/share-card.png' });
+  });
+
+  it('falls back to the spoiler-free text share when capture fails', async () => {
+    mockLive();
+    mockCaptureRef.mockRejectedValueOnce(new Error('snapshot failed'));
+    const { getByText } = await render(<ShareSheet />);
+
+    await act(async () => {
+      fireEvent.press(getByText('Instagram'));
+    });
+
+    expect(shareSpy).toHaveBeenCalledTimes(1);
+    expect(shareSpy).toHaveBeenCalledWith({
+      message: 'Alex & Jordan · 84% in sync · 7🔥\n🟢🟢🟡\nfind your wavelength on parallax',
+    });
   });
 
   // KEEP LAST: a userEvent press leaves RNTL 14 unable to render a fresh tree
