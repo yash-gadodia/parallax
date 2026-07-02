@@ -1,30 +1,46 @@
 import React, { useState, useRef, useEffect } from 'react';
-import {
-  View,
-  Text,
-  Animated as RNAnimated,
-  useWindowDimensions,
-} from 'react-native';
+import { View, Text, Animated as RNAnimated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { safeBack } from "../src/lib/nav";
 import { BlurView } from 'expo-blur';
-import { colors, gradients, radius, space } from '../src/design/tokens';
+import { gradients } from '../src/design/tokens';
 import { fontFamily } from '../src/design/typography';
 import { Icon, ICONS } from '../src/components/Icon';
 import { Kick, Serif } from '../src/components/Text';
 import Press from '../src/components/Press';
 import Tok from '../src/components/Tok';
 import Btn from '../src/components/Btn';
-import { WRAP, COUPLE_TYPE } from '../src/content/extras';
 import { useIdentity } from '../src/features/profile/useIdentity';
+import { useCouple } from '../src/features/pairing/useCouple';
+import { useCoupleHistory } from '../src/features/lovemap/useCoupleHistory';
+import {
+  monthStats,
+  monthLabel,
+  dayLabel,
+  weeklyDots,
+} from '../src/features/history/historyStats';
+
+// A couple needs this many revealed drops in the month for a recap to mean
+// anything — below it, Wrapped shows the warm not-yet state instead.
+const MIN_DROPS_FOR_WRAPPED = 5;
+
+interface Slide {
+  kind: 'cover' | 'stat' | 'share';
+  bg: readonly [string, string, ...string[]];
+  kicker?: string;
+  big?: string;
+  unit?: string;
+  sub?: string;
+}
 
 export default function WrappedScreen() {
   const router = useRouter();
   const { me, partner } = useIdentity();
+  const { couple } = useCouple();
+  const { history, loading } = useCoupleHistory();
   const [slideIdx, setSlideIdx] = useState(0);
-  const { height: screenHeight } = useWindowDimensions();
   const barAnim = useRef(new RNAnimated.Value(0)).current;
 
   useEffect(() => {
@@ -36,38 +52,72 @@ export default function WrappedScreen() {
     }).start();
   }, [slideIdx, barAnim]);
 
-  const slide = WRAP[slideIdx];
-  const isLastSlide = slideIdx === WRAP.length - 1;
+  const now = new Date();
+  const month = monthLabel(now);
+  const stats = monthStats(history, now);
+  const streak = couple?.streak ?? 0;
 
-  // Extract gradient colors from the bg string (linear-gradient or var(--us))
-  const getGradientFromBg = (bg: string): { colors: readonly [string, string, ...string[]]; locations: readonly number[] } => {
-    if (bg === 'var(--us)') {
-      return {
-        colors: gradients.us.colors,
-        locations: gradients.us.locations,
-      };
-    }
-    // Parse linear-gradient(angle,color1,color2,...)
-    const match = bg.match(/linear-gradient\([^,]+,([^,]+),([^,]+)(?:,([^)]+))?\)/);
-    if (match) {
-      const c1 = match[1].trim();
-      const c2 = match[2].trim();
-      const c3 = match[3]?.trim();
-      if (c3) {
-        return {
-          colors: [c1, c2, c3] as const,
-          locations: [0, 0.48, 1] as const,
-        };
-      }
-      return {
-        colors: [c1, c2] as const,
-        locations: [0, 1] as const,
-      };
-    }
-    return { colors: ['#FF8E7A', '#9D95F5'] as const, locations: [0, 1] as const };
+  const handleClose = () => {
+    safeBack(router);
   };
 
-  const gradientInfo = getGradientFromBg(slide.bg);
+  const handleShare = () => {
+    router.push('/(sheets)/share');
+  };
+
+  // Every slide is computed from the couple's real month — no canned numbers,
+  // no archetype. Slides without a real data source simply don't exist.
+  const slides: Slide[] = [
+    { kind: 'cover', bg: ['#FF8E7A', '#9D95F5'] },
+    {
+      kind: 'stat',
+      bg: ['#7064E6', '#C387C9'],
+      kicker: 'you showed up',
+      big: String(stats.count),
+      unit: 'drops, together',
+      sub: `that's ${stats.count} drops revealed this month.`,
+    },
+    ...(stats.avgWave != null
+      ? [
+          {
+            kind: 'stat',
+            bg: ['#54C2A0', '#9D95F5'],
+            kicker: 'in sync',
+            big: `${stats.avgWave}%`,
+            unit: 'average wavelength',
+            sub: 'your real average, across every reveal this month.',
+          } as Slide,
+        ]
+      : []),
+    ...(stats.best
+      ? [
+          {
+            kind: 'stat',
+            bg: ['#EF6A53', '#C387C9'],
+            kicker: 'your best day',
+            big: `${stats.best.wavelength}%`,
+            unit: stats.best.title,
+            sub: `${dayLabel(stats.best.date)} — your highest wavelength this month.`,
+          } as Slide,
+        ]
+      : []),
+    ...(streak > 0
+      ? [
+          {
+            kind: 'stat',
+            bg: gradients.us.colors,
+            kicker: 'still going',
+            big: String(streak),
+            unit: 'day streak',
+            sub: 'kept alive by the both of you.',
+          } as Slide,
+        ]
+      : []),
+    { kind: 'share', bg: ['#9D95F5', '#FF8E7A'] },
+  ];
+
+  const slide = slides[Math.min(slideIdx, slides.length - 1)];
+  const isLastSlide = slideIdx >= slides.length - 1;
 
   const handleNext = () => {
     if (isLastSlide) {
@@ -83,19 +133,78 @@ export default function WrappedScreen() {
     }
   };
 
-  const handleClose = () => {
-    safeBack(router);
-  };
+  // Not enough real reveals this month for a recap: the warm not-yet state.
+  if (!loading && stats.count < MIN_DROPS_FOR_WRAPPED) {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#000' }}>
+        <LinearGradient
+          colors={['#FF8E7A', '#9D95F5']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={{
+            flex: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingHorizontal: 34,
+          }}
+        >
+          <Press
+            onPress={handleClose}
+            scale={false}
+            accessibilityLabel="Close wrapped"
+            style={{
+              position: 'absolute',
+              top: 50,
+              right: 14,
+              width: 34,
+              height: 34,
+              zIndex: 30,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Icon d={ICONS.close} size={17} color="#fff" sw={2} />
+          </Press>
 
-  const handleShare = () => {
-    router.push('/(sheets)/share');
-  };
+          <Text allowFontScaling={false} style={{ fontSize: 44, lineHeight: 50 }}>
+            🌱
+          </Text>
+          <Serif
+            s={36}
+            c="#fff"
+            style={{ lineHeight: 41, marginTop: 16, textAlign: 'center' }}
+          >
+            your first month is still writing itself
+          </Serif>
+          <Text
+            allowFontScaling={false}
+            style={{
+              fontSize: 15,
+              color: 'rgba(255,255,255,0.92)',
+              lineHeight: 22,
+              marginTop: 12,
+              maxWidth: 300,
+              textAlign: 'center',
+              fontFamily: fontFamily.ui,
+            }}
+          >
+            come back when you've played a few more drops — your recap is built
+            from your real reveals, nothing else.
+          </Text>
+          <View style={{ marginTop: 26, width: '100%' }}>
+            <Btn kind="soft" onPress={handleClose}>
+              back to today
+            </Btn>
+          </View>
+        </LinearGradient>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#000' }}>
       <LinearGradient
-        colors={gradientInfo.colors}
-        locations={gradientInfo.locations as readonly [number, number, ...number[]]}
+        colors={slide.bg}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={{
@@ -103,17 +212,6 @@ export default function WrappedScreen() {
           overflow: 'hidden',
         }}
       >
-        {/* Sheen overlay */}
-        <View
-          style={{
-            position: 'absolute',
-            inset: 0,
-            opacity: 0.35,
-          }}
-        >
-          <BlurView intensity={0} style={{ flex: 1 }} />
-        </View>
-
         {/* Progress bars */}
         <View
           style={{
@@ -126,7 +224,7 @@ export default function WrappedScreen() {
             zIndex: 20,
           }}
         >
-          {WRAP.map((_, k) => {
+          {slides.map((_, k) => {
             const isCurrent = k === slideIdx;
             const isPassed = k < slideIdx;
             const fillWidth = isCurrent
@@ -163,6 +261,7 @@ export default function WrappedScreen() {
         <Press
           onPress={handleClose}
           scale={false}
+          accessibilityLabel="Close wrapped"
           style={{
             position: 'absolute',
             top: 50,
@@ -181,6 +280,7 @@ export default function WrappedScreen() {
         <Press
           onPress={handlePrev}
           scale={false}
+          accessibilityLabel="Previous slide"
           style={{
             position: 'absolute',
             left: 0,
@@ -196,6 +296,7 @@ export default function WrappedScreen() {
         <Press
           onPress={handleNext}
           scale={false}
+          accessibilityLabel="Next slide"
           style={{
             position: 'absolute',
             right: 0,
@@ -239,7 +340,7 @@ export default function WrappedScreen() {
                 </View>
               </View>
 
-              <Kick c="rgba(255,255,255,0.85)">parallax · june</Kick>
+              <Kick c="rgba(255,255,255,0.85)">{`parallax · ${month}`}</Kick>
               <Serif
                 s={62}
                 c="#fff"
@@ -266,8 +367,8 @@ export default function WrappedScreen() {
             </View>
           )}
 
-          {/* STAT SLIDES (big numbers) */}
-          {slide.big && slide.kind !== 'type' && (
+          {/* STAT SLIDES (big real numbers) */}
+          {slide.kind === 'stat' && slide.big != null && (
             <View style={{ alignItems: 'center' }}>
               <Kick c="rgba(255,255,255,0.85)">{slide.kicker}</Kick>
               <Text
@@ -315,97 +416,6 @@ export default function WrappedScreen() {
             </View>
           )}
 
-          {/* COUPLE TYPE SLIDE */}
-          {slide.kind === 'type' && (
-            <View style={{ alignItems: 'center' }}>
-              <Kick c="rgba(255,255,255,0.85)">your couple type</Kick>
-              <Text
-                allowFontScaling={false}
-                style={{
-                  fontSize: 56,
-                  color: '#fff',
-                  lineHeight: 56,
-                  marginTop: 14,
-                  marginBottom: 14,
-                }}
-              >
-                {COUPLE_TYPE.emoji}
-              </Text>
-              <Serif
-                s={48}
-                c="#fff"
-                style={{
-                  lineHeight: 54,
-                  textAlign: 'center',
-                }}
-              >
-                {COUPLE_TYPE.name}
-              </Serif>
-              <Serif
-                s={21}
-                italic
-                c="rgba(255,255,255,0.95)"
-                style={{
-                  lineHeight: 27,
-                  marginTop: 14,
-                  textAlign: 'center',
-                  maxWidth: 280,
-                }}
-              >
-                {COUPLE_TYPE.line}
-              </Serif>
-              <Text
-                allowFontScaling={false}
-                style={{
-                  fontSize: 14.5,
-                  color: 'rgba(255,255,255,0.9)',
-                  lineHeight: 23,
-                  marginTop: 14,
-                  maxWidth: 300,
-                  textAlign: 'center',
-                  fontFamily: fontFamily.ui,
-                }}
-              >
-                {COUPLE_TYPE.body}
-              </Text>
-
-              {/* Trait pills */}
-              <View
-                style={{
-                  flexDirection: 'row',
-                  flexWrap: 'wrap',
-                  justifyContent: 'center',
-                  gap: 7,
-                  marginTop: 14,
-                }}
-              >
-                {COUPLE_TYPE.traits.map((trait: string, idx: number) => (
-                  <View
-                    key={`trait-${idx}`}
-                    style={{
-                      paddingVertical: 7,
-                      paddingHorizontal: 13,
-                      borderRadius: radius.pill,
-                      backgroundColor: 'rgba(255,255,255,0.22)',
-                    }}
-                  >
-                    <Text
-                      allowFontScaling={false}
-                      style={{
-                        color: '#fff',
-                        fontSize: 13,
-                        fontWeight: '600',
-                        fontFamily: fontFamily.ui,
-                      }}
-                    >
-                      {trait}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-          )}
-
           {/* SHARE SLIDE */}
           {slide.kind === 'share' && (
             <View style={{ width: '100%', alignItems: 'center' }}>
@@ -417,10 +427,10 @@ export default function WrappedScreen() {
                   textAlign: 'center',
                 }}
               >
-                Show the{'\n'}world your type.
+                Show the{'\n'}world your month.
               </Serif>
 
-              {/* Share preview card - frosted glass */}
+              {/* Share preview card - frosted glass, spoiler-free */}
               <BlurView
                 intensity={14}
                 tint="light"
@@ -436,33 +446,18 @@ export default function WrappedScreen() {
                   overflow: 'hidden',
                 }}
               >
-                <View
+                <Text
+                  allowFontScaling={false}
                   style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 9,
+                    fontFamily: fontFamily.mono,
+                    fontSize: 19,
+                    letterSpacing: 0.06 * 19,
+                    color: '#fff',
+                    lineHeight: 28,
                   }}
                 >
-                  <Text
-                    allowFontScaling={false}
-                    style={{
-                      fontSize: 26,
-                      color: '#fff',
-                    }}
-                  >
-                    {COUPLE_TYPE.emoji}
-                  </Text>
-                  <Serif
-                    s={28}
-                    c="#fff"
-                    style={{
-                      lineHeight: 31,
-                    }}
-                  >
-                    {COUPLE_TYPE.name}
-                  </Serif>
-                </View>
+                  {weeklyDots(history)}
+                </Text>
                 <Text
                   allowFontScaling={false}
                   style={{
@@ -474,7 +469,7 @@ export default function WrappedScreen() {
                     fontFamily: fontFamily.mono,
                   }}
                 >
-                  {`${me.name.toUpperCase()} & ${partner.name.toUpperCase()} · 83% IN SYNC`}
+                  {`${me.name.toUpperCase()} & ${partner.name.toUpperCase()} · ${stats.avgWave}% IN SYNC`}
                 </Text>
               </BlurView>
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -17,36 +17,55 @@ import { RadialGlow } from '../src/components/RadialGlow';
 import Tok from '../src/components/Tok';
 import { Icon, ICONS } from '../src/components/Icon';
 import { DawnBlobs } from '../src/components/DawnBlobs';
-import Toast from '../src/components/Toast';
 import { colors, gradients, radius, shadows, space } from '../src/design/tokens';
 import { fontFamily } from '../src/design/typography';
 import { MILES } from '../src/content/us';
+import { supabase } from '../src/lib/supabase';
+import type { StreakSurface } from '../src/types/db';
 import { useCouple } from '../src/features/pairing/useCouple';
 import { useIdentity } from '../src/features/profile/useIdentity';
 
 export default function StreakScreen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
-  const [frozen, setFrozen] = useState(false);
-  const [showToast, setShowToast] = useState('');
   const { couple } = useCouple();
   const { me, partner } = useIdentity();
+  const [surface, setSurface] = useState<StreakSurface | null>(null);
 
-  const streak = couple?.streak ?? 0;
-  const week = Array.from({ length: 7 }, (_, i) => i >= 7 - Math.min(streak, 7));
+  useEffect(() => {
+    if (!couple?.id) {
+      setSurface(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      // @ts-expect-error supabase-js RPC overload limitation with multiple function signatures
+      const { data, error } = await supabase.rpc('get_streak_surface', {
+        p_couple: couple.id,
+      });
+      // Quiet failure by design: the local fallback below stays up rather
+      // than an error state — same posture as getTodayState.
+      if (cancelled || error || !data) return;
+      setSurface(data as StreakSurface);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [couple?.id]);
+
+  const streak = surface?.streak ?? couple?.streak ?? 0;
+  // Server truth: get_streak_surface.week is the real last-7-days history,
+  // oldest first (index 6 = today). GATE: the unauthenticated demo (no couple)
+  // keeps the old synthetic fill from the streak count.
+  const week =
+    surface?.week ?? Array.from({ length: 7 }, (_, i) => i >= 7 - Math.min(streak, 7));
+  const longest = surface?.longest_streak ?? couple?.longest_streak ?? streak;
+  const freezes = surface?.freezes_remaining ?? couple?.freezes_remaining ?? 2;
   const next = MILES.find((m) => m > streak) || 365;
   const prevM = [0, ...MILES].reverse().find((m) => m <= streak) || 0;
   const prog = next === prevM ? 1 : Math.min(1, (streak - prevM) / (next - prevM));
 
   const handleBack = () => safeBack(router);
-
-  const handleFreezePress = () => {
-    if (!frozen) {
-      setFrozen(true);
-      setShowToast('Freeze armed 🧊 you\'re covered');
-      setTimeout(() => setShowToast(''), 2500);
-    }
-  };
 
   const handleMilestonePress = (days: number) => {
     const hit = streak >= days;
@@ -200,6 +219,7 @@ export default function StreakScreen() {
                 {day}
               </Text>
               <View
+                testID={`week-dot-${idx}-${week[idx] ? 'filled' : 'empty'}`}
                 style={{
                   width: 30,
                   height: 30,
@@ -394,7 +414,7 @@ export default function StreakScreen() {
                 color: colors.ink,
               }}
             >
-              Streak freeze · {frozen ? 1 : 2} left
+              Streak freeze · {freezes} equipped
             </Text>
             <Text
               style={{
@@ -405,37 +425,9 @@ export default function StreakScreen() {
                 marginTop: 2,
               }}
             >
-              Life happens. A freeze saves your streak for one missed day, for both of you.
+              Auto-used if you miss a day. Life happens — a freeze saves the streak for both of you.
             </Text>
           </View>
-
-          {/* Arm/Armed button */}
-          <Press
-            onPress={handleFreezePress}
-            scale={false}
-          >
-            <View
-              style={{
-                paddingHorizontal: 14,
-                paddingVertical: 9,
-                borderRadius: 999,
-                backgroundColor: frozen ? colors.sunken : colors.ink,
-              }}
-            >
-              <Text
-                style={{
-                  fontFamily: fontFamily.ui,
-                  fontSize: 13,
-                  lineHeight: 19.5,
-                  fontWeight: '700',
-                  color: frozen ? colors.inkMute : '#fff',
-                }}
-              >
-                {frozen ? 'Armed' : 'Arm'}
-              </Text>
-            </View>
-          </Press>
-
         </View>
 
         {/* Longest streak stat */}
@@ -449,12 +441,9 @@ export default function StreakScreen() {
             marginTop: 18,
           }}
         >
-          {`longest streak together · ${streak} days`}
+          {`longest streak together · ${longest} days`}
         </Text>
       </ScrollView>
-
-      {/* Toast notification */}
-      {showToast && <Toast msg={showToast} />}
     </View>
   );
 }

@@ -96,10 +96,6 @@ export default function ActivityScreen() {
       router.push('/play');
     } else if (item.cta === 'streak') {
       router.push('/streak');
-    } else if (item.cta === 'packs') {
-      router.push('/packs');
-    } else if (item.cta === 'lovemap') {
-      router.push('/lovemap');
     }
   };
 

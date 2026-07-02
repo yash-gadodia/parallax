@@ -68,16 +68,18 @@ export const LEARNINGS: Learning[] = [
 // The 4 mastery labels: how well you're reinforcing each learning
 export const MASTERY = ['just learned', 'getting it', 'second nature', 'you\'ve got this'] as const;
 
+// Only kinds the server actually produces (played/nudge/milestone) — the
+// pack/refocus/reveal samples were cut with their UI copy (no dead promises).
 export interface Activity {
   id: string;
-  kind: 'played' | 'nudge' | 'milestone' | 'pack' | 'refocus' | 'reveal';
+  kind: 'played' | 'nudge' | 'milestone';
   who: 'you' | 'dani' | 'us';
   emoji: string;
   title: string;
   body: string;
   when: string;
   unread: boolean;
-  cta: 'play' | 'streak' | 'packs' | 'lovemap' | null;
+  cta: 'play' | 'streak' | null;
 }
 
 // Activity pulse, the two-player back-and-forth (Duolingo red-dot trigger)
@@ -114,39 +116,6 @@ export const ACTIVITY: Activity[] = [
     when: 'today',
     unread: false,
     cta: 'streak',
-  },
-  {
-    id: 'a4',
-    kind: 'pack',
-    who: 'dani',
-    emoji: '🌊',
-    title: 'Dani sent you a pack',
-    body: 'Deep end · 3 of the real questions.',
-    when: 'yesterday',
-    unread: false,
-    cta: 'packs',
-  },
-  {
-    id: 'a5',
-    kind: 'refocus',
-    who: 'us',
-    emoji: '🤍',
-    title: 'You refocused "the Saturday silence"',
-    body: 'Added 2 things to your Love Map.',
-    when: '2 days ago',
-    unread: false,
-    cta: 'lovemap',
-  },
-  {
-    id: 'a6',
-    kind: 'reveal',
-    who: 'us',
-    emoji: '👯',
-    title: 'A twin moment on DROP 26',
-    body: 'You both said "bad texter." Iconic.',
-    when: '2 days ago',
-    unread: false,
-    cta: null,
   },
 ];
 

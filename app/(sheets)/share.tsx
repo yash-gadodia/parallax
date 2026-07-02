@@ -15,12 +15,22 @@ import { fontFamily } from '../../src/design/typography';
 import { usePlayStore, computeReveal } from '../../src/store/play';
 import { DROP } from '../../src/content/drop';
 import { useIdentity } from '../../src/features/profile/useIdentity';
+import { useSession } from '../../src/features/auth/useSession';
+import { useCouple } from '../../src/features/pairing/useCouple';
+import { useTodayState } from '../../src/features/drops/useTodayState';
+import { useCoupleHistory } from '../../src/features/lovemap/useCoupleHistory';
+import { weeklyDots } from '../../src/features/history/historyStats';
+import { buildLiveShareMessage } from '../../src/features/history/shareMessage';
 
 export default function ShareSheet() {
   const router = useRouter();
   const playState = usePlayStore();
-  const reveal = computeReveal(playState);
   const { me, partner } = useIdentity();
+  const { session } = useSession();
+  const { couple } = useCouple();
+  const isLive = !!session && !!couple;
+  const { today } = useTodayState(session && couple ? couple.id : null);
+  const { history } = useCoupleHistory();
   const footer = partner.hasPartner
     ? `${me.name} & ${partner.name} · ${DROP.code}`
     : DROP.code;
@@ -31,7 +41,29 @@ export default function ShareSheet() {
     safeBack(router);
   };
 
-  const shareMessage = `We're ${reveal.wave}% on the same wavelength 💞. Find yours on Parallax.`;
+  // Server-true wavelength when signed in: today's stored wave_pct (0014) when
+  // revealed, else the latest revealed day from couple_history. The local
+  // computeReveal score is DEMO-only (no session) — never shared as real.
+  const serverWave =
+    today?.state === 'revealed' && today.wave_pct != null
+      ? today.wave_pct
+      : isLive && history.length > 0
+        ? history[0].wavelength
+        : null;
+  const demoReveal = computeReveal(playState);
+  const wave = isLive ? serverWave : demoReveal.wave;
+  // Spoiler-free weekly pattern from real revealed days — never Q&A.
+  const dots = isLive ? weeklyDots(history) : '';
+  const streak = couple?.streak ?? 0;
+
+  const shareMessage = isLive
+    ? buildLiveShareMessage({
+        names: partner.hasPartner ? `${me.name} & ${partner.name}` : me.name,
+        wave,
+        streak,
+        dots,
+      })
+    : `We're ${demoReveal.wave}% on the same wavelength 💞. Find yours on Parallax.`;
 
   const handleShare = async (platform: 'Messages' | 'Instagram' | 'Copy') => {
     try {
@@ -50,13 +82,17 @@ export default function ShareSheet() {
     }
   };
 
-  const grid = DROP.prompts
-    .map((p, i) => {
-      const twin = playState.myPicks[i] === p.remy;
-      const ok = playState.myHunches[i] === p.remy;
-      return p.emoji + (twin ? '👯' : ok ? '💞' : '🤍');
-    })
-    .join('  ');
+  // The card's pattern row: real weekly dots when signed in; the demo
+  // emoji grid (static DROP vs local play state) only without a session.
+  const grid = isLive
+    ? dots
+    : DROP.prompts
+        .map((p, i) => {
+          const twin = playState.myPicks[i] === p.remy;
+          const ok = playState.myHunches[i] === p.remy;
+          return p.emoji + (twin ? '👯' : ok ? '💞' : '🤍');
+        })
+        .join('  ');
 
   return (
     <>
@@ -95,7 +131,7 @@ export default function ShareSheet() {
                   <Wordmark size={20} light />
                 </View>
                 <Serif s={56} c="#fff" style={{ marginBottom: 2, lineHeight: 56 * 0.96 }}>
-                  {reveal.wave}%
+                  {`${wave ?? '—'}%`}
                 </Serif>
                 <Text
                   allowFontScaling={false}
@@ -110,20 +146,22 @@ export default function ShareSheet() {
                 >
                   on the same wavelength
                 </Text>
-                <Text
-                  allowFontScaling={false}
-                  style={{
-                    fontFamily: fontFamily.mono,
-                    fontSize: 19,
-                    letterSpacing: 0.06 * 19,
-                    marginBottom: 14,
-                    marginTop: 16,
-                    color: '#fff',
-                    lineHeight: 28,
-                  }}
-                >
-                  {grid}
-                </Text>
+                {grid !== '' && (
+                  <Text
+                    allowFontScaling={false}
+                    style={{
+                      fontFamily: fontFamily.mono,
+                      fontSize: 19,
+                      letterSpacing: 0.06 * 19,
+                      marginBottom: 14,
+                      marginTop: 16,
+                      color: '#fff',
+                      lineHeight: 28,
+                    }}
+                  >
+                    {grid}
+                  </Text>
+                )}
                 <Text
                   allowFontScaling={false}
                   style={{

@@ -63,65 +63,31 @@ describe('activityFormatter', () => {
       expect(result.who).toBe('us');
     });
 
-    it('maps "pack" kind to correct emoji/title/cta', () => {
-      const activity: Activity = {
-        id: 'activity-4',
-        couple_id: 'couple-1',
-        kind: 'pack',
-        actor: 'dani-id',
-        payload: null,
-        read_by: [],
-        created_at: '2026-06-22T10:00:00Z',
-      };
+    // 'pack' / 'refocus' / 'reveal' have no server-side producer, so their
+    // bespoke copy was removed (no dead promises). If such a row ever appears
+    // they render via the generic fallback, never invented copy.
+    it.each(['pack', 'refocus', 'reveal'])(
+      'maps producer-less "%s" kind to the generic fallback',
+      (kind) => {
+        const activity: Activity = {
+          id: `activity-${kind}`,
+          couple_id: 'couple-1',
+          kind,
+          actor: null,
+          payload: null,
+          read_by: [],
+          created_at: '2026-06-22T10:00:00Z',
+        };
 
-      const result = mapActivityToDisplay(activity);
+        const result = mapActivityToDisplay(activity);
 
-      expect(result.emoji).toBe('🌊');
-      expect(result.title).toBe('Partner sent you a pack');
-      expect(result.body).toBe('See what they picked for you.');
-      expect(result.cta).toBe('packs');
-      expect(result.who).toBe('dani');
-    });
-
-    it('maps "refocus" kind to correct emoji/title/cta', () => {
-      const activity: Activity = {
-        id: 'activity-5',
-        couple_id: 'couple-1',
-        kind: 'refocus',
-        actor: null,
-        payload: null,
-        read_by: [],
-        created_at: '2026-06-22T10:00:00Z',
-      };
-
-      const result = mapActivityToDisplay(activity);
-
-      expect(result.emoji).toBe('🤍');
-      expect(result.title).toBe('You refocused a moment');
-      expect(result.body).toBe('Added to your Love Map.');
-      expect(result.cta).toBe('lovemap');
-      expect(result.who).toBe('us');
-    });
-
-    it('maps "reveal" kind to correct emoji/title/cta', () => {
-      const activity: Activity = {
-        id: 'activity-6',
-        couple_id: 'couple-1',
-        kind: 'reveal',
-        actor: null,
-        payload: null,
-        read_by: [],
-        created_at: '2026-06-22T10:00:00Z',
-      };
-
-      const result = mapActivityToDisplay(activity);
-
-      expect(result.emoji).toBe('👯');
-      expect(result.title).toBe('A twin moment');
-      expect(result.body).toBe('You matched on an answer.');
-      expect(result.cta).toBeNull();
-      expect(result.who).toBe('us');
-    });
+        expect(result.emoji).toBe('📌');
+        expect(result.title).toBe(kind);
+        expect(result.body).toBe('');
+        expect(result.cta).toBeNull();
+        expect(result.who).toBe('us');
+      }
+    );
 
     it('maps unknown kind to generic emoji and kind as title', () => {
       const activity: Activity = {

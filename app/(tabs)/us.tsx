@@ -19,12 +19,16 @@ import { fontFamily } from '../../src/design/typography';
 import { ARCHIVE } from '../../src/content/drop';
 import { useLearnings } from '../../src/features/lovemap/useLearnings';
 import { useCoupleHistory } from '../../src/features/lovemap/useCoupleHistory';
+import { useDropEmojis } from '../../src/features/history/useDropEmojis';
 import { useProfile } from '../../src/features/profile/useProfile';
 
 export default function UsScreen() {
   const router = useRouter();
   const { items: learningItems, isSample: learningsSample } = useLearnings();
   const { history, isSample: historySample } = useCoupleHistory();
+  // Real drops carry their emoji in the DB (first prompt); the static ARCHIVE
+  // only covers the demo codes, so it stays as the demo fallback below.
+  const dropEmojis = useDropEmojis(history.map((h) => h.code));
   const { name, partnerName, streak, togetherSince } = useProfile();
 
   const currentWave = history.length > 0 ? `${history[0].wavelength}` : null;
@@ -458,7 +462,12 @@ export default function UsScreen() {
           {/* History list */}
           <View style={{ flexDirection: 'column', gap: 10 }}>
             {history.map((h) => {
-              const archiveEntry = ARCHIVE.find(a => a.code === h.code);
+              // Real emoji from the drops data first; ARCHIVE covers the demo
+              // sample; 💬 is the honest unknown.
+              const emoji =
+                dropEmojis[h.code] ??
+                ARCHIVE.find((a) => a.code === h.code)?.emoji ??
+                '💬';
               return (
                 <Press key={h.code} onPress={() => handleDropPress(h.code)}>
                   <Card
@@ -482,7 +491,7 @@ export default function UsScreen() {
                         justifyContent: 'center',
                       }}
                     >
-                      <Text style={{ fontSize: 22 }}>{archiveEntry?.emoji || '💬'}</Text>
+                      <Text style={{ fontSize: 22 }}>{emoji}</Text>
                     </View>
 
                     {/* Title + code/day */}

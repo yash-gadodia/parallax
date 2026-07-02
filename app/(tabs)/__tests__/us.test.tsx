@@ -14,6 +14,10 @@ jest.mock('../../../src/features/lovemap/useCoupleHistory', () => ({
   useCoupleHistory: jest.fn(),
 }));
 
+jest.mock('../../../src/features/history/useDropEmojis', () => ({
+  useDropEmojis: jest.fn(() => ({})),
+}));
+
 jest.mock('../../../src/features/profile/useProfile', () => ({
   useProfile: jest.fn(() => ({
     name: 'Alex',
@@ -28,6 +32,8 @@ jest.mock('../../../src/features/profile/useProfile', () => ({
 }));
 
 const mockUseCoupleHistory = useCoupleHistory as jest.Mock;
+const { useDropEmojis } = require('../../../src/features/history/useDropEmojis');
+const mockUseDropEmojis = useDropEmojis as jest.Mock;
 
 // Real history so the wavelength chart + stat trio render (empty history
 // shows the first-run state instead). history[0] is the latest drop.
@@ -40,6 +46,7 @@ const THREE_DROPS = [
 describe('UsScreen', () => {
   beforeEach(() => {
     mockUseCoupleHistory.mockReturnValue({ history: THREE_DROPS, isSample: false });
+    mockUseDropEmojis.mockReturnValue({});
   });
 
   it('renders real couple name from useProfile', async () => {
@@ -99,6 +106,46 @@ describe('UsScreen', () => {
     const { getByText, queryByText } = await render(<UsScreen />);
     expect(getByText('LAST 7 DROPS')).toBeTruthy();
     expect(queryByText(/^[▲▼]/)).toBeNull();
+  });
+
+  it('renders the real drop emoji, title, code and wave for a real history row', async () => {
+    mockUseCoupleHistory.mockReturnValue({
+      history: [
+        { date: '2026-07-01', code: 'W12', title: 'the hot seat', wavelength: 64, twins_count: 1 },
+      ],
+      isSample: false,
+    });
+    mockUseDropEmojis.mockReturnValue({ W12: '🧨' });
+
+    const { getByText, getAllByText } = await render(<UsScreen />);
+
+    expect(getByText('🧨')).toBeTruthy();
+    expect(getByText('the hot seat')).toBeTruthy();
+    expect(getByText('W12 · 2026-07-01')).toBeTruthy();
+    // Wavelength headline + history row, each doubled by GradientText's
+    // masked + invisible-sizer copies.
+    expect(getAllByText('64%')).toHaveLength(4);
+  });
+
+  it('falls back to 💬 for a real drop with no known emoji (never the demo ARCHIVE art)', async () => {
+    mockUseCoupleHistory.mockReturnValue({
+      history: [
+        { date: '2026-07-01', code: 'W99', title: 'unknown drop', wavelength: 50, twins_count: 0 },
+      ],
+      isSample: false,
+    });
+
+    const { getByText, queryByText } = await render(<UsScreen />);
+
+    expect(getByText('💬')).toBeTruthy();
+    expect(queryByText('😬')).toBeNull();
+  });
+
+  it('still shows the demo ARCHIVE emoji for the sample history', async () => {
+    const { getByText } = await render(<UsScreen />);
+
+    // 'DROP 26' (the ick list) carries 😬 in the static ARCHIVE.
+    expect(getByText('😬')).toBeTruthy();
   });
 
   it('hides the trend delta when the two latest drops tie', async () => {

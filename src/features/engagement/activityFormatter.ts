@@ -10,15 +10,19 @@ export interface DisplayActivity {
   when: string;
   created_at?: string;
   unread: boolean;
-  cta: 'play' | 'streak' | 'packs' | 'lovemap' | null;
+  cta: 'play' | 'streak' | null;
   read_by: string[];
 }
 
+// Only kinds with a real server-side producer get copy (audit item (c)12/15 —
+// no dead promises): 'played' + 'milestone' from _increment_streak (0014/0017),
+// 'nudge' from nudge_partner. 'pack'/'refocus'/'reveal' were removed until
+// something actually emits them; unknown kinds fall through to the generic map.
 const ACTIVITY_KINDS: Record<string, {
   emoji: string;
   title: (actor?: string | null) => string;
   body: (payload?: Record<string, unknown> | null) => string;
-  cta: 'play' | 'streak' | 'packs' | 'lovemap' | null;
+  cta: 'play' | 'streak' | null;
   who: 'you' | 'dani' | 'us';
 }> = {
   played: {
@@ -37,30 +41,9 @@ const ACTIVITY_KINDS: Record<string, {
   },
   milestone: {
     emoji: '🔥',
-    title: (actor) => 'You hit a milestone',
+    title: () => 'You hit a milestone',
     body: () => 'Keep the streak alive.',
     cta: 'streak',
-    who: 'us',
-  },
-  pack: {
-    emoji: '🌊',
-    title: () => 'Partner sent you a pack',
-    body: () => 'See what they picked for you.',
-    cta: 'packs',
-    who: 'dani',
-  },
-  refocus: {
-    emoji: '🤍',
-    title: () => 'You refocused a moment',
-    body: () => 'Added to your Love Map.',
-    cta: 'lovemap',
-    who: 'us',
-  },
-  reveal: {
-    emoji: '👯',
-    title: () => 'A twin moment',
-    body: () => 'You matched on an answer.',
-    cta: null,
     who: 'us',
   },
 };

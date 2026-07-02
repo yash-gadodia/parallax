@@ -66,6 +66,16 @@ export interface TodayState {
   held?: boolean;
 }
 
+// get_streak_surface (0017): the honest streak screen in one round-trip.
+// week = last 7 couple-local days, OLDEST FIRST (week[6] is today); true when
+// that day's couple_drop reached state 'revealed'.
+export interface StreakSurface {
+  streak: number;
+  longest_streak: number;
+  freezes_remaining: number;
+  week: boolean[];
+}
+
 export interface Answer {
   id: string;
   couple_drop_id: string;
@@ -181,6 +191,10 @@ export interface Database {
         Returns: void;
       };
       get_today_state: {
+        Args: { p_couple: string };
+        Returns: Json;
+      };
+      get_streak_surface: {
         Args: { p_couple: string };
         Returns: Json;
       };
