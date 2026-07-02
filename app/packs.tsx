@@ -29,7 +29,11 @@ export default function PacksScreen() {
     router.push(`/packDetail?id=${packId}`);
   };
 
-  const handleOpenPlus = () => {
+  const handleTryPlus = () => {
+    router.push('/checkout');
+  };
+
+  const handleManagePlus = () => {
     router.push('/manageSub');
   };
 
@@ -176,11 +180,7 @@ export default function PacksScreen() {
                 >
                   {`Every pack, unlimited drops, full history, shared with ${partner.name}. Manage anytime in settings.`}
                 </Text>
-                <Btn
-                  kind="soft"
-                  onPress={handleOpenPlus}
-                  sub="annual · free trial"
-                >
+                <Btn kind="soft" onPress={handleManagePlus}>
                   Manage Plus
                 </Btn>
               </>
@@ -206,7 +206,7 @@ export default function PacksScreen() {
                 </Text>
                 <Btn
                   kind="us"
-                  onPress={handleOpenPlus}
+                  onPress={handleTryPlus}
                   sub="7 days free"
                 >
                   Try Plus

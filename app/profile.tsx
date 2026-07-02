@@ -22,6 +22,7 @@ import { Mark } from '../src/components/Mark';
 import { colors, gradients, radius, shadows, space } from '../src/design/tokens';
 import { fontFamily } from '../src/design/typography';
 import { useCouple } from '../src/features/pairing/useCouple';
+import { useTodayState } from '../src/features/drops/useTodayState';
 import { unpairCouple } from '../src/features/pairing/pairingActions';
 import { nudge } from '../src/features/engagement/engagementActions';
 import { usePurchases } from '../src/features/purchases/usePurchases';
@@ -130,9 +131,13 @@ export default function ProfileScreen() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const { couple } = useCouple();
+  const { today } = useTodayState(couple?.id ?? null);
   const isPro = usePurchases((s) => s.isPro);
   const { name, partnerName, spiceLevel, notifyTime } = useProfile();
   const plus = isPro;
+  // Nudge only makes sense when I've played and my partner genuinely hasn't.
+  const showNudge =
+    !!today?.i_answered && !today.partner_answered && today.state !== 'revealed';
 
   // Format HH:MM (24h) to a display string like "8:00 PM"
   function formatNotifyTime(t: string | null): string {
@@ -320,47 +325,49 @@ export default function ProfileScreen() {
           </View>
         </Press>
 
-        {/* Nudge Banner */}
-        <LinearGradient
-          colors={gradients.usSoft.colors}
-          locations={gradients.usSoft.locations}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={{
-            borderRadius: 22,
-            paddingHorizontal: 16,
-            paddingVertical: 16,
-            marginBottom: 14,
-            borderWidth: 1,
-            borderColor: 'rgba(157,149,245,0.25)',
-            overflow: 'hidden',
-            ...shadows.shadowSoft,
-          }}
-        >
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <Text style={{ fontSize: 24 }}>👋</Text>
-            <View style={{ flex: 1 }}>
-              <Text
-                style={{
-                  fontSize: 14.5,
-                  fontWeight: '700',
-                  color: colors.ink,
-                  fontFamily: fontFamily.ui,
-                }}
-              >
-                {`Give ${partnerName} a nudge`}
-              </Text>
-              <Kick c={colors.p2Deep} style={{ marginTop: 2 }}>
-                they haven't opened today's reveal
-              </Kick>
+        {/* Nudge Banner — only when I've played and my partner hasn't yet */}
+        {showNudge && (
+          <LinearGradient
+            colors={gradients.usSoft.colors}
+            locations={gradients.usSoft.locations}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={{
+              borderRadius: 22,
+              paddingHorizontal: 16,
+              paddingVertical: 16,
+              marginBottom: 14,
+              borderWidth: 1,
+              borderColor: 'rgba(157,149,245,0.25)',
+              overflow: 'hidden',
+              ...shadows.shadowSoft,
+            }}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <Text style={{ fontSize: 24 }}>👋</Text>
+              <View style={{ flex: 1 }}>
+                <Text
+                  style={{
+                    fontSize: 14.5,
+                    fontWeight: '700',
+                    color: colors.ink,
+                    fontFamily: fontFamily.ui,
+                  }}
+                >
+                  {`Give ${partnerName} a nudge`}
+                </Text>
+                <Kick c={colors.p2Deep} style={{ marginTop: 2 }}>
+                  they haven't played today's drop
+                </Kick>
+              </View>
             </View>
-          </View>
-          <View style={{ marginTop: 12 }}>
-            <Btn kind="us" onPress={handleNudge} style={{ minHeight: 48 }}>
-              <Text style={{ fontSize: 14.5, color: '#fff', fontFamily: fontFamily.ui }}>Send a nudge</Text>
-            </Btn>
-          </View>
-        </LinearGradient>
+            <View style={{ marginTop: 12 }}>
+              <Btn kind="us" onPress={handleNudge} style={{ minHeight: 48 }}>
+                <Text style={{ fontSize: 14.5, color: '#fff', fontFamily: fontFamily.ui }}>Send a nudge</Text>
+              </Btn>
+            </View>
+          </LinearGradient>
+        )}
 
         {/* Plus Banner (conditional) */}
         {plus && (

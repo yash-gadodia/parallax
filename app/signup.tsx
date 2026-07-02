@@ -26,6 +26,8 @@ import {
   signUpWithEmail,
   signInWithApple,
   signInWithGoogle,
+  resendConfirmationEmail,
+  isValidEmail,
 } from '../src/features/auth/authActions';
 import { track, EVENTS } from '../src/lib/analytics';
 
@@ -65,18 +67,26 @@ export default function SignupScreen() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [resendWait, setResendWait] = useState(0);
 
   useEffect(() => {
     track(EVENTS.SIGNUP_STARTED);
   }, []);
+
+  useEffect(() => {
+    if (resendWait <= 0) return;
+    const t = setTimeout(() => setResendWait((s) => s - 1), 1000);
+    return () => clearTimeout(t);
+  }, [resendWait]);
 
   const handleSignUp = async () => {
     if (!name.trim()) {
       fireToast('What should we call you?');
       return;
     }
-    if (!email.trim()) {
-      fireToast('Please enter your email');
+    if (!isValidEmail(email)) {
+      setEmailError('Enter a valid email address');
       return;
     }
     if (password.length < 6) {
@@ -94,6 +104,16 @@ export default function SignupScreen() {
       fireToast(msg);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    setResendWait(30);
+    try {
+      await resendConfirmationEmail(email.trim());
+      fireToast('Confirmation email re-sent');
+    } catch (err) {
+      fireToast(err instanceof Error ? err.message : 'Could not resend the email');
     }
   };
 
@@ -160,6 +180,23 @@ export default function SignupScreen() {
                 <Text style={{ fontWeight: '700', color: colors.ink }}>{email.trim()}</Text>. Tap it
                 to finish setting up and meet your person.
               </Text>
+              <Press scale={false} onPress={handleResend} disabled={resendWait > 0}>
+                <Text
+                  allowFontScaling={false}
+                  style={{
+                    textAlign: 'center',
+                    padding: 16,
+                    marginTop: 12,
+                    fontSize: 14,
+                    fontWeight: '700',
+                    color: resendWait > 0 ? colors.inkMute : colors.p2Deep,
+                    fontFamily: fontFamily.ui,
+                    lineHeight: 20,
+                  }}
+                >
+                  {resendWait > 0 ? `Resend in ${resendWait}s` : "Didn't get it? Resend email"}
+                </Text>
+              </Press>
               <Press scale={false} onPress={() => router.replace('/login')}>
                 <Text
                   allowFontScaling={false}
@@ -214,7 +251,10 @@ export default function SignupScreen() {
                 <View style={fieldWrap}>
                   <TextInput
                     value={email}
-                    onChangeText={setEmail}
+                    onChangeText={(v) => {
+                      setEmail(v);
+                      setEmailError(null);
+                    }}
                     placeholder="you@example.com"
                     placeholderTextColor={colors.inkMute}
                     keyboardType="email-address"
@@ -224,6 +264,20 @@ export default function SignupScreen() {
                     style={inputStyle}
                   />
                 </View>
+                {emailError && (
+                  <Text
+                    allowFontScaling={false}
+                    style={{
+                      marginTop: 6,
+                      fontSize: 12.5,
+                      lineHeight: 17,
+                      color: colors.p1Deep,
+                      fontFamily: fontFamily.ui,
+                    }}
+                  >
+                    {emailError}
+                  </Text>
+                )}
               </View>
 
               <View style={{ marginBottom: 28 }}>

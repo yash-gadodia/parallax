@@ -20,7 +20,13 @@ import TopBar from '../src/components/TopBar';
 import { DawnBlobs } from '../src/components/DawnBlobs';
 import Toast from '../src/components/Toast';
 import { useUiStore } from '../src/store/ui';
-import { signInWithEmail, signInWithApple, signInWithGoogle } from '../src/features/auth/authActions';
+import {
+  signInWithEmail,
+  signInWithApple,
+  signInWithGoogle,
+  requestPasswordReset,
+  isValidEmail,
+} from '../src/features/auth/authActions';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -30,9 +36,32 @@ export default function LoginScreen() {
   const [email, setEmail] = useState(__DEV__ ? 'test@parallax.app' : '');
   const [password, setPassword] = useState(__DEV__ ? 'parallax123' : '');
   const [loading, setLoading] = useState(false);
+  const [mode, setMode] = useState<'login' | 'forgot' | 'resetSent'>('login');
+  const [emailError, setEmailError] = useState<string | null>(null);
 
   const handleBack = () => {
+    if (mode !== 'login') {
+      setMode('login');
+      setEmailError(null);
+      return;
+    }
     router.replace('/(onboarding)');
+  };
+
+  const handleSendReset = async () => {
+    if (!isValidEmail(email)) {
+      setEmailError('Enter a valid email address');
+      return;
+    }
+    setLoading(true);
+    try {
+      await requestPasswordReset(email.trim());
+      setMode('resetSent');
+    } catch (err) {
+      fireToast(err instanceof Error ? err.message : 'Could not send the reset link');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleLogIn = async () => {
@@ -109,6 +138,149 @@ export default function LoginScreen() {
             <Wordmark size={48} />
           </View>
 
+          {mode === 'forgot' ? (
+            <>
+              <Kick style={{ marginBottom: 8 }}>reset password</Kick>
+              <Serif s={34} style={{ marginBottom: 12 }}>
+                Forgot your password?
+              </Serif>
+              <Text
+                allowFontScaling={false}
+                style={{
+                  fontSize: 15,
+                  color: colors.inkSoft,
+                  lineHeight: 23,
+                  marginBottom: 24,
+                  fontFamily: fontFamily.ui,
+                }}
+              >
+                Enter your email and we'll send you a link to set a new one.
+              </Text>
+
+              <View style={{ marginBottom: 24 }}>
+                <Text
+                  allowFontScaling={false}
+                  style={{
+                    fontFamily: fontFamily.mono,
+                    fontSize: 10,
+                    letterSpacing: 1.2,
+                    textTransform: 'uppercase',
+                    color: colors.inkMute,
+                    marginBottom: 8,
+                    lineHeight: 10,
+                  }}
+                >
+                  Email
+                </Text>
+                <View
+                  style={{
+                    paddingVertical: 14,
+                    paddingHorizontal: 15,
+                    borderRadius: radius.input,
+                    backgroundColor: colors.surface,
+                    borderWidth: 1,
+                    borderColor: colors.line,
+                    ...shadows.shadowSoft,
+                  }}
+                >
+                  <TextInput
+                    value={email}
+                    onChangeText={(v) => {
+                      setEmail(v);
+                      setEmailError(null);
+                    }}
+                    placeholder="you@example.com"
+                    placeholderTextColor={colors.inkMute}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    editable={!loading}
+                    allowFontScaling={false}
+                    style={{
+                      fontSize: 15.5,
+                      fontWeight: '600',
+                      fontFamily: fontFamily.ui,
+                      color: colors.ink,
+                      lineHeight: 24,
+                    }}
+                  />
+                </View>
+                {emailError && (
+                  <Text
+                    allowFontScaling={false}
+                    style={{
+                      marginTop: 6,
+                      fontSize: 12.5,
+                      lineHeight: 17,
+                      color: colors.p1Deep,
+                      fontFamily: fontFamily.ui,
+                    }}
+                  >
+                    {emailError}
+                  </Text>
+                )}
+              </View>
+
+              <Btn kind="us" onPress={handleSendReset} disabled={loading}>
+                {loading ? <ActivityIndicator color="#fff" size="small" /> : 'Send reset link'}
+              </Btn>
+
+              <Press scale={false} onPress={() => setMode('login')}>
+                <Text
+                  allowFontScaling={false}
+                  style={{
+                    textAlign: 'center',
+                    padding: 14,
+                    marginTop: 8,
+                    fontSize: 14,
+                    fontWeight: '600',
+                    color: colors.inkMute,
+                    fontFamily: fontFamily.ui,
+                    lineHeight: 20,
+                  }}
+                >
+                  Back to log in
+                </Text>
+              </Press>
+            </>
+          ) : mode === 'resetSent' ? (
+            <>
+              <Kick style={{ marginBottom: 8 }}>reset password</Kick>
+              <Serif s={34} style={{ marginBottom: 12 }}>
+                Check your inbox
+              </Serif>
+              <Text
+                allowFontScaling={false}
+                style={{
+                  fontSize: 15,
+                  color: colors.inkSoft,
+                  lineHeight: 23,
+                  marginBottom: 24,
+                  fontFamily: fontFamily.ui,
+                }}
+              >
+                We sent a password reset link to{' '}
+                <Text style={{ fontWeight: '700', color: colors.ink }}>{email.trim()}</Text>. Tap
+                it to set a new password.
+              </Text>
+              <Press scale={false} onPress={() => setMode('login')}>
+                <Text
+                  allowFontScaling={false}
+                  style={{
+                    textAlign: 'center',
+                    padding: 14,
+                    fontSize: 14,
+                    fontWeight: '600',
+                    color: colors.inkMute,
+                    fontFamily: fontFamily.ui,
+                    lineHeight: 20,
+                  }}
+                >
+                  Back to log in
+                </Text>
+              </Press>
+            </>
+          ) : (
+            <>
           {/* Heading */}
           <Kick style={{ marginBottom: 8 }}>welcome back</Kick>
           <Serif s={34} style={{ marginBottom: 28 }}>
@@ -163,7 +335,7 @@ export default function LoginScreen() {
           </View>
 
           {/* Password Input */}
-          <View style={{ marginBottom: 32 }}>
+          <View style={{ marginBottom: 12 }}>
             <Text
               allowFontScaling={false}
               style={{
@@ -207,6 +379,30 @@ export default function LoginScreen() {
               />
             </View>
           </View>
+
+          {/* Forgot password */}
+          <Press
+            scale={false}
+            onPress={() => {
+              setEmailError(null);
+              setMode('forgot');
+            }}
+            style={{ alignSelf: 'flex-end', marginBottom: 20 }}
+          >
+            <Text
+              allowFontScaling={false}
+              style={{
+                padding: 4,
+                fontSize: 13.5,
+                fontWeight: '600',
+                color: colors.p2Deep,
+                fontFamily: fontFamily.ui,
+                lineHeight: 19,
+              }}
+            >
+              Forgot password?
+            </Text>
+          </Press>
 
           {/* Log In Button */}
           <Btn
@@ -319,6 +515,8 @@ export default function LoginScreen() {
               New here? Create an account
             </Text>
           </Press>
+            </>
+          )}
         </ScrollView>
       </SafeAreaView>
 

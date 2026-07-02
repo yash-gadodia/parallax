@@ -41,11 +41,17 @@ export default function TodayScreen() {
   const playState = usePlayStore();
   const { session } = useSession();
   const { couple } = useCouple();
-  const { today } = useTodayState(session && couple ? couple.id : null);
+  const { today, content } = useTodayState(session && couple ? couple.id : null);
   const { items: dbActivity, unreadCount } = useActivity(couple?.id || null);
   const { spiceLevel } = useProfile();
   const { me, partner } = useIdentity();
-  const activeDrop = selectDropForSpice(DROP, normaliseSpiceLevel(spiceLevel) as SpiceLevel);
+  const staticDrop = selectDropForSpice(DROP, normaliseSpiceLevel(spiceLevel) as SpiceLevel);
+  // Live couples see the drop the server actually assigned (rotation-aware);
+  // the unauthenticated demo keeps the static content.
+  const activeDrop =
+    session && couple && content
+      ? { ...staticDrop, code: content.code ?? staticDrop.code, title: content.title ?? staticDrop.title, prompts: content.prompts }
+      : staticDrop;
 
   // Live sessions trust the server (relaunch-safe); the unauthenticated demo
   // falls back to the in-memory play store as before.

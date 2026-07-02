@@ -8,6 +8,10 @@ import {
   signInWithApple,
   signInWithGoogle,
   verifyEmailOtp,
+  resendConfirmationEmail,
+  requestPasswordReset,
+  updatePassword,
+  isValidEmail,
 } from './authActions';
 import { useSession } from './useSession';
 
@@ -24,6 +28,9 @@ jest.mock('../../lib/supabase', () => ({
       verifyOtp: jest.fn(),
       setSession: jest.fn(),
       onAuthStateChange: jest.fn(),
+      resend: jest.fn(),
+      resetPasswordForEmail: jest.fn(),
+      updateUser: jest.fn(),
     },
   },
 }));
@@ -119,6 +126,112 @@ describe('Auth Actions', () => {
       await expect(verifyEmailOtp('stale')).rejects.toThrow(
         'Token has expired or is invalid'
       );
+    });
+  });
+
+  describe('verifyEmailOtp (recovery)', () => {
+    it('verifies a recovery token_hash as a recovery OTP', async () => {
+      mockSupabase.auth.verifyOtp.mockResolvedValue({ error: null } as any);
+
+      await verifyEmailOtp('recoveryhash', 'recovery');
+
+      expect(mockSupabase.auth.verifyOtp).toHaveBeenCalledWith({
+        token_hash: 'recoveryhash',
+        type: 'recovery',
+      });
+    });
+  });
+
+  describe('resendConfirmationEmail', () => {
+    it('calls resend with the signup type, email, and the auth-callback redirect', async () => {
+      mockSupabase.auth.resend.mockResolvedValue({ error: null } as any);
+
+      await resendConfirmationEmail('yash@example.com');
+
+      expect(mockSupabase.auth.resend).toHaveBeenCalledWith({
+        type: 'signup',
+        email: 'yash@example.com',
+        options: { emailRedirectTo: 'parallax://auth-callback' },
+      });
+    });
+
+    it('throws when resend fails', async () => {
+      mockSupabase.auth.resend.mockResolvedValue({
+        error: new Error('rate limited'),
+      } as any);
+
+      await expect(resendConfirmationEmail('yash@example.com')).rejects.toThrow(
+        'rate limited'
+      );
+    });
+  });
+
+  describe('requestPasswordReset', () => {
+    it('calls resetPasswordForEmail with the email and the auth-callback redirect', async () => {
+      mockSupabase.auth.resetPasswordForEmail.mockResolvedValue({ error: null } as any);
+
+      await requestPasswordReset('yash@example.com');
+
+      expect(mockSupabase.auth.resetPasswordForEmail).toHaveBeenCalledWith(
+        'yash@example.com',
+        { redirectTo: 'parallax://auth-callback' }
+      );
+    });
+
+    it('throws when the reset request fails', async () => {
+      mockSupabase.auth.resetPasswordForEmail.mockResolvedValue({
+        error: new Error('user not found'),
+      } as any);
+
+      await expect(requestPasswordReset('nobody@example.com')).rejects.toThrow(
+        'user not found'
+      );
+    });
+  });
+
+  describe('updatePassword', () => {
+    it('calls updateUser with the new password', async () => {
+      mockSupabase.auth.updateUser.mockResolvedValue({ error: null } as any);
+
+      await updatePassword('newpass123');
+
+      expect(mockSupabase.auth.updateUser).toHaveBeenCalledWith({
+        password: 'newpass123',
+      });
+    });
+
+    it('throws when updateUser fails', async () => {
+      mockSupabase.auth.updateUser.mockResolvedValue({
+        error: new Error('session missing'),
+      } as any);
+
+      await expect(updatePassword('newpass123')).rejects.toThrow('session missing');
+    });
+  });
+
+  describe('isValidEmail', () => {
+    it('accepts a standard address', () => {
+      expect(isValidEmail('yash@example.com')).toBe(true);
+    });
+
+    it('accepts an address with surrounding whitespace', () => {
+      expect(isValidEmail('  yash@example.com  ')).toBe(true);
+    });
+
+    it('rejects an empty string', () => {
+      expect(isValidEmail('')).toBe(false);
+    });
+
+    it('rejects an address without an @', () => {
+      expect(isValidEmail('yash.example.com')).toBe(false);
+    });
+
+    it('rejects an address without a domain dot', () => {
+      expect(isValidEmail('yash@example')).toBe(false);
+    });
+
+    it('rejects an address with spaces inside', () => {
+      expect(isValidEmail('ya sh@example.com')).toBe(false);
     });
   });
 

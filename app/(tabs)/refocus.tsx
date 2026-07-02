@@ -4,11 +4,11 @@ import {
   ScrollView,
   Text,
   TextInput,
-  useWindowDimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { SafeAreaView, useSafeAreaInsets  } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import * as Clipboard from 'expo-clipboard';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -36,10 +36,6 @@ import {
 } from '../../src/design/tokens';
 import { fontFamily } from '../../src/design/typography';
 import {
-  EXEMPLAR,
-  DANI_SIDE,
-  VOICE_TRANSCRIPT,
-  SAMPLE_LOG,
   PROMISES,
   MODES,
   RefocusResult,
@@ -56,7 +52,7 @@ import { useIdentity } from '../../src/features/profile/useIdentity';
 // Identity definitions
 const YOU = { name: 'you', initial: 'Y' };
 
-type Step = 'intro' | 'mode' | 'share' | 'waiting' | 'result';
+type Step = 'intro' | 'mode' | 'share' | 'waiting' | 'error' | 'result';
 
 export default function RefocusScreen() {
   const router = useRouter();
@@ -81,6 +77,8 @@ export default function RefocusScreen() {
       setStep('mode');
     } else if (step === 'waiting') {
       // Cancel the analysis and return to the compose step (keeps their input).
+      setStep('share');
+    } else if (step === 'error') {
       setStep('share');
     } else if (step === 'result') {
       exitToTabs();
@@ -121,7 +119,7 @@ export default function RefocusScreen() {
           insets={insets}
           onSelectMode={(m) => {
             setMode(m);
-            setText(m === 'paste' ? SAMPLE_LOG : m === 'voice' ? '' : '');
+            setText('');
             setStep('share');
           }}
           onBack={() => setStep('intro')}
@@ -141,21 +139,28 @@ export default function RefocusScreen() {
 
       {step === 'waiting' && (
         <WaitingStep
-          userText={text || VOICE_TRANSCRIPT}
-          daniText={DANI_SIDE}
+          userText={text}
           onCancel={handleBack}
           onDone={(res) => {
             track(EVENTS.REFOCUS_COMPLETED);
             setResult(res);
             setStep('result');
           }}
+          onError={() => setStep('error')}
         />
       )}
 
-      {step === 'result' && (
+      {step === 'error' && (
+        <ErrorStep
+          onRetry={() => setStep('waiting')}
+          onBack={() => setStep('share')}
+        />
+      )}
+
+      {step === 'result' && result && (
         <ResultStep
           insets={insets}
-          result={result || EXEMPLAR}
+          result={result}
           onBack={handleBack}
           onShowToast={showToast}
           onOpenLoveMap={handleNavigateToLoveMap}
@@ -176,7 +181,6 @@ interface IntroStepProps {
 }
 
 function IntroStep({ insets, onStart, onBack }: IntroStepProps) {
-  const { partner } = useIdentity();
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <TopBar title="refocus" onBack={onBack} />
@@ -225,7 +229,9 @@ function IntroStep({ insets, onStart, onBack }: IntroStepProps) {
               fontFamily: fontFamily.ui,
             }}
           >
-            {`A rough moment is just the two of you seeing it from different angles. Share your side privately, ${partner.name} shares theirs, and we'll find where they meet.`}
+            A rough moment gets easier once you untangle your side of it. Say
+            what happened, just for you, and we&apos;ll help you see
+            what&apos;s underneath and a kind way to raise it.
           </Text>
         </View>
 
@@ -309,7 +315,7 @@ function IntroStep({ insets, onStart, onBack }: IntroStepProps) {
         }}
       >
         <Btn kind="us" onPress={onStart} sub="just your side, privately" testID="refocus-start">
-          Start, share my side
+          Start, untangle my side
         </Btn>
       </View>
     </SafeAreaView>
@@ -421,27 +427,9 @@ function ShareStep({
   onBack,
 }: ShareStepProps) {
   const { partner } = useIdentity();
-  const [rec, setRec] = useState(false);
-  const [secs, setSecs] = useState(0);
 
-  useEffect(() => {
-    if (!rec) return;
-    const t = setInterval(() => setSecs((s) => s + 1), 1000);
-    return () => clearInterval(t);
-  }, [rec]);
-
-  const stopRec = () => {
-    setRec(false);
-    setText(VOICE_TRANSCRIPT);
-  };
-
-  const title =
-    mode === 'voice'
-      ? 'your voice note'
-      : mode === 'paste'
-        ? 'paste the convo'
-        : 'your side';
-  const ready = (text && text.trim().length > 3) || mode === 'voice';
+  const title = mode === 'paste' ? 'paste the convo' : 'your side';
+  const ready = text.trim().length > 3;
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
@@ -475,162 +463,46 @@ function ShareStep({
               fontFamily: fontFamily.ui,
             }}
           >
-            {`Private to the AI. ${partner.name} only ever sees the resolution.`}
+            {`Private to the AI. Nothing is sent to ${partner.name}.`}
           </Text>
         </View>
 
-        {mode === 'voice' && !text ? (
-          /* Voice recorder view */
-          <View
+        {/* Text input view */}
+        <View
+          style={{
+            flex: 1,
+            paddingHorizontal: space.gutter,
+          }}
+        >
+          <TextInput
+            value={text}
+            onChangeText={setText}
+            autoFocus={mode === 'text'}
+            placeholder={
+              mode === 'paste'
+                ? 'Paste the messages here…'
+                : 'What happened, from your side? Say it how you actually feel, messy is fine.'
+            }
+            placeholderTextColor={colors.inkSoft}
+            multiline
             style={{
               flex: 1,
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 22,
-              paddingHorizontal: 24,
+              width: '100%',
+              borderWidth: 1,
+              borderColor: colors.line,
+              borderRadius: 18,
+              backgroundColor: colors.surface,
+              paddingVertical: 15,
+              paddingHorizontal: 16,
+              fontSize: 15.5,
+              lineHeight: 15.5 * 1.55,
+              fontFamily:
+                mode === 'paste' ? fontFamily.mono : fontFamily.ui,
+              color: colors.ink,
+              ...shadows.shadowSoft,
             }}
-          >
-            {/* Timer */}
-            <Text
-              style={{
-                fontSize: 30,
-                fontWeight: '700',
-                color: colors.ink,
-                fontFamily: fontFamily.mono,
-              }}
-            >
-              {String(Math.floor(secs / 60)).padStart(2, '0')}:
-              {String(secs % 60).padStart(2, '0')}
-            </Text>
-
-            {/* Waveform */}
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 4,
-                height: 50,
-              }}
-            >
-              {Array.from({ length: 22 }).map((_, i) => (
-                <WaveformBar
-                  key={i}
-                  index={i}
-                  isRecording={rec}
-                  secs={secs}
-                />
-              ))}
-            </View>
-
-            {/* Record button */}
-            <Press
-              onPress={() => (rec ? stopRec() : setRec(true))}
-              scale={false}
-              style={{ width: 'auto' }}
-            >
-              <View
-                style={{
-                  width: 76,
-                  height: 76,
-                  borderRadius: radius.pill,
-                  backgroundColor: rec ? colors.p1Deep : colors.p2,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  ...shadows.shadow,
-                }}
-              >
-                {rec ? (
-                  <View
-                    style={{
-                      width: 24,
-                      height: 24,
-                      borderRadius: 6,
-                      backgroundColor: '#fff',
-                    }}
-                  />
-                ) : (
-                  <Icon
-                    d="M10 3a3 3 0 013 3v4a3 3 0 01-6 0V6a3 3 0 013-3zM5 9.5a5 5 0 0110 0M10 14.5V17"
-                    size={30}
-                    color="#fff"
-                    sw={1.6}
-                  />
-                )}
-              </View>
-            </Press>
-
-            {/* Status text */}
-            <Text
-              style={{
-                fontSize: 13.5,
-                color: colors.inkSoft,
-                fontFamily: fontFamily.ui,
-              }}
-            >
-              {rec ? 'tap to stop' : 'tap to start talking'}
-            </Text>
-          </View>
-        ) : (
-          /* Text input view */
-          <View
-            style={{
-              flex: 1,
-              paddingHorizontal: space.gutter,
-            }}
-          >
-            {mode === 'voice' && (
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 7,
-                  marginBottom: 8,
-                }}
-              >
-                <Icon d={ICONS.check} size={14} color={colors.matchDeep} sw={2.4} />
-                <Text
-                  style={{
-                    fontFamily: fontFamily.mono,
-                    fontSize: 11,
-                    color: colors.matchDeep,
-                    letterSpacing: 0.08 * 11,
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  TRANSCRIBED · EDIT IF YOU LIKE
-                </Text>
-              </View>
-            )}
-            <TextInput
-              value={text}
-              onChangeText={setText}
-              autoFocus={mode === 'text'}
-              placeholder={
-                mode === 'paste'
-                  ? 'Paste the messages here…'
-                  : 'What happened, from your side? Say it how you actually feel, messy is fine.'
-              }
-              placeholderTextColor={colors.inkSoft}
-              multiline
-              style={{
-                flex: 1,
-                width: '100%',
-                borderWidth: 1,
-                borderColor: colors.line,
-                borderRadius: 18,
-                backgroundColor: colors.surface,
-                paddingVertical: 15,
-                paddingHorizontal: 16,
-                fontSize: 15.5,
-                lineHeight: 15.5 * 1.55,
-                fontFamily:
-                  mode === 'paste' ? fontFamily.mono : fontFamily.ui,
-                color: colors.ink,
-                ...shadows.shadowSoft,
-              }}
-            />
-          </View>
-        )}
+          />
+        </View>
       </View>
 
       {/* Sticky button */}
@@ -647,53 +519,12 @@ function ShareStep({
           kind="us"
           onPress={onSubmit}
           disabled={!ready}
-          sub={`then we wait for ${partner.name}`}
+          sub="private, just for you"
         >
-          Share my side
+          Untangle it
         </Btn>
       </View>
     </SafeAreaView>
-  );
-}
-
-// ── Waveform bar animation helper ────────────────────────────────
-
-function WaveformBar({
-  index,
-  isRecording,
-  secs,
-}: {
-  index: number;
-  isRecording: boolean;
-  secs: number;
-}) {
-  const heightValue = useSharedValue(10);
-
-  useEffect(() => {
-    if (!isRecording) {
-      heightValue.value = withTiming(10, { duration: 200 });
-      return;
-    }
-
-    const baseHeight = 20 + Math.abs(Math.sin(index * 1.1 + secs)) * 30;
-    heightValue.value = withTiming(baseHeight, { duration: 100 });
-  }, [isRecording, secs, index]);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    height: heightValue.value,
-  }));
-
-  return (
-    <Animated.View
-      style={[
-        {
-          width: 4,
-          borderRadius: 3,
-          backgroundColor: isRecording ? colors.p2 : colors.sunken,
-        },
-        animatedStyle,
-      ]}
-    />
   );
 }
 
@@ -701,39 +532,35 @@ function WaveformBar({
 
 interface WaitingStepProps {
   userText: string;
-  daniText: string;
   onCancel: () => void;
   onDone: (result: RefocusResult) => void;
+  onError: () => void;
 }
 
-function WaitingStep({ userText, daniText, onCancel, onDone }: WaitingStepProps) {
+function WaitingStep({ userText, onCancel, onDone, onError }: WaitingStepProps) {
   const { partner } = useIdentity();
-  const [phase, setPhase] = useState(0); // 0 you in · 1 dani in · 2 analyzing
+  const [phase, setPhase] = useState(0); // 0 reading · 1 reflecting
   const mounted = useRef(true);
 
   useEffect(() => {
     mounted.current = true;
-    const t1 = setTimeout(() => setPhase(1), 1400);
-    const t2 = setTimeout(() => setPhase(2), 2700);
+    const t1 = setTimeout(() => setPhase(1), 1600);
     const min = new Promise((r) => setTimeout(r, 4200));
 
-    // Live Claude mediation (edge fn) raced against a min display time.
-    Promise.all([analyze(userText, daniText, partner.name), min]).then(([res]) => {
+    // Live Claude reflection (edge fn) raced against a min display time.
+    // A failure surfaces the honest error step — never a canned result.
+    Promise.all([analyze(userText, partner.name), min]).then(([res]) => {
       // Guard: the user may navigate away during the ~4.2s wait.
-      if (mounted.current) onDone(res);
+      if (!mounted.current) return;
+      if (res) onDone(res);
+      else onError();
     });
 
     return () => {
       mounted.current = false;
       clearTimeout(t1);
-      clearTimeout(t2);
     };
   }, []);
-
-  const lines = [
-    { color: colors.p1, who: YOU, label: 'You shared your side', active: phase >= 0 },
-    { color: colors.p2, who: { name: partner.name, initial: partner.initial }, label: `${partner.name} shared their side`, active: phase >= 1 },
-  ];
 
   return (
     <View
@@ -770,7 +597,7 @@ function WaitingStep({ userText, daniText, onCancel, onDone }: WaitingStepProps)
           />
         </Float>
         <Float distance={7} duration={4000}>
-          <Peek size={128} mood={phase >= 2 ? 'focus' : 'search'} />
+          <Peek size={128} mood={phase >= 1 ? 'focus' : 'search'} />
         </Float>
       </View>
 
@@ -785,70 +612,48 @@ function WaitingStep({ userText, daniText, onCancel, onDone }: WaitingStepProps)
           lineHeight: 28 * 1.09,
         }}
       >
-        {phase < 1
-          ? 'sharing your side…'
-          : phase < 2
-            ? `${partner.name}'s in too…`
-            : 'finding where you meet…'}
+        {phase < 1 ? 'reading your side…' : 'finding what’s underneath…'}
       </Serif>
 
-      {/* Status items */}
+      {/* Status item */}
       <View style={{ width: '100%', maxWidth: 280, gap: 12 }}>
-        {lines.map((l, i) => (
-          <View
-            key={i}
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 11,
+            paddingVertical: 12,
+            paddingHorizontal: 15,
+            borderRadius: 16,
+            backgroundColor: colors.surface,
+            borderWidth: 1,
+            borderColor: colors.line,
+            ...shadows.shadowSoft,
+          }}
+        >
+          <Tok who={YOU} you size={28} />
+          <Text
             style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 11,
-              paddingVertical: 12,
-              paddingHorizontal: 15,
-              borderRadius: 16,
-              backgroundColor: colors.surface,
-              borderWidth: 1,
-              borderColor: colors.line,
-              opacity: l.active ? 1 : 0.4,
-              ...shadows.shadowSoft,
+              flex: 1,
+              fontSize: 14,
+              fontWeight: '600',
+              color: colors.ink,
+              textAlign: 'left',
+              fontFamily: fontFamily.ui,
             }}
           >
-            <Tok who={l.who} you={l.who === YOU} size={28} />
-            <Text
-              style={{
-                flex: 1,
-                fontSize: 14,
-                fontWeight: '600',
-                color: colors.ink,
-                textAlign: 'left',
-                fontFamily: fontFamily.ui,
-              }}
-            >
-              {l.label}
-            </Text>
-            {l.active ? (
-              <Icon d={ICONS.check} size={16} color={colors.matchDeep} sw={2.6} />
-            ) : (
-              <View
-                style={{
-                  width: 16,
-                  height: 16,
-                  borderRadius: radius.pill,
-                  borderWidth: 2,
-                  borderColor: colors.sunken,
-                }}
-              />
-            )}
-          </View>
-        ))}
+            Your side is in
+          </Text>
+          <Icon d={ICONS.check} size={16} color={colors.matchDeep} sw={2.6} />
+        </View>
       </View>
 
       {/* Loading dots */}
-      {phase >= 2 && (
-        <View style={{ marginTop: 22, flexDirection: 'row', gap: 6 }}>
-          {[0, 1, 2].map((i) => (
-            <PulseDot key={i} delay={i * 0.18} />
-          ))}
-        </View>
-      )}
+      <View style={{ marginTop: 22, flexDirection: 'row', gap: 6 }}>
+        {[0, 1, 2].map((i) => (
+          <PulseDot key={i} delay={i * 0.18} />
+        ))}
+      </View>
     </View>
   );
 }
@@ -886,6 +691,68 @@ function PulseDot({ delay }: { delay: number }) {
   );
 }
 
+// ── ERROR STEP ───────────────────────────────────────────────────
+
+interface ErrorStepProps {
+  onRetry: () => void;
+  onBack: () => void;
+}
+
+function ErrorStep({ onRetry, onBack }: ErrorStepProps) {
+  return (
+    <SafeAreaView style={{ flex: 1 }}>
+      <TopBar title="refocus" onBack={onBack} />
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingHorizontal: 34,
+        }}
+      >
+        <Float distance={7} duration={4000}>
+          <Peek size={104} mood="search" />
+        </Float>
+        <Serif
+          s={28}
+          italic
+          style={{
+            textAlign: 'center',
+            marginTop: 24,
+            marginBottom: 12,
+            maxWidth: 280,
+            lineHeight: 28 * 1.09,
+          }}
+        >
+          Still a little blurry.
+        </Serif>
+        <Text
+          style={{
+            fontSize: 14.5,
+            lineHeight: 14.5 * 1.55,
+            color: colors.inkSoft,
+            textAlign: 'center',
+            maxWidth: 290,
+            fontFamily: fontFamily.ui,
+            marginBottom: 28,
+          }}
+        >
+          We couldn&apos;t reach the AI just now. Your words are safe right
+          here, give it another go in a moment.
+        </Text>
+        <View style={{ width: '100%', maxWidth: 300, gap: 10 }}>
+          <Btn kind="us" onPress={onRetry} testID="refocus-retry">
+            Try again
+          </Btn>
+          <Btn kind="soft" onPress={onBack}>
+            Back to my words
+          </Btn>
+        </View>
+      </View>
+    </SafeAreaView>
+  );
+}
+
 // ── RESULT STEP ──────────────────────────────────────────────────
 
 interface ResultStepProps {
@@ -905,7 +772,7 @@ function ResultStep({
 }: ResultStepProps) {
   const { partner } = useIdentity();
   const [msg, setMsg] = useState(result.bridge);
-  const [sent, setSent] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [savingLearnings, setSavingLearnings] = useState(false);
   const { session } = useSession();
   const { couple } = useCouple();
@@ -941,7 +808,7 @@ function ResultStep({
               lineHeight: 32 * 1.09,
             }}
           >
-            You're closer than it felt.
+            Your side, in focus.
           </Serif>
           <Text
             style={{
@@ -953,14 +820,14 @@ function ResultStep({
               fontFamily: fontFamily.ui,
             }}
           >
-            {`${partner.name} saw this too, the resolution, not your raw words.`}
+            {`Nothing here was sent to ${partner.name}. What you share, and when, is up to you.`}
           </Text>
         </View>
 
-        {/* Where you both agree */}
-        <ResultSection icon="🤝" label="where you both agree">
+        {/* What happened */}
+        <ResultSection icon="🧭" label="what happened">
           <View style={{ gap: 9 }}>
-            {result.agree.map((a, i) => (
+            {result.happened.map((a, i) => (
               <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <View
                   style={{
@@ -992,32 +859,32 @@ function ResultStep({
           </View>
         </ResultSection>
 
-        {/* How it looked from each angle */}
-        <ResultSection icon="👀" label="how it looked from each angle">
+        {/* Other angles it might look from */}
+        <ResultSection icon="👀" label="other angles it might look from">
+          <Text
+            style={{
+              fontSize: 12.5,
+              color: colors.inkSoft,
+              marginBottom: 12,
+              lineHeight: 12.5 * 1.4,
+              fontFamily: fontFamily.ui,
+            }}
+          >
+            {`Possibilities to sit with, not ${partner.name}'s actual words.`}
+          </Text>
           <View style={{ gap: 12 }}>
-            <AngleCard
-              who={YOU}
-              youSide
-              label="your angle"
-              text={result.angles.you}
-            />
-            <AngleCard
-              who={{ initial: partner.initial, name: partner.name }}
-              label={`${partner.name}'s angle`}
-              text={result.angles.dani}
-            />
+            {result.angles.map((a, i) => (
+              <PossibilityCard key={i} text={a} />
+            ))}
           </View>
         </ResultSection>
 
         {/* What's really underneath */}
         <ResultSection icon="💗" label="what's really underneath">
-          <View style={{ gap: 10 }}>
-            <NeedCard who={YOU} youSide text={result.underneath.you} />
-            <NeedCard who={{ initial: partner.initial, name: partner.name }} text={result.underneath.dani} />
-          </View>
+          <NeedCard who={YOU} youSide text={result.underneath} />
         </ResultSection>
 
-        {/* A way back */}
+        {/* A way to raise it */}
         <Card
           style={{
             borderRadius: 24,
@@ -1029,7 +896,7 @@ function ResultStep({
             borderColor: 'rgba(157,149,245,0.25)',
           }}
         >
-          <Kick c={colors.p2Deep}>a way back</Kick>
+          <Kick c={colors.p2Deep}>a way to raise it</Kick>
           <Text
             style={{
               fontSize: 15.5,
@@ -1071,7 +938,7 @@ function ResultStep({
                 fontFamily: fontFamily.ui,
               }}
             >
-              {`Say it to ${partner.name}?`}
+              {`Want to say it to ${partner.name}?`}
             </Text>
             <Text
               style={{
@@ -1106,15 +973,15 @@ function ResultStep({
           />
           <View style={{ marginTop: 12 }}>
             <Btn
-              kind={sent ? 'soft' : 'us'}
-              onPress={() => {
-                if (!sent) {
-                  setSent(true);
-                  onShowToast(`Sent to ${partner.name} 🤍`);
-                }
+              kind={copied ? 'soft' : 'us'}
+              onPress={async () => {
+                await Clipboard.setStringAsync(msg);
+                setCopied(true);
+                onShowToast('Copied, share it when you’re ready 🤍');
               }}
+              sub="paste it anywhere you two talk"
             >
-              {sent ? 'Sent 🤍' : `Send to ${partner.name}`}
+              {copied ? 'Copied 🤍' : 'Copy to share'}
             </Btn>
           </View>
         </Card>
@@ -1161,13 +1028,12 @@ function ResultStep({
               fontFamily: fontFamily.ui,
             }}
           >
-            Parallax will gently weave these into your next few drops, so next
+            Parallax will gently weave this into your next few drops, so next
             time, it&apos;s something you both just{' '}
             <Text style={{ fontStyle: 'italic' }}>know</Text>.
           </Text>
           <View style={{ gap: 10, marginBottom: 14 }}>
-            <NeedCard who={YOU} youSide text={result.underneath.you} />
-            <NeedCard who={{ initial: partner.initial, name: partner.name }} text={result.underneath.dani} />
+            <NeedCard who={YOU} youSide text={result.underneath} />
           </View>
           <Btn
             kind="soft"
@@ -1175,36 +1041,19 @@ function ResultStep({
               if (session && couple) {
                 try {
                   setSavingLearnings(true);
-                  const partner = couple.member_a === session.user.id
-                    ? couple.member_b
-                    : couple.member_a;
 
-                  // Stable origin derived from this resolution's content, so
-                  // re-tapping "Open your Love Map" upserts the same two learnings
+                  // Stable origin derived from this reflection's content, so
+                  // re-tapping "Open your Love Map" upserts the same learning
                   // instead of creating duplicates each time.
-                  const origin = 'refocus-' + learningOrigin(result.agree, result.wayback);
+                  const origin = 'refocus-' + learningOrigin(result.happened, result.wayback);
 
-                  // Add learning for "you" (about your needs)
-                  if (result.underneath.you) {
+                  if (result.underneath) {
                     await addLearning({
                       coupleId: couple.id,
                       aboutId: session.user.id,
                       emoji: '🤍',
-                      need: result.underneath.you.split('\n')[0] || 'Underlying need',
-                      detail: result.underneath.you,
-                      source: 'refocus',
-                      origin,
-                    });
-                  }
-
-                  // Add learning for partner
-                  if (result.underneath.dani && partner) {
-                    await addLearning({
-                      coupleId: couple.id,
-                      aboutId: partner,
-                      emoji: '💗',
-                      need: result.underneath.dani.split('\n')[0] || 'Underlying need',
-                      detail: result.underneath.dani,
+                      need: result.underneath.split('\n')[0] || 'Underlying need',
+                      detail: result.underneath,
                       source: 'refocus',
                       origin,
                     });
@@ -1237,7 +1086,7 @@ function ResultStep({
             fontFamily: fontFamily.ui,
           }}
         >
-          Refocus helps you talk it through, it isn't therapy. For the heavy
+          Refocus helps you talk it through, it isn&apos;t therapy. For the heavy
           stuff, please reach for a real pro. 🤍
         </Text>
       </ScrollView>
@@ -1291,50 +1140,31 @@ function ResultSection({
   );
 }
 
-function AngleCard({
-  who,
-  youSide = false,
-  label,
-  text,
-}: {
-  who: { name: string; initial: string };
-  youSide?: boolean;
-  label: string;
-  text: string;
-}) {
-  const bgColor = youSide ? 'rgba(255,142,122,0.08)' : 'rgba(157,149,245,0.09)';
-  const borderColor = youSide ? colors.p1 : colors.p2;
-  const textColor = youSide ? colors.p1Deep : colors.p2Deep;
-
+function PossibilityCard({ text }: { text: string }) {
   return (
     <View
       style={{
-        flexDirection: 'row',
-        gap: 11,
         paddingHorizontal: 14,
         paddingVertical: 13,
         borderRadius: 16,
-        backgroundColor: bgColor,
+        backgroundColor: 'rgba(157,149,245,0.09)',
         borderLeftWidth: 3,
-        borderLeftColor: borderColor,
+        borderLeftColor: colors.p2,
       }}
     >
-      <Tok who={who} you={youSide} size={26} />
-      <View style={{ flex: 1 }}>
-        <Kick c={textColor} style={{ marginBottom: 4 }}>
-          {label}
-        </Kick>
-        <Text
-          style={{
-            fontSize: 14,
-            color: colors.ink,
-            lineHeight: 14 * 1.45,
-            fontFamily: fontFamily.ui,
-          }}
-        >
-          {text}
-        </Text>
-      </View>
+      <Kick c={colors.p2Deep} style={{ marginBottom: 4 }}>
+        one possibility
+      </Kick>
+      <Text
+        style={{
+          fontSize: 14,
+          color: colors.ink,
+          lineHeight: 14 * 1.45,
+          fontFamily: fontFamily.ui,
+        }}
+      >
+        {text}
+      </Text>
     </View>
   );
 }
@@ -1366,36 +1196,33 @@ function NeedCard({
   );
 }
 
-// ── AI analysis (GATE: real implementation uses Supabase edge function) ────
+// ── AI analysis (real implementation: Supabase edge function) ────
 
 async function analyze(
   userText: string,
-  daniText: string,
   partnerName: string
-): Promise<RefocusResult> {
-  // Live Claude mediation via the `refocus` Supabase edge function (key is
-  // server-side). Falls back to the scripted EXEMPLAR if the function isn't
-  // configured/reachable or returns an unexpected shape, so the flow never breaks.
+): Promise<RefocusResult | null> {
+  // Live Claude reflection via the `refocus` Supabase edge function (key is
+  // server-side). A failure or malformed shape returns null so the screen can
+  // show an honest error state — never a canned result.
   try {
     const { data, error } = await supabase.functions.invoke<RefocusResult>(
       'refocus',
-      { body: { userText, daniText, partnerName } }
+      { body: { userText, partnerName } }
     );
     if (
       error ||
       !data ||
-      !Array.isArray(data.agree) ||
-      !data.angles?.you ||
-      !data.angles?.dani ||
-      !data.underneath?.you ||
-      !data.underneath?.dani ||
+      !Array.isArray(data.happened) ||
+      !Array.isArray(data.angles) ||
+      !data.underneath ||
       !data.wayback ||
       !data.bridge
     ) {
-      return EXEMPLAR;
+      return null;
     }
     return data;
   } catch {
-    return EXEMPLAR;
+    return null;
   }
 }

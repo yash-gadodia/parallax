@@ -14,11 +14,16 @@ import { colors, gradients, shadows } from '../../src/design/tokens';
 import { fontFamily } from '../../src/design/typography';
 import { usePlayStore, computeReveal } from '../../src/store/play';
 import { DROP } from '../../src/content/drop';
+import { useIdentity } from '../../src/features/profile/useIdentity';
 
 export default function ShareSheet() {
   const router = useRouter();
   const playState = usePlayStore();
   const reveal = computeReveal(playState);
+  const { me, partner } = useIdentity();
+  const footer = partner.hasPartner
+    ? `${me.name} & ${partner.name} · ${DROP.code}`
+    : DROP.code;
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const { width } = useWindowDimensions();
 
@@ -130,7 +135,7 @@ export default function ShareSheet() {
                     lineHeight: 14,
                   }}
                 >
-                  YASH & DANI · {DROP.code}
+                  {footer}
                 </Text>
               </View>
             </View>

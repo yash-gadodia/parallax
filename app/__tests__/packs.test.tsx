@@ -1,21 +1,31 @@
 import React from 'react';
-import { render } from '@testing-library/react-native';
-import PacksScreen from '../packs';
+import { render, fireEvent } from '@testing-library/react-native';
+
+const mockPush = jest.fn();
+
+jest.mock('expo-router', () => ({
+  __esModule: true,
+  useRouter: () => ({ push: mockPush, replace: jest.fn(), back: jest.fn() }),
+}));
 
 jest.mock('../../src/lib/nav', () => ({
   safeBack: jest.fn(),
 }));
 
+const mockStore = { isPro: false };
+
 jest.mock('../../src/features/purchases/usePurchases', () => ({
-  usePurchases: jest.fn((selector) => {
-    if (typeof selector === 'function') {
-      return selector({ isPro: false });
-    }
-    return false;
-  }),
+  usePurchases: jest.fn((selector: (s: { isPro: boolean }) => unknown) => selector(mockStore)),
 }));
 
+import PacksScreen from '../packs';
+
 describe('PacksScreen', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockStore.isPro = false;
+  });
+
   it('renders the packs screen with key sections', async () => {
     const { getByText } = await render(<PacksScreen />);
 
@@ -34,5 +44,22 @@ describe('PacksScreen', () => {
     // Check upsell section exists
     expect(getByText('parallax plus')).toBeTruthy();
     expect(getByText('One sub, both of you.')).toBeTruthy();
+  });
+
+  it('routes a free user from Try Plus to the checkout, not manageSub', async () => {
+    const { getByText } = await render(<PacksScreen />);
+
+    fireEvent.press(getByText('Try Plus'));
+    expect(mockPush).toHaveBeenCalledWith('/checkout');
+    expect(mockPush).not.toHaveBeenCalledWith('/manageSub');
+  });
+
+  it('routes a Plus user from Manage Plus to manageSub', async () => {
+    mockStore.isPro = true;
+
+    const { getByText } = await render(<PacksScreen />);
+
+    fireEvent.press(getByText('Manage Plus'));
+    expect(mockPush).toHaveBeenCalledWith('/manageSub');
   });
 });

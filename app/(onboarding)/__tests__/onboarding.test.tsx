@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, fireEvent, waitFor } from '@testing-library/react-native';
+import { render, fireEvent, waitFor, act } from '@testing-library/react-native';
 import OnboardingScreen from '../index';
 
 // Mock dependencies BEFORE importing the component
@@ -179,6 +179,12 @@ jest.mock('../../../src/store/ui', () => ({
   }),
 }));
 
+const mockTrack = jest.fn();
+jest.mock('../../../src/lib/analytics', () => ({
+  track: (...args: unknown[]) => mockTrack(...args),
+  EVENTS: { COUPLE_PAIRED: 'couple_paired' },
+}));
+
 const mockSetPendingIntents = jest.fn();
 jest.mock('../../../src/store/onboarding', () => ({
   useOnboardingStore: () => ({
@@ -190,7 +196,9 @@ jest.mock('../../../src/store/onboarding', () => ({
 // The component destructures Share from 'react-native' at import time, so we must
 // mutate the *share* property on the existing Share object (not replace Share itself).
 const { Share } = require('react-native');
-Share.share = jest.fn(async () => ({}));
+Share.share = jest.fn(async () => ({ action: Share.sharedAction }));
+
+import { createCouple, joinCouple } from '../../../src/features/pairing/pairingActions';
 
 describe('Onboarding', () => {
   beforeEach(() => {
@@ -199,6 +207,11 @@ describe('Onboarding', () => {
     mockPush.mockClear();
     mockReplace.mockClear();
     mockSetPendingIntents.mockClear();
+    mockTrack.mockClear();
+    (Share.share as jest.Mock).mockClear();
+    (Share.share as jest.Mock).mockImplementation(async () => ({ action: Share.sharedAction }));
+    (createCouple as jest.Mock).mockClear();
+    (joinCouple as jest.Mock).mockClear();
   });
 
   // Constants tests
@@ -236,7 +249,7 @@ describe('Onboarding', () => {
     const getStartedBtn = getByText(/Get started/);
     expect(getStartedBtn).toBeTruthy();
 
-    fireEvent.press(getStartedBtn);
+    await fireEvent.press(getStartedBtn);
 
     await waitFor(() => {
       expect(getByText(/Three taps, then the good part/i)).toBeTruthy();
@@ -246,14 +259,14 @@ describe('Onboarding', () => {
   it('step 1 shows "Makes sense →" button that advances to step 2', async () => {
     const { getByText } = await render(<OnboardingScreen />);
 
-    fireEvent.press(getByText(/Get started/));
+    await fireEvent.press(getByText(/Get started/));
 
     await waitFor(() => {
       expect(getByText(/Makes sense/i)).toBeTruthy();
     });
 
     const makesSenseBtn = getByText(/Makes sense/);
-    fireEvent.press(makesSenseBtn);
+    await fireEvent.press(makesSenseBtn);
 
     await waitFor(() => {
       expect(getByText(/What do you two want/i)).toBeTruthy();
@@ -264,13 +277,13 @@ describe('Onboarding', () => {
     const { getByText } = await render(<OnboardingScreen />);
 
     // Navigate to step 2
-    fireEvent.press(getByText(/Get started/));
+    await fireEvent.press(getByText(/Get started/));
 
     await waitFor(() => {
       expect(getByText(/Makes sense/i)).toBeTruthy();
     });
 
-    fireEvent.press(getByText(/Makes sense/));
+    await fireEvent.press(getByText(/Makes sense/));
 
     await waitFor(() => {
       expect(getByText(/What do you two want/i)).toBeTruthy();
@@ -282,7 +295,7 @@ describe('Onboarding', () => {
 
     // Click another chip to toggle selection
     const talkChip = getByText(/Spark better conversations/i);
-    fireEvent.press(talkChip);
+    await fireEvent.press(talkChip);
 
     // Verify selection now shows "2 selected"
     await waitFor(() => {
@@ -293,15 +306,15 @@ describe('Onboarding', () => {
   it('an unauthenticated user is routed to /signup before pairing', async () => {
     const { getByText } = await render(<OnboardingScreen />);
 
-    fireEvent.press(getByText(/Get started/));
+    await fireEvent.press(getByText(/Get started/));
     await waitFor(() => {
       expect(getByText(/Makes sense/i)).toBeTruthy();
     });
-    fireEvent.press(getByText(/Makes sense/));
+    await fireEvent.press(getByText(/Makes sense/));
     await waitFor(() => {
       expect(getByText(/What do you two want/i)).toBeTruthy();
     });
-    fireEvent.press(getByText(/Continue/));
+    await fireEvent.press(getByText(/Continue/));
 
     await waitFor(() => {
       expect(mockPush).toHaveBeenCalledWith('/signup');
@@ -330,12 +343,12 @@ describe('Onboarding', () => {
   it('step 2 intent: stashes selected intents in the store before advancing (no session)', async () => {
     const { getByText } = await render(<OnboardingScreen />);
 
-    fireEvent.press(getByText(/Get started/));
+    await fireEvent.press(getByText(/Get started/));
     await waitFor(() => expect(getByText(/Makes sense/i)).toBeTruthy());
-    fireEvent.press(getByText(/Makes sense/));
+    await fireEvent.press(getByText(/Makes sense/));
     await waitFor(() => expect(getByText(/What do you two want/i)).toBeTruthy());
 
-    fireEvent.press(getByText(/Continue/));
+    await fireEvent.press(getByText(/Continue/));
 
     await waitFor(() => {
       expect(mockSetPendingIntents).toHaveBeenCalledWith(['know']);
@@ -351,7 +364,7 @@ describe('Onboarding', () => {
     // Advance to step 4 by reaching the pair-up step and simulating the share
     const { Share } = require('react-native');
     await waitFor(() => expect(getByText(/Send your partner the link/i)).toBeTruthy());
-    fireEvent.press(getByText(/Send your partner the link/i));
+    await fireEvent.press(getByText(/Send your partner the link/i));
 
     await waitFor(() => {
       expect(getByText(/You're in/i)).toBeTruthy();
@@ -368,7 +381,7 @@ describe('Onboarding', () => {
     const { getByText } = await render(<OnboardingScreen />);
 
     await waitFor(() => expect(getByText(/Send your partner the link/i)).toBeTruthy());
-    fireEvent.press(getByText(/Send your partner the link/i));
+    await fireEvent.press(getByText(/Send your partner the link/i));
 
     await waitFor(() => {
       expect(getByText(/Sam joined!/i)).toBeTruthy();
@@ -383,12 +396,113 @@ describe('Onboarding', () => {
 
     const { getByText, getAllByText, queryByText } = await render(<OnboardingScreen />);
     await waitFor(() => expect(getByText(/Send your partner the link/i)).toBeTruthy());
-    fireEvent.press(getByText(/Send your partner the link/i));
+    await fireEvent.press(getByText(/Send your partner the link/i));
 
     await waitFor(() => {
       expect(getByText(/You're in/i)).toBeTruthy();
     });
     expect(getAllByText(/Answer today's drop/i).length).toBeGreaterThan(0);
     expect(queryByText(/Sam joined!/i)).toBeNull();
+  });
+
+  it('cancelling the share sheet does not advance the step and fires no analytics', async () => {
+    mockSessionValue = { session: { user: { id: 'u1' } }, loading: false };
+    (Share.share as jest.Mock).mockImplementation(async () => ({
+      action: Share.dismissedAction,
+    }));
+
+    const { getByText, queryByText } = await render(<OnboardingScreen />);
+    await waitFor(() => expect(getByText(/Send your partner the link/i)).toBeTruthy());
+
+    await fireEvent.press(getByText(/Send your partner the link/i));
+
+    await waitFor(() => expect(Share.share).toHaveBeenCalledTimes(1));
+    // Still on pair-up: step 4's copy never appears.
+    expect(getByText(/Send your partner the link/i)).toBeTruthy();
+    expect(queryByText(/You're in/i)).toBeNull();
+    expect(mockTrack).not.toHaveBeenCalled();
+  });
+
+  it('a completed share advances the step but does NOT fire COUPLE_PAIRED (no pairing yet)', async () => {
+    mockSessionValue = { session: { user: { id: 'u1' } }, loading: false };
+    mockCoupleStatus = 'pending';
+
+    const { getByText } = await render(<OnboardingScreen />);
+    await waitFor(() => expect(getByText(/Send your partner the link/i)).toBeTruthy());
+
+    await fireEvent.press(getByText(/Send your partner the link/i));
+
+    await waitFor(() => expect(getByText(/You're in/i)).toBeTruthy());
+    expect(mockTrack).not.toHaveBeenCalled();
+  });
+
+  it('COUPLE_PAIRED fires exactly once when the joined step flips to active', async () => {
+    mockSessionValue = { session: { user: { id: 'u1' } }, loading: false };
+    mockCoupleStatus = 'pending';
+
+    const screen = await render(<OnboardingScreen />);
+    await waitFor(() => expect(screen.getByText(/Send your partner the link/i)).toBeTruthy());
+    await fireEvent.press(screen.getByText(/Send your partner the link/i));
+    await waitFor(() => expect(screen.getByText(/You're in/i)).toBeTruthy());
+    expect(mockTrack).not.toHaveBeenCalled();
+
+    // Realtime flip: the partner joins and the couple becomes active.
+    mockCoupleStatus = 'active';
+    await screen.rerender(<OnboardingScreen />);
+
+    await waitFor(() => expect(screen.getByText(/Sam joined!/i)).toBeTruthy());
+    expect(mockTrack).toHaveBeenCalledWith('couple_paired', { method: 'invite' });
+    expect(mockTrack).toHaveBeenCalledTimes(1);
+
+    // Further renders do not re-fire it.
+    await screen.rerender(<OnboardingScreen />);
+    expect(mockTrack).toHaveBeenCalledTimes(1);
+  });
+
+  it('COUPLE_PAIRED does not fire when the joined step mounts already active (invitee path)', async () => {
+    mockSessionValue = { session: { user: { id: 'u1' } }, loading: false };
+    mockCoupleStatus = 'active';
+
+    const { getByText } = await render(<OnboardingScreen />);
+    await waitFor(() => expect(getByText(/Send your partner the link/i)).toBeTruthy());
+    await fireEvent.press(getByText(/Send your partner the link/i));
+
+    await waitFor(() => expect(getByText(/Sam joined!/i)).toBeTruthy());
+    expect(mockTrack).not.toHaveBeenCalled();
+  });
+
+  it('joining with a code fires COUPLE_PAIRED once with method join', async () => {
+    mockSessionValue = { session: { user: { id: 'u1' } }, loading: false };
+    mockCoupleStatus = 'active';
+
+    const screen = await render(<OnboardingScreen />);
+    await waitFor(() => expect(screen.getByText(/Enter a code instead/i)).toBeTruthy());
+    await fireEvent.press(screen.getByText(/Enter a code instead/i));
+
+    await act(async () => {
+      screen.getByPlaceholderText('Enter invite code').props.onChangeText('YASH-4827');
+    });
+    await fireEvent.press(screen.getByText('Join'));
+
+    await waitFor(() => {
+      expect(joinCouple).toHaveBeenCalledWith('YASH-4827');
+    });
+    expect(mockTrack).toHaveBeenCalledWith('couple_paired', { method: 'join' });
+    expect(mockTrack).toHaveBeenCalledTimes(1);
+  });
+
+  it('a failed couple creation shows a tappable "Tap retry" that re-calls createCouple', async () => {
+    mockSessionValue = { session: { user: { id: 'u1' } }, loading: false };
+    (createCouple as jest.Mock).mockRejectedValueOnce(new Error('network'));
+
+    const { getByText } = await render(<OnboardingScreen />);
+
+    await waitFor(() => expect(getByText('Tap retry')).toBeTruthy());
+    expect(createCouple).toHaveBeenCalledTimes(1);
+
+    await fireEvent.press(getByText('Tap retry'));
+
+    await waitFor(() => expect(getByText(/YASH-4827/)).toBeTruthy());
+    expect(createCouple).toHaveBeenCalledTimes(2);
   });
 });

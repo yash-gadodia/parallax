@@ -1,5 +1,17 @@
 import { supabase } from '../../lib/supabase';
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export function isValidEmail(email: string): boolean {
+  return EMAIL_RE.test(email.trim());
+}
+
+function authCallbackUrl(): string {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const Linking = require('expo-linking');
+  return Linking.createURL('auth-callback');
+}
+
 export async function signInWithEmail(
   email: string,
   password: string
@@ -19,9 +31,7 @@ export async function signUpWithEmail(
   password: string,
   displayName: string
 ): Promise<void> {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const Linking = require('expo-linking');
-  const emailRedirectTo = Linking.createURL('auth-callback');
+  const emailRedirectTo = authCallbackUrl();
 
   const { error } = await supabase.auth.signUp({
     email,
@@ -39,13 +49,47 @@ export async function signUpWithEmail(
   }
 }
 
-// Confirmation-email link deep-links back as parallax://auth-callback?token_hash=…
+// Confirmation/recovery email links deep-link back as
+// parallax://auth-callback?token_hash=…&type=…
 // The auth-callback route exchanges that hash for a session.
-export async function verifyEmailOtp(tokenHash: string): Promise<void> {
+export async function verifyEmailOtp(
+  tokenHash: string,
+  type: 'signup' | 'recovery' = 'signup'
+): Promise<void> {
   const { error } = await supabase.auth.verifyOtp({
     token_hash: tokenHash,
-    type: 'signup',
+    type,
   });
+
+  if (error) {
+    throw error;
+  }
+}
+
+export async function resendConfirmationEmail(email: string): Promise<void> {
+  const { error } = await supabase.auth.resend({
+    type: 'signup',
+    email,
+    options: { emailRedirectTo: authCallbackUrl() },
+  });
+
+  if (error) {
+    throw error;
+  }
+}
+
+export async function requestPasswordReset(email: string): Promise<void> {
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: authCallbackUrl(),
+  });
+
+  if (error) {
+    throw error;
+  }
+}
+
+export async function updatePassword(password: string): Promise<void> {
+  const { error } = await supabase.auth.updateUser({ password });
 
   if (error) {
     throw error;

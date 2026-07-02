@@ -1,6 +1,7 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
 import UsScreen from '../us';
+import { useCoupleHistory } from '../../../src/features/lovemap/useCoupleHistory';
 
 jest.mock('../../../src/features/lovemap/useLearnings', () => ({
   useLearnings: jest.fn(() => ({
@@ -10,16 +11,7 @@ jest.mock('../../../src/features/lovemap/useLearnings', () => ({
 }));
 
 jest.mock('../../../src/features/lovemap/useCoupleHistory', () => ({
-  useCoupleHistory: jest.fn(() => ({
-    // Real history so the wavelength chart + stat trio render (empty history
-    // now shows the first-run state instead).
-    history: [
-      { date: '2026-06-30', code: 'TODAY', title: 'soft launch', wavelength: 82, twins_count: 2 },
-      { date: '2026-06-29', code: 'DROP 26', title: 'the ick list', wavelength: 74, twins_count: 1 },
-      { date: '2026-06-28', code: 'DROP 25', title: 'future tense', wavelength: 88, twins_count: 3 },
-    ],
-    isSample: false,
-  })),
+  useCoupleHistory: jest.fn(),
 }));
 
 jest.mock('../../../src/features/profile/useProfile', () => ({
@@ -35,7 +27,21 @@ jest.mock('../../../src/features/profile/useProfile', () => ({
   })),
 }));
 
+const mockUseCoupleHistory = useCoupleHistory as jest.Mock;
+
+// Real history so the wavelength chart + stat trio render (empty history
+// shows the first-run state instead). history[0] is the latest drop.
+const THREE_DROPS = [
+  { date: '2026-06-30', code: 'TODAY', title: 'soft launch', wavelength: 82, twins_count: 2 },
+  { date: '2026-06-29', code: 'DROP 26', title: 'the ick list', wavelength: 74, twins_count: 1 },
+  { date: '2026-06-28', code: 'DROP 25', title: 'future tense', wavelength: 88, twins_count: 3 },
+];
+
 describe('UsScreen', () => {
+  beforeEach(() => {
+    mockUseCoupleHistory.mockReturnValue({ history: THREE_DROPS, isSample: false });
+  });
+
   it('renders real couple name from useProfile', async () => {
     const { getByText } = await render(<UsScreen />);
     expect(getByText('Alex & Jordan')).toBeTruthy();
@@ -64,5 +70,46 @@ describe('UsScreen', () => {
   it('renders the drop history label', async () => {
     const { getByText } = await render(<UsScreen />);
     expect(getByText('your drop history')).toBeTruthy();
+  });
+
+  it('computes the trend delta from the two latest drops (82 vs 74 → ▲ 8%)', async () => {
+    const { getByText } = await render(<UsScreen />);
+    expect(getByText('▲ 8%')).toBeTruthy();
+  });
+
+  it('shows a downward trend when the latest drop scored lower (70 vs 76 → ▼ 6%)', async () => {
+    mockUseCoupleHistory.mockReturnValue({
+      history: [
+        { date: '2026-06-30', code: 'TODAY', title: 'soft launch', wavelength: 70, twins_count: 1 },
+        { date: '2026-06-29', code: 'DROP 26', title: 'the ick list', wavelength: 76, twins_count: 2 },
+      ],
+      isSample: false,
+    });
+    const { getByText } = await render(<UsScreen />);
+    expect(getByText('▼ 6%')).toBeTruthy();
+  });
+
+  it('hides the trend delta with a single drop of history', async () => {
+    mockUseCoupleHistory.mockReturnValue({
+      history: [
+        { date: '2026-06-30', code: 'TODAY', title: 'soft launch', wavelength: 82, twins_count: 2 },
+      ],
+      isSample: false,
+    });
+    const { getByText, queryByText } = await render(<UsScreen />);
+    expect(getByText('LAST 7 DROPS')).toBeTruthy();
+    expect(queryByText(/^[▲▼]/)).toBeNull();
+  });
+
+  it('hides the trend delta when the two latest drops tie', async () => {
+    mockUseCoupleHistory.mockReturnValue({
+      history: [
+        { date: '2026-06-30', code: 'TODAY', title: 'soft launch', wavelength: 80, twins_count: 2 },
+        { date: '2026-06-29', code: 'DROP 26', title: 'the ick list', wavelength: 80, twins_count: 1 },
+      ],
+      isSample: false,
+    });
+    const { queryByText } = await render(<UsScreen />);
+    expect(queryByText(/^[▲▼]/)).toBeNull();
   });
 });

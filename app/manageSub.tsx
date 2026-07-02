@@ -3,27 +3,32 @@ import {
   View,
   Text,
   ScrollView,
-  Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import type { PurchasesEntitlementInfo } from 'react-native-purchases';
 import { safeBack } from "../src/lib/nav";
-import { colors, gradients, radius, shadows, space } from '../src/design/tokens';
+import { colors, gradients, radius, space } from '../src/design/tokens';
 import { fontFamily } from '../src/design/typography';
-import { Kick } from '../src/components/Text';
+import { Kick, Serif } from '../src/components/Text';
 import TopBar from '../src/components/TopBar';
 import Btn from '../src/components/Btn';
 import Card from '../src/components/Card';
-import Press from '../src/components/Press';
 import { Mark } from '../src/components/Mark';
 import { DawnBlobs } from '../src/components/DawnBlobs';
 import Toast from '../src/components/Toast';
 import { usePurchases, presentCustomerCenter } from '../src/features/purchases/usePurchases';
-import { purchasesAvailable } from '../src/features/purchases/client';
-import { useProfile } from '../src/features/profile/useProfile';
+import { purchasesAvailable, ENTITLEMENT_ID } from '../src/features/purchases/client';
 
-// Status card with Mark icon
-function StatusCard() {
+function formatEntitlementDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
+
+function StatusCard({ status, badge }: { status: string; badge?: string }) {
   return (
     <LinearGradient
       colors={gradients.usSoft.colors}
@@ -61,37 +66,40 @@ function StatusCard() {
             marginTop: 3,
           }}
         >
-          ● active · free trial
+          {status}
         </Kick>
       </View>
 
-      <Text
-        allowFontScaling={false}
-        style={{
-          fontSize: 9,
-          fontWeight: '700',
-          letterSpacing: 1.6,
-          color: '#fff',
-          backgroundColor: colors.p2,
-          paddingVertical: 4,
-          paddingHorizontal: 9,
-          borderRadius: radius.pill,
-        }}
-      >
-        ANNUAL
-      </Text>
+      {badge && (
+        <Text
+          allowFontScaling={false}
+          style={{
+            fontSize: 9,
+            fontWeight: '700',
+            letterSpacing: 1.6,
+            color: '#fff',
+            backgroundColor: colors.p2,
+            paddingVertical: 4,
+            paddingHorizontal: 9,
+            borderRadius: radius.pill,
+          }}
+        >
+          {badge}
+        </Text>
+      )}
     </LinearGradient>
   );
 }
 
-// Plan details row
-function PlanDetailsCard({ partnerName }: { partnerName: string }) {
-  const rows = [
-    ['Plan', 'Annual · $39.99/yr'],
-    ['Free trial ends', 'in 7 days'],
-    ['Renews', 'Jun 15, 2026'],
-    ['Shared with', partnerName],
-  ];
+// Plan details built only from fields RevenueCat actually returned.
+function PlanDetailsCard({ entitlement }: { entitlement: PurchasesEntitlementInfo }) {
+  const rows: [string, string][] = [['Plan', entitlement.productIdentifier]];
+  if (entitlement.expirationDate) {
+    rows.push([
+      entitlement.willRenew ? 'Renews' : 'Expires',
+      formatEntitlementDate(entitlement.expirationDate),
+    ]);
+  }
 
   return (
     <Card style={{ overflow: 'hidden', marginTop: 14, borderRadius: 20 }}>
@@ -135,47 +143,23 @@ function PlanDetailsCard({ partnerName }: { partnerName: string }) {
 
 export default function ManageSubScreen() {
   const router = useRouter();
-  const [switchToastMsg, setSwitchToastMsg] = useState<string | null>(null);
-  const [cancelToastMsg, setCancelToastMsg] = useState<string | null>(null);
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
   const setDemoPro = usePurchases((s) => s.setDemoPro);
-  const { partnerName } = useProfile();
+  const isPro = usePurchases((s) => s.isPro);
+  const customerInfo = usePurchases((s) => s.customerInfo);
+  const available = purchasesAvailable();
+  const entitlement = available
+    ? customerInfo?.entitlements?.active?.[ENTITLEMENT_ID] ?? null
+    : null;
 
-  const handleSwitchPlan = () => {
-    // Real build: RevenueCat Customer Center handles plan changes. Demo: toast.
-    if (purchasesAvailable()) {
-      presentCustomerCenter();
-      return;
-    }
-    setSwitchToastMsg('Plan switched to monthly');
-    setTimeout(() => setSwitchToastMsg(null), 2000);
+  const handleManagePlan = () => {
+    presentCustomerCenter();
   };
 
-  const handleCancelSubscription = () => {
-    // Real build: Customer Center handles cancellation/refunds the compliant way.
-    if (purchasesAvailable()) {
-      presentCustomerCenter();
-      return;
-    }
-    Alert.alert(
-      'Cancel Parallax Plus?',
-      "You'll lose access to Plus features at the end of your billing period.",
-      [
-        {
-          text: 'Keep subscription',
-          onPress: () => {},
-          style: 'cancel',
-        },
-        {
-          text: 'Cancel',
-          onPress: () => {
-            setDemoPro(false);
-            setCancelToastMsg('Subscription cancelled');
-            setTimeout(() => setCancelToastMsg(null), 2000);
-          },
-          style: 'destructive',
-        },
-      ]
-    );
+  const handleRemoveDemoPro = () => {
+    setDemoPro(false);
+    setToastMsg('Demo unlock removed');
+    setTimeout(() => setToastMsg(null), 2000);
   };
 
   const handleBack = () => {
@@ -205,51 +189,76 @@ export default function ManageSubScreen() {
         {/* Top padding */}
         <View style={{ height: 50 }} />
 
-        {/* Status Card */}
-        <StatusCard />
-
-        {/* Plan Details */}
-        <PlanDetailsCard partnerName={partnerName} />
-
-        {/* Action Buttons */}
-        <View
-          style={{
-            marginTop: 18,
-            flexDirection: 'column',
-            gap: 10,
-          }}
-        >
-          <Btn kind="soft" onPress={handleSwitchPlan}>
-            Switch to monthly
-          </Btn>
-
-          <Press onPress={handleCancelSubscription}>
-            <View
+        {!isPro ? (
+          <>
+            <Card
               style={{
-                paddingVertical: 14,
-                paddingHorizontal: 16,
+                borderRadius: 24,
+                padding: 24,
+                marginBottom: 14,
                 alignItems: 'center',
               }}
             >
+              <Mark size={24} />
+              <Serif s={26} c={colors.ink} style={{ marginTop: 12 }}>
+                No active plan
+              </Serif>
               <Text
                 allowFontScaling={false}
                 style={{
-                  fontSize: 14.5,
-                  fontWeight: '700',
-                  color: colors.p1Deep,
-                  textAlign: 'center',
+                  fontSize: 14,
                   lineHeight: 20,
+                  color: colors.inkSoft,
+                  fontFamily: fontFamily.ui,
+                  textAlign: 'center',
+                  marginTop: 6,
                 }}
               >
-                Cancel subscription
+                Parallax Plus unlocks every pack, for both of you.
               </Text>
+            </Card>
+            <Btn kind="us" onPress={() => router.push('/checkout')}>
+              See Plus plans
+            </Btn>
+          </>
+        ) : !available ? (
+          <>
+            <StatusCard status="● demo unlock" badge="DEMO" />
+            <Text
+              allowFontScaling={false}
+              style={{
+                fontSize: 13,
+                lineHeight: 18,
+                color: colors.inkSoft,
+                fontFamily: fontFamily.ui,
+                marginBottom: 14,
+                paddingHorizontal: 4,
+              }}
+            >
+              This is a local demo unlock, not a real subscription — nothing is billed.
+            </Text>
+            <Btn kind="soft" onPress={handleRemoveDemoPro}>
+              Remove demo unlock
+            </Btn>
+          </>
+        ) : (
+          <>
+            <StatusCard
+              status={
+                entitlement?.periodType === 'TRIAL' ? '● active · free trial' : '● active'
+              }
+            />
+            {entitlement && <PlanDetailsCard entitlement={entitlement} />}
+            <View style={{ marginTop: 18 }}>
+              <Btn kind="soft" onPress={handleManagePlan}>
+                Manage subscription
+              </Btn>
             </View>
-          </Press>
-        </View>
+          </>
+        )}
       </ScrollView>
 
-      {switchToastMsg && <Toast msg={switchToastMsg} />}
-      {cancelToastMsg && <Toast msg={cancelToastMsg} />}
+      {toastMsg && <Toast msg={toastMsg} />}
     </View>
   );
 }

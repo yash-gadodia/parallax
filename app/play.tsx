@@ -22,6 +22,7 @@ import { useSession } from '../src/features/auth/useSession';
 import { useCouple } from '../src/features/pairing/useCouple';
 import { useIdentity } from '../src/features/profile/useIdentity';
 import { submitMyAnswers } from '../src/features/drops/dropActions';
+import { useTodayState } from '../src/features/drops/useTodayState';
 import { useUiStore } from '../src/store/ui';
 import { track, EVENTS } from '../src/lib/analytics';
 
@@ -31,18 +32,23 @@ export default function PlayScreen() {
   const { couple } = useCouple();
   const { me, partner } = useIdentity();
   const { idx, phase, myPicks, myHunches, reset } = usePlayStore();
+  const { content } = useTodayState(session && couple ? couple.id : null);
   const [submitting, setSubmitting] = useState(false);
   // Guards the answer→hunch / hunch→next-prompt transition: a tap landing
   // during the re-render otherwise binds to the NEW phase's option at the
   // same position (E2E finding F6).
   const transitionLock = React.useRef(false);
-  const prompt = DROP.prompts[idx];
+  const isLive = !!(session && couple);
+  // Live couples play the drop the server assigned (rotation-aware); the
+  // unauthenticated demo plays the static content. Never mix mid-session.
+  const prompts = isLive ? content?.prompts ?? null : DROP.prompts;
+  const prompt = prompts ? prompts[idx] : null;
   const isPick = phase === 'pick';
   const color = isPick ? colors.p1 : colors.p2;
   const deepColor = isPick ? colors.p1Deep : colors.p2Deep;
   const selected = isPick ? myPicks[idx] : myHunches[idx];
 
-  const total = DROP.prompts.length * 2;
+  const total = (prompts?.length ?? 3) * 2;
   const step = idx * 2 + (isPick ? 1 : 2);
 
   // Reset store on mount
@@ -67,7 +73,7 @@ export default function PlayScreen() {
       usePlayStore.setState((s) => ({
         myHunches: s.myHunches.map((h, i) => (i === idx ? optionIdx : h)),
       }));
-      const isLast = idx === DROP.prompts.length - 1;
+      const isLast = idx === (prompts?.length ?? 3) - 1;
       if (!isLast) {
         usePlayStore.setState({ idx: idx + 1, phase: 'pick' });
       } else {
@@ -117,6 +123,27 @@ export default function PlayScreen() {
       usePlayStore.setState({ phase: 'pick' });
     }
   };
+
+  // Live session before the assigned drop's content arrives: brief hold so a
+  // couple never starts on static questions that swap mid-play.
+  if (!prompt) {
+    return (
+      <LinearGradient
+        colors={gradients.dawn.colors}
+        locations={gradients.dawn.locations}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={{ flex: 1 }}
+      >
+        <DawnBlobs />
+        <SafeAreaView
+          style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}
+        >
+          <Kick c={colors.inkSoft}>loading today's drop…</Kick>
+        </SafeAreaView>
+      </LinearGradient>
+    );
+  }
 
   return (
     <LinearGradient
@@ -170,7 +197,7 @@ export default function PlayScreen() {
             />
           </View>
           <Kick>
-            {idx + 1}/{DROP.prompts.length}
+            {idx + 1}/{prompts?.length ?? 3}
           </Kick>
         </View>
 

@@ -25,13 +25,61 @@ export default function DropDetailScreen() {
   const params = useLocalSearchParams();
   const code = typeof params.code === 'string' ? params.code : undefined;
 
-  // Look up drop in ARCHIVE by code, fallback to first
-  const drop = code ? ARCHIVE.find((x) => x.code === code) : null;
-  const d = drop || ARCHIVE[0];
+  // Look up drop in ARCHIVE by code — never substitute a different drop.
+  const d = code ? ARCHIVE.find((x) => x.code === code) ?? null : null;
 
   const handleBack = () => {
     safeBack(router);
   };
+
+  if (!d) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.bg0 }}>
+        <LinearGradient
+          colors={gradients.dawn.colors}
+          locations={gradients.dawn.locations}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={{ position: 'absolute', inset: 0 }}
+        />
+        <DawnBlobs />
+
+        <TopBar title={code ?? 'drop'} onBack={handleBack} />
+
+        <View
+          style={{
+            flex: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingHorizontal: space.gutter,
+          }}
+        >
+          <Text
+            allowFontScaling={false}
+            style={{ fontSize: 40, lineHeight: 44 }}
+          >
+            🌒
+          </Text>
+          <Serif s={28} italic c={colors.ink} style={{ marginTop: 12, textAlign: 'center' }}>
+            This drop isn't available yet
+          </Serif>
+          <Text
+            allowFontScaling={false}
+            style={{
+              fontSize: 14,
+              lineHeight: 20,
+              color: colors.inkSoft,
+              fontFamily: fontFamily.ui,
+              textAlign: 'center',
+              marginTop: 8,
+            }}
+          >
+            The full look-back at your answers is coming soon.
+          </Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg0 }}>

@@ -137,6 +137,59 @@ export async function submitMyAnswers(
   }
 }
 
+export interface DropContent {
+  code: string | null;
+  title: string | null;
+  prompts: Array<{ id: string; emoji: string; q: string; opts: string[] }>;
+}
+
+/**
+ * Fetch the actual content (code, title, prompts) assigned to a couple_drop,
+ * shaped like the static DROP so screens can render either interchangeably.
+ * Returns null on any failure — callers fall back to a neutral state.
+ */
+export async function getDropContent(coupleDropId: string): Promise<DropContent | null> {
+  const { data: coupleDrop, error: cdError } = await supabase
+    .from('couple_drops')
+    .select('drop_id')
+    .eq('id', coupleDropId)
+    .maybeSingle();
+
+  if (cdError || !coupleDrop) return null;
+  const dropId = (coupleDrop as { drop_id: string }).drop_id;
+
+  const [dropRes, promptsRes] = await Promise.all([
+    supabase.from('drops').select('code, title').eq('id', dropId).maybeSingle(),
+    supabase
+      .from('drop_prompts')
+      .select('id, emoji, question, options')
+      .eq('drop_id', dropId)
+      .order('position', { ascending: true }),
+  ]);
+
+  if (promptsRes.error) return null;
+  const promptRows = (promptsRes.data || []) as Array<{
+    id: string;
+    emoji: string | null;
+    question: string | null;
+    options: string[];
+  }>;
+  if (promptRows.length === 0) return null;
+
+  const dropMeta = (dropRes.data ?? {}) as { code?: string | null; title?: string | null };
+
+  return {
+    code: dropMeta.code ?? null,
+    title: dropMeta.title ?? null,
+    prompts: promptRows.map((p) => ({
+      id: p.id,
+      emoji: p.emoji ?? '💬',
+      q: p.question ?? '',
+      opts: p.options,
+    })),
+  };
+}
+
 /**
  * Fetch today's truthful state for the couple in one round-trip.
  * RLS (correctly) hides the partner's answers pre-reveal, so partner_answered

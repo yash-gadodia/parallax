@@ -48,6 +48,7 @@ export default function RevealScreen() {
   const [serverReveal, setServerReveal] = useState<{
     reveal: RevealScore;
     promptAnswers: PromptAnswers[];
+    prompts: Array<{ id: string; emoji: string | null; question: string | null; options: string[] }>;
   } | null>(null);
   const [fetchFailed, setFetchFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
@@ -82,12 +83,38 @@ export default function RevealScreen() {
     setFetchFailed(false);
     fetchReveal(coupleDropId)
       .then((result) => {
-        setServerReveal({ reveal: result.reveal, promptAnswers: result.promptAnswers });
+        setServerReveal({
+          reveal: result.reveal,
+          promptAnswers: result.promptAnswers,
+          prompts: result.prompts,
+        });
       })
       .catch(() => {
         setFetchFailed(true);
       });
   }, [isLive, coupleDropId, attempt]);
+
+  // Live path renders the ACTUAL prompts of this couple_drop (rotation-aware);
+  // the demo path keeps the static content with its authored notes/why lines.
+  const LIVE_NOTES: [string, string, string] = [
+    'same answer, zero hints needed',
+    'you called it',
+    "different angles — that's tonight's conversation",
+  ];
+  const renderPrompts = isLive
+    ? (serverReveal?.prompts ?? []).map((p) => ({
+        id: p.id,
+        emoji: p.emoji ?? '💬',
+        q: p.question ?? '',
+        opts: p.options,
+        note: LIVE_NOTES as string[],
+        why: undefined as string | undefined,
+        youDemo: 0,
+        youHunchDemo: 0,
+        remy: 0,
+        remyHunch: 0,
+      }))
+    : DROP.prompts.map((p) => ({ ...p, why: p.why as string | undefined }));
 
   const verdict =
     reveal.wave >= 80
@@ -283,7 +310,7 @@ export default function RevealScreen() {
               }}
             >
               <Stat
-                big={`${reveal.yourHits + reveal.theirHits}/${DROP.prompts.length * 2}`}
+                big={`${reveal.yourHits + reveal.theirHits}/${(renderPrompts.length || 3) * 2}`}
                 label="hunches landed"
               />
               <View style={{ width: 1, backgroundColor: colors.line }} />
@@ -293,8 +320,8 @@ export default function RevealScreen() {
 
           {/* Per-prompt compare cards */}
           <View style={{ marginTop: 26, gap: 12 }}>
-            {DROP.prompts.map((prompt, i) => {
-              // Server path: use promptAnswers from fetchReveal (index-aligned to DROP.prompts)
+            {renderPrompts.map((prompt, i) => {
+              // Server path: promptAnswers from fetchReveal, index-aligned to renderPrompts
               const serverAnswers = serverReveal?.promptAnswers[i];
               const myChoice = serverAnswers?.youPick ?? playState.myPicks[i] ?? prompt.youDemo;
               const theirChoice = serverAnswers?.themPick ?? prompt.remy;
@@ -482,7 +509,8 @@ export default function RevealScreen() {
                     </Press>
                   </View>
 
-                  {/* Why section */}
+                  {/* Why section (authored content only — no fabricated science lines) */}
+                  {prompt.why != null && (
                   <View
                     style={{
                       marginTop: 11,
@@ -522,6 +550,7 @@ export default function RevealScreen() {
                       {prompt.why}
                     </Text>
                   </View>
+                  )}
                 </Card>
               );
             })}

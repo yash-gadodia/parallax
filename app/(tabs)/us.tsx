@@ -29,6 +29,10 @@ export default function UsScreen() {
 
   const currentWave = history.length > 0 ? `${history[0].wavelength}` : null;
 
+  // Trend vs the previous drop — only shown when there are two real data points.
+  const trendDelta =
+    history.length >= 2 ? history[0].wavelength - history[1].wavelength : null;
+
   // Wavelength bar chart: built only from real history (most recent rendered as current).
   const hist: number[] = history.slice(0, 7).reverse().map((h) => h.wavelength);
 
@@ -333,17 +337,19 @@ export default function UsScreen() {
                   >
                     {`${currentWave}%`}
                   </GradientText>
-                  <Text
-                    style={{
-                      fontSize: 12,
-                      fontWeight: '700',
-                      color: colors.matchDeep,
-                      fontFamily: fontFamily.mono,
-                      letterSpacing: 0,
-                    }}
-                  >
-                    ▲ 9%
-                  </Text>
+                  {trendDelta !== null && trendDelta !== 0 && (
+                    <Text
+                      style={{
+                        fontSize: 12,
+                        fontWeight: '700',
+                        color: trendDelta > 0 ? colors.matchDeep : colors.p1Deep,
+                        fontFamily: fontFamily.mono,
+                        letterSpacing: 0,
+                      }}
+                    >
+                      {`${trendDelta > 0 ? '▲' : '▼'} ${Math.abs(trendDelta)}%`}
+                    </Text>
+                  )}
                 </View>
               </View>
             </View>

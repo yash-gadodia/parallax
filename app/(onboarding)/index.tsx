@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -407,21 +407,22 @@ function Step3PairUp({
     }
   }, []);
 
-  useEffect(() => {
-    const init = async () => {
-      setCreatingCouple(true);
-      try {
-        const couple = await createCouple();
-        setInviteCode(couple.invite_code ?? null);
-      } catch {
-        setInviteCode(null);
-        fireToast('Could not create your invite code. Check your connection and try again.');
-      } finally {
-        setCreatingCouple(false);
-      }
-    };
-    init();
+  const createInvite = useCallback(async () => {
+    setCreatingCouple(true);
+    try {
+      const couple = await createCouple();
+      setInviteCode(couple.invite_code ?? null);
+    } catch {
+      setInviteCode(null);
+      fireToast('Could not create your invite code. Check your connection and try again.');
+    } finally {
+      setCreatingCouple(false);
+    }
   }, [fireToast]);
+
+  useEffect(() => {
+    createInvite();
+  }, [createInvite]);
 
   const handleShare = async () => {
     if (!inviteCode) return;
@@ -431,10 +432,11 @@ function Step3PairUp({
       // TODO (Yash): replace the https URL with your real domain once you host
       // the Apple App Site Association file + configure associatedDomains in app.json.
       const deepLink = `parallax://join?code=${inviteCode}`;
-      await Share.share({
+      const result = await Share.share({
         message: `Join me on Parallax! Tap to join: ${deepLink}\n\nOr enter my code manually: ${inviteCode}`,
       });
-      track(EVENTS.COUPLE_PAIRED, { method: 'invite' });
+      // Cancelling the sheet is not a share — stay on this step.
+      if (result.action === Share.dismissedAction) return;
       onNext();
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Share failed';
@@ -495,20 +497,39 @@ function Step3PairUp({
               ]}
             >
               <Kick c={colors.p2Deep}>your invite code</Kick>
-              <Text
-                allowFontScaling={false}
-                style={{
-                  fontFamily: fontFamily.mono,
-                  fontSize: 30,
-                  fontWeight: '700',
-                  letterSpacing: 4.2,
-                  color: colors.ink,
-                  marginTop: 12,
-                  marginBottom: 6,
-                }}
-              >
-                {creatingCouple ? 'Loading...' : inviteCode || 'Tap retry'}
-              </Text>
+              {!creatingCouple && !inviteCode ? (
+                <Press onPress={createInvite} scale={false}>
+                  <Text
+                    allowFontScaling={false}
+                    style={{
+                      fontFamily: fontFamily.mono,
+                      fontSize: 30,
+                      fontWeight: '700',
+                      letterSpacing: 4.2,
+                      color: colors.p2Deep,
+                      marginTop: 12,
+                      marginBottom: 6,
+                    }}
+                  >
+                    Tap retry
+                  </Text>
+                </Press>
+              ) : (
+                <Text
+                  allowFontScaling={false}
+                  style={{
+                    fontFamily: fontFamily.mono,
+                    fontSize: 30,
+                    fontWeight: '700',
+                    letterSpacing: 4.2,
+                    color: colors.ink,
+                    marginTop: 12,
+                    marginBottom: 6,
+                  }}
+                >
+                  {creatingCouple ? 'Loading...' : inviteCode}
+                </Text>
+              )}
               <Text
                 allowFontScaling={false}
                 style={{
@@ -606,6 +627,23 @@ function Step4Joined({ onNext, hasSession }: { onNext: () => void; hasSession: b
   // Demo path (no session): show scripted celebration immediately.
   // Real path (session): wait for couple to become active via realtime/poll.
   const isActive = !hasSession || status === 'active';
+
+  // COUPLE_PAIRED fires on the ACTUAL pairing moment: the realtime flip to
+  // 'active' while the inviter waits here. If we mounted already-active (the
+  // invitee — join_couple already tracked it), there is no flip to report.
+  const initialStatus = useRef(status);
+  const paired = useRef(false);
+  useEffect(() => {
+    if (
+      hasSession &&
+      status === 'active' &&
+      initialStatus.current !== 'active' &&
+      !paired.current
+    ) {
+      paired.current = true;
+      track(EVENTS.COUPLE_PAIRED, { method: 'invite' });
+    }
+  }, [hasSession, status]);
 
   if (!isActive) {
     // Pending: invite sent, partner not in yet. Not a wall — a doorway. Let them
