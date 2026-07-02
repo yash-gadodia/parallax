@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   ScrollView,
@@ -6,6 +6,17 @@ import {
   Share,
   useWindowDimensions,
 } from 'react-native';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withDelay,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Clipboard from 'expo-clipboard';
 import { SafeAreaView, useSafeAreaInsets  } from 'react-native-safe-area-context';
@@ -27,16 +38,34 @@ import { fontFamily } from '../../src/design/typography';
 import { DROP } from '../../src/content/drop';
 import { usePlayStore, computeReveal } from '../../src/store/play';
 import { useUiStore } from '../../src/store/ui';
-import { useTodayState } from '../../src/features/drops/useTodayState';
+import {
+  useTodayState,
+  coupleAgeDays,
+  firstWeekBeat,
+  isEvening,
+  localDayKey,
+} from '../../src/features/drops/useTodayState';
 import { useCouple } from '../../src/features/pairing/useCouple';
 import { useActivity } from '../../src/features/engagement/useActivity';
+import { nudge } from '../../src/features/engagement/engagementActions';
+import { useCoupleHistory } from '../../src/features/lovemap/useCoupleHistory';
 import { useSession } from '../../src/features/auth/useSession';
 import { useProfile } from '../../src/features/profile/useProfile';
 import { useIdentity } from '../../src/features/profile/useIdentity';
 import { selectDropForSpice, normaliseSpiceLevel } from '../../src/domain/spice';
 import type { SpiceLevel } from '../../src/domain/spice';
+import { syncWidgetFromToday } from '../../src/features/widget';
 
-export default function TodayScreen() {
+// One-per-day dedupe keys (device-local day, see localDayKey).
+const STREAK_PULSE_SEEN_KEY = 'parallax:streak_pulse_seen_on';
+const NUDGE_SENT_KEY = 'parallax:nudge_sent_on';
+
+export default function TodayScreen({
+  // Injectable clock so the time-of-day and couple-age logic is exact-testable.
+  now = () => new Date(),
+}: {
+  now?: () => Date;
+}) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
@@ -45,6 +74,7 @@ export default function TodayScreen() {
   const { couple } = useCouple();
   const { today, content } = useTodayState(session && couple ? couple.id : null);
   const { items: dbActivity, unreadCount } = useActivity(couple?.id || null);
+  const { history } = useCoupleHistory();
   const { spiceLevel } = useProfile();
   const { me, partner } = useIdentity();
   const staticDrop = selectDropForSpice(DROP, normaliseSpiceLevel(spiceLevel) as SpiceLevel);
@@ -75,6 +105,91 @@ export default function TodayScreen() {
   // Pairing pending: user is in, partner hasn't joined. They can answer ahead;
   // the reveal stays server-held (migration 0011) until the partner joins + answers.
   const isPending = couple?.status === 'pending';
+
+  // Keep the home-screen widget in sync with server truth: realtime partner
+  // events already refresh `today`, so the widget flips the moment they play.
+  useEffect(() => {
+    if (!isLive) return;
+    syncWidgetFromToday(today, couple, partner.name);
+  }, [isLive, today, couple, partner.name]);
+
+  // --- first-week beats (IMPROVEMENT_PLAN 2.3) -----------------------------
+  const nowDate = now();
+  const todayKey = localDayKey(nowDate);
+  const ageDays = coupleAgeDays(couple?.created_at ?? null, nowDate);
+  const beat = isLive ? firstWeekBeat(ageDays, streak) : null;
+  const freezes = couple?.freezes_remaining ?? 2;
+
+  // Days 2–6: the streak pill pulses gently, once per local day, and never
+  // when the system asks for reduced motion.
+  const reducedMotion = useReducedMotion();
+  const pulseScale = useSharedValue(1);
+  const pulseStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pulseScale.value }],
+  }));
+
+  useEffect(() => {
+    if (beat !== 'pulse' || reducedMotion) return;
+    let cancelled = false;
+    AsyncStorage.getItem(STREAK_PULSE_SEEN_KEY)
+      .then((seen) => {
+        if (cancelled || seen === todayKey) return;
+        pulseScale.value = withDelay(
+          700,
+          withRepeat(
+            withSequence(
+              withTiming(1.1, { duration: 460, easing: Easing.inOut(Easing.quad) }),
+              withTiming(1, { duration: 460, easing: Easing.inOut(Easing.quad) })
+            ),
+            2,
+            false
+          )
+        );
+        AsyncStorage.setItem(STREAK_PULSE_SEEN_KEY, todayKey).catch(() => {});
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [beat, reducedMotion, todayKey, pulseScale]);
+
+  // --- partner-silent evening (IMPROVEMENT_PLAN 3.7) ------------------------
+  // I answered, they haven't yet, and it's evening: offer solo value while the
+  // reveal waits. Warm only — never guilt about the quiet side of the couple.
+  const eveningWait = isLive && iAnswered && !revealed && !isPending && isEvening(nowDate);
+  const hasHistory = isLive && history.length > 0;
+
+  const [nudgedToday, setNudgedToday] = useState(false);
+  useEffect(() => {
+    if (!eveningWait) return;
+    let cancelled = false;
+    AsyncStorage.getItem(NUDGE_SENT_KEY)
+      .then((sentOn) => {
+        if (!cancelled && sentOn === todayKey) setNudgedToday(true);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [eveningWait, todayKey]);
+
+  const handleNudge = () => {
+    if (!couple) return;
+    // Optimistic hide: the server rate-limits (1/day) and toasts either way.
+    setNudgedToday(true);
+    AsyncStorage.setItem(NUDGE_SENT_KEY, todayKey).catch(() => {});
+    nudge(couple.id).catch(() => {
+      // already-nudged / offline — engagementActions toasted honestly.
+    });
+  };
+
+  const handleOnThisDay = () => {
+    router.push('/onThisDay');
+  };
+
+  const handleFirstWeek = () => {
+    router.push('/wrapped');
+  };
 
   const handleInvite = async () => {
     const code = couple?.invite_code;
@@ -154,7 +269,8 @@ export default function TodayScreen() {
           >
             <Wordmark size={25} c={colors.ink} />
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              {/* Streak pill */}
+              {/* Streak pill — pulses gently once a day during the first week */}
+              <Animated.View style={pulseStyle}>
               <Press
                 onPress={handleStreakPress}
                 scale={false}
@@ -195,6 +311,7 @@ export default function TodayScreen() {
                   </Text>
                 </View>
               </Press>
+              </Animated.View>
 
               {/* Activity bell with red dot */}
               <Press
@@ -250,6 +367,50 @@ export default function TodayScreen() {
               </Press>
             </View>
           </View>
+
+          {/* Day 7 of the first week: celebrate, then show the real recap */}
+          {beat === 'week' && (
+            <Press onPress={handleFirstWeek} accessibilityLabel="See your first week">
+              <LinearGradient
+                colors={gradients.us.colors}
+                locations={gradients.us.locations}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={{
+                  borderRadius: 18,
+                  overflow: 'hidden',
+                  marginBottom: 14,
+                }}
+              >
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 11,
+                    paddingVertical: 13,
+                    paddingHorizontal: 14,
+                  }}
+                >
+                  <View style={{ flex: 1 }}>
+                    <Text
+                      style={{
+                        fontSize: 14.5,
+                        fontWeight: '700',
+                        color: '#fff',
+                        fontFamily: fontFamily.ui,
+                      }}
+                    >
+                      one week of you two 🎉
+                    </Text>
+                    <Kick c="rgba(255,255,255,0.88)" style={{ marginTop: 3 }}>
+                      see your first week →
+                    </Kick>
+                  </View>
+                  <Icon d={ICONS.chevR} size={18} color="#fff" />
+                </View>
+              </LinearGradient>
+            </Press>
+          )}
 
           {/* Banner: invite CTA while pending · partner-played only when TRUE */}
           {!done && (isPending || partnerPlayed) && (
@@ -488,6 +649,85 @@ export default function TodayScreen() {
                   >
                     Waiting on {partner.name} — the reveal unlocks the moment they play.
                   </Text>
+                  {eveningWait && (
+                    <View style={{ marginTop: 14, gap: 8 }}>
+                      <Kick c={colors.inkMute}>while you wait</Kick>
+                      {hasHistory && (
+                        <Press
+                          onPress={handleOnThisDay}
+                          scale={false}
+                          accessibilityLabel="Revisit a favorite reveal"
+                        >
+                          <View
+                            style={{
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                              gap: 10,
+                              paddingVertical: 11,
+                              paddingHorizontal: 13,
+                              borderRadius: 14,
+                              backgroundColor: colors.sunken,
+                            }}
+                          >
+                            <Text style={{ fontSize: 19 }}>💫</Text>
+                            <View style={{ flex: 1 }}>
+                              <Text
+                                style={{
+                                  fontSize: 13.5,
+                                  fontWeight: '700',
+                                  color: colors.ink,
+                                  fontFamily: fontFamily.ui,
+                                }}
+                              >
+                                remember this one?
+                              </Text>
+                              <Kick style={{ marginTop: 3 }}>
+                                revisit a favorite reveal from your story
+                              </Kick>
+                            </View>
+                            <Icon d={ICONS.chevR} size={16} color={colors.inkMute} />
+                          </View>
+                        </Press>
+                      )}
+                      {!nudgedToday && (
+                        <Press
+                          onPress={handleNudge}
+                          scale={false}
+                          accessibilityLabel={`Send ${partner.name} a nudge`}
+                        >
+                          <View
+                            style={{
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                              gap: 10,
+                              paddingVertical: 11,
+                              paddingHorizontal: 13,
+                              borderRadius: 14,
+                              backgroundColor: colors.sunken,
+                            }}
+                          >
+                            <Text style={{ fontSize: 19 }}>👋</Text>
+                            <View style={{ flex: 1 }}>
+                              <Text
+                                style={{
+                                  fontSize: 13.5,
+                                  fontWeight: '700',
+                                  color: colors.ink,
+                                  fontFamily: fontFamily.ui,
+                                }}
+                              >
+                                send {partner.name} a nudge
+                              </Text>
+                              <Kick style={{ marginTop: 3 }}>
+                                a soft hello — zero pressure
+                              </Kick>
+                            </View>
+                            <Icon d={ICONS.chevR} size={16} color={colors.inkMute} />
+                          </View>
+                        </Press>
+                      )}
+                    </View>
+                  )}
                 </>
               ) : (
                 <>
@@ -538,6 +778,23 @@ export default function TodayScreen() {
               )}
             </View>
           </Card>
+
+          {/* Day 1: the streak rule in one quiet sentence (Duolingo's lesson) */}
+          {streak === 1 && (
+            <Text
+              style={{
+                marginTop: 10,
+                fontSize: 12.5,
+                lineHeight: 18,
+                color: colors.inkSoft,
+                fontFamily: fontFamily.ui,
+                textAlign: 'center',
+              }}
+            >
+              streak rule: you both play, it grows. miss a day, it resets — you
+              have {freezes} freeze{freezes === 1 ? '' : 's'}.
+            </Text>
+          )}
 
           {/* Send a pack row */}
           <Press onPress={handlePacks}>

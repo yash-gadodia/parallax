@@ -109,6 +109,7 @@ jest.mock('react-native-reanimated', () => {
     useAnimatedScrollHandler: () => {},
     useDerivedValue: (callback: any) => ({ value: callback(), get: () => callback() }),
     useAnimatedSensor: () => ({ sensor: { value: { x: 0, y: 0, z: 0 } } }),
+    useReducedMotion: () => false,
     withTiming: (target: any, config?: any) => target,
     withSpring: (target: any, config?: any) => target,
     withDecay: (config: any) => 0,
@@ -218,6 +219,16 @@ jest.mock('react-native-purchases-ui', () => ({
     presentPaywallIfNeeded: jest.fn(() => Promise.resolve('NOT_PRESENTED')),
     presentCustomerCenter: jest.fn(() => Promise.resolve()),
   },
+}));
+
+// expo-haptics is native — stub it so src/lib/haptics is a clean no-op in jest.
+jest.mock('expo-haptics', () => ({
+  __esModule: true,
+  selectionAsync: jest.fn(() => Promise.resolve()),
+  impactAsync: jest.fn(() => Promise.resolve()),
+  notificationAsync: jest.fn(() => Promise.resolve()),
+  ImpactFeedbackStyle: { Light: 'light', Medium: 'medium', Heavy: 'heavy', Soft: 'soft', Rigid: 'rigid' },
+  NotificationFeedbackType: { Success: 'success', Warning: 'warning', Error: 'error' },
 }));
 
 // expo-clipboard is native — stub it for the share sheet's Copy action.

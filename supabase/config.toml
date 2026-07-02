@@ -58,3 +58,10 @@ verify_jwt = true
 
 [functions.delete-account]
 verify_jwt = true
+
+# generate-drops: ops/cron-only batch generation of candidate drops into the
+# review queue (docs/GENERATIVE_ENGINE.md). verify_jwt is OFF because the
+# function enforces a STRICTER gate itself: the Authorization bearer must be
+# exactly the service-role key — anon/user JWTs are rejected with 401.
+[functions.generate-drops]
+verify_jwt = false

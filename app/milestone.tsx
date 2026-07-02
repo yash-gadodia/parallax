@@ -1,9 +1,8 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
   ScrollView,
-  Animated,
   useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -19,6 +18,8 @@ import Btn from '../src/components/Btn';
 import { Float } from '../src/components/Float';
 import { DawnBlobs } from '../src/components/DawnBlobs';
 import { Icon, ICONS } from '../src/components/Icon';
+import { SparkleBurst } from './reveal';
+import * as haptics from '../src/lib/haptics';
 
 const YOU = { initial: 'Y' };
 const PAR = { initial: 'D' };
@@ -26,9 +27,14 @@ const PAR = { initial: 'D' };
 export default function MilestoneScreen() {
   const router = useRouter();
   const { days: daysParam } = useLocalSearchParams<{ days?: string }>();
-  const days = daysParam ? parseInt(daysParam, 10) : 30;
+  // Real milestones come from the server (0017): 3/7/14/30/50/100. A missing
+  // or bad param falls back to the SMALLEST milestone — never fabricate a
+  // bigger streak than was earned.
+  const parsed = Number.parseInt(daysParam ?? '', 10);
+  const days = Number.isFinite(parsed) && parsed > 0 ? parsed : 3;
 
-  // Milestone-specific copy
+  // Milestone-specific copy — one honest line per real threshold (0017:
+  // 3/7/14/30/50/100), plus 365 for the long game. No fabricated default.
   const line =
     days >= 365
       ? 'A year of choosing\neach other.'
@@ -38,7 +44,11 @@ export default function MilestoneScreen() {
           ? 'Fifty days of\nstaying in focus.'
           : days >= 30
             ? "You're officially\na streak couple."
-            : 'One week strong.';
+            : days >= 14
+              ? 'Two weeks,\nzero blinks.'
+              : days >= 7
+                ? 'One week strong.'
+                : 'Three days in.\nThis is becoming a thing.';
 
   const sub =
     days >= 365
@@ -49,35 +59,16 @@ export default function MilestoneScreen() {
           ? 'Fifty days straight. You\'ve made this a habit, together.'
           : days >= 30
             ? 'A whole month of showing up for each other. That\'s rarer than you think.'
-            : 'Seven days in a row. This is how rituals are born.';
+            : days >= 14
+              ? 'Fourteen days without missing once. You two mean it.'
+              : days >= 7
+                ? 'Seven days in a row. This is how rituals are born.'
+                : 'Three days in a row. Every ritual starts exactly like this.';
 
-  // Confetti emoji hearts - 12 scattered across top, rising animation
-  const hearts = Array.from({ length: 12 }, (_, i) => ({
-    id: i,
-    x: 4 + Math.random() * 92,
-    delay: Math.random() * 0.9,
-    emoji: ['🔥', '✨', '💞', '🎉', '💗'][i % 5],
-  }));
-
-  const heartAnims = useRef(
-    hearts.map(() => new Animated.Value(0))
-  ).current;
-
+  // Celebration haptic at the earned peak — once, on mount.
   useEffect(() => {
-    // Each heart animates in with stagger: rise from bottom, fade out over 2s
-    const timers = hearts.map((_, i) =>
-      setTimeout(() => {
-        Animated.sequence([
-          Animated.timing(heartAnims[i], {
-            toValue: 1,
-            duration: 2000,
-            useNativeDriver: true,
-          }),
-        ]).start();
-      }, hearts[i].delay * 1000)
-    );
-    return () => timers.forEach(clearTimeout);
-  }, [heartAnims]);
+    haptics.celebration();
+  }, []);
 
   const handleBack = () => {
     safeBack(router);
@@ -98,43 +89,6 @@ export default function MilestoneScreen() {
       style={{ flex: 1, position: 'relative' }}
     >
       {/* Radial gradient overlay at top (light center) - not available in RN, skipped */}
-
-      {/* Confetti emoji hearts - positioned absolutely, animated rise */}
-      {hearts.map((h, idx) => {
-        const animValue = heartAnims[idx];
-        const translateY = animValue.interpolate({
-          inputRange: [0, 1],
-          outputRange: [0, -200],
-        });
-        const opacity = animValue.interpolate({
-          inputRange: [0, 0.8, 1],
-          outputRange: [1, 1, 0],
-        });
-
-        return (
-          <Animated.View
-            key={h.id}
-            pointerEvents="none"
-            style={{
-              position: 'absolute',
-              bottom: 90,
-              left: `${h.x}%`,
-              transform: [{ translateY }],
-              opacity,
-            }}
-          >
-            <Text
-              allowFontScaling={false}
-              style={{
-                fontSize: 24,
-                color: '#fff',
-              }}
-            >
-              {h.emoji}
-            </Text>
-          </Animated.View>
-        );
-      })}
 
       {/* Close button (X) */}
       <View
@@ -207,6 +161,12 @@ export default function MilestoneScreen() {
                 >
                   🔥
                 </Text>
+                {/* One-shot celebration sparkle (reduced-motion aware) */}
+                <SparkleBurst
+                  emojis={['🔥', '✨', '💞', '🎉', '💗']}
+                  radius={150}
+                  delay={250}
+                />
               </View>
             </Float>
 

@@ -3,19 +3,22 @@ import { render } from '@testing-library/react-native';
 import WidgetSetupScreen from '../widgetSetup';
 
 describe('WidgetSetupScreen', () => {
-  it('renders the home screen widget setup with title and main headline', async () => {
+  it('renders the headline and the real install instructions', async () => {
     const { getByText } = await render(<WidgetSetupScreen />);
 
-    // Assert the TopBar title
     expect(getByText('home screen')).toBeTruthy();
-
-    // Assert the main headline
     expect(getByText('See Dani all day, not just in the app.')).toBeTruthy();
-
-    // Assert the kicker
     expect(getByText('live on your home screen')).toBeTruthy();
 
-    // Assert the button text
-    expect(getByText('Add to Home Screen')).toBeTruthy();
+    // The honest install steps (no fake springboard demo)
+    expect(getByText('long-press your home screen')).toBeTruthy();
+    expect(getByText('tap + (or edit → add widget)')).toBeTruthy();
+    expect(getByText('search parallax')).toBeTruthy();
+    expect(
+      getByText(
+        'just installed the app? parallax appears in the widget list after your next app launch.'
+      )
+    ).toBeTruthy();
+    expect(getByText('got it')).toBeTruthy();
   });
 });

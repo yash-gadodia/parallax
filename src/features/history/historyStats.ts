@@ -52,6 +52,18 @@ export function monthStats(history: CoupleHistoryRow[], now: Date): MonthStats {
   return { count: rows.length, avgWave, best };
 }
 
+// The "on this day" memory: the most interesting past reveal. Highest
+// wavelength wins; couple_history arrives most-recent-first, so a tie keeps
+// the earliest index — i.e. the most recent of the tied days.
+export function pickOnThisDay(history: CoupleHistoryRow[]): CoupleHistoryRow | null {
+  if (history.length === 0) return null;
+  let best = history[0];
+  for (const row of history) {
+    if (row.wavelength > best.wavelength) best = row;
+  }
+  return best;
+}
+
 // 'july' — the app's lowercase voice.
 export function monthLabel(now: Date): string {
   return now.toLocaleString('en-US', { month: 'long' }).toLowerCase();

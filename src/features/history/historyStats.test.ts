@@ -1,4 +1,4 @@
-import { waveDot, weeklyDots, monthStats, monthLabel, dayLabel } from './historyStats';
+import { waveDot, weeklyDots, monthStats, monthLabel, dayLabel, pickOnThisDay } from './historyStats';
 import type { CoupleHistoryRow } from '../../types/db';
 
 const row = (date: string, wavelength: number, title = 'a drop'): CoupleHistoryRow => ({
@@ -90,6 +90,37 @@ describe('monthStats', () => {
       avgWave: null,
       best: null,
     });
+  });
+});
+
+describe('pickOnThisDay', () => {
+  it('picks the highest-wavelength reveal', () => {
+    const memory = pickOnThisDay([
+      row('2026-07-10', 72),
+      row('2026-07-06', 94, 'the deep end'),
+      row('2026-07-01', 81),
+    ]);
+    expect(memory?.title).toBe('the deep end');
+    expect(memory?.wavelength).toBe(94);
+    expect(memory?.date).toBe('2026-07-06');
+  });
+
+  it('breaks a wavelength tie toward the most recent day', () => {
+    const memory = pickOnThisDay([
+      row('2026-07-10', 88, 'newer'),
+      row('2026-07-02', 88, 'older'),
+    ]);
+    expect(memory?.title).toBe('newer');
+    expect(memory?.date).toBe('2026-07-10');
+  });
+
+  it('falls back to the most recent reveal when all waves are equal', () => {
+    const memory = pickOnThisDay([row('2026-07-09', 50, 'latest'), row('2026-07-08', 50)]);
+    expect(memory?.title).toBe('latest');
+  });
+
+  it('is null with no history', () => {
+    expect(pickOnThisDay([])).toBeNull();
   });
 });
 

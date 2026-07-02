@@ -7,6 +7,7 @@ import { useAppFonts } from '../src/design/fonts';
 import { queryClient } from '../src/lib/queryClient';
 import { usePurchases } from '../src/features/purchases/usePurchases';
 import { AppErrorBoundary } from '../src/components/AppErrorBoundary';
+import { BrandedLoading } from '../src/components/BrandedLoading';
 import { flushQueue } from '../src/lib/offlineQueue';
 import { submitMyAnswers } from '../src/features/drops/dropActions';
 import { supabase } from '../src/lib/supabase';
@@ -44,8 +45,9 @@ export default function RootLayout() {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Branded frame (font-free) instead of a blank white flash while fonts load.
   if (!fontsLoaded) {
-    return null;
+    return <BrandedLoading />;
   }
 
   return (

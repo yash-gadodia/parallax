@@ -2,6 +2,7 @@ import { Tabs, usePathname, useRouter } from 'expo-router';
 import type { ReactNode } from 'react';
 import { View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import TabBar from '../../src/components/TabBar';
 import { gradients } from '../../src/design/tokens';
@@ -51,7 +52,15 @@ export default function TabsLayout(): ReactNode {
             locations={[0, 64 / scrimH, 1]}
             style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: scrimH }}
           />
-          <TabBar active={active} go={(t) => router.navigate(tabToRoute[t] as never)} />
+          <TabBar
+            active={active}
+            go={(t) => {
+              // Subtle selection tick on tab press - fire-and-forget, best-effort
+              // (silently a no-op where haptics are unsupported).
+              Haptics.selectionAsync().catch(() => {});
+              router.navigate(tabToRoute[t] as never);
+            }}
+          />
         </>
       )}
     </View>

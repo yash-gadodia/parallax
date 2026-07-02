@@ -14,6 +14,7 @@
       "output": "static"
     },
     "plugins": [
+      "@bacons/apple-targets",
       "expo-router",
       "expo-apple-authentication",
       "expo-web-browser",
@@ -30,7 +31,13 @@
     },
     "ios": {
       "bundleIdentifier": "com.yashgadodia.parallax",
+      "appleTeamId": "P6QG53Y747",
       "usesAppleSignIn": true,
+      "entitlements": {
+        "com.apple.security.application-groups": [
+          "group.com.yashgadodia.parallax"
+        ]
+      },
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }

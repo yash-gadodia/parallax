@@ -86,6 +86,16 @@ export interface Answer {
   created_at: string;
 }
 
+// 0018: per-prompt emoji reaction on a revealed drop (one per author per prompt).
+export interface Reaction {
+  id: string;
+  couple_drop_id: string;
+  prompt_id: string;
+  author: string;
+  emoji: string;
+  created_at: string;
+}
+
 export interface Activity {
   id: string;
   couple_id: string;
@@ -154,6 +164,11 @@ export interface Database {
         Row: Answer;
         Insert: Omit<Answer, 'id' | 'created_at'>;
         Update: Partial<Omit<Answer, 'id' | 'created_at'>>;
+      };
+      reactions: {
+        Row: Reaction;
+        Insert: Omit<Reaction, 'id' | 'created_at'>;
+        Update: Partial<Omit<Reaction, 'id' | 'created_at'>>;
       };
       activity: {
         Row: Activity;
