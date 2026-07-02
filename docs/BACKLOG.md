@@ -60,14 +60,21 @@ _From the 2026-07-02 E2E pass — details in `docs/E2E_FINDINGS_2026-07-02.md`._
 - [ ] **(Claude)** Android fidelity pass once iOS is solid: `eas build -p android` works from the same codebase; needs shadows→elevation, blur + font/lineHeight checks per screen (first preview APK built 2026-07-02).
 - [~] **(Claude)** F1: reanimated 4.3.1→4.5.0 + worklets 0.10.1 committed AND shipped — EAS production build `a64c5ec5` (2026-07-02) submitted to TestFlight with the fix + push wiring. REMAINING (Yash): crash-soak the TestFlight build on the waiting screen to confirm the SIGSEGV is gone.
 
+### (Yash) — from the 2026-07-02 build-all sprint (code done, needs your keys/actions)
+- [ ] **(Yash)** Wire an HOURLY cron invoking the `scheduled-pushes` + `email-reengage` edge fns with the service-role bearer (streak-saver ~10pm couple-local, ritual-drift reminder, 3-day-silent email; server-side claim ledger makes reruns safe). Steps + rationale in the `0023_scheduled_pushes.sql` header.
+- [ ] **(Yash)** Set `RESEND_API_KEY` (+ optional `RESEND_FROM`) as function secrets — until then `email-reengage` no-ops with a clear log line.
+- [ ] **(Yash)** Deploy the sprint to prod when ready: `supabase db push` (0020–0025) + deploy edge fns `scheduled-pushes`, `email-reengage`, updated `notify-partner` / `generate-drops` / `refocus`. Verified locally: clean `db reset` + full pgTAP 22 files / 295 tests PASS.
+- [ ] **(Yash)** Next TestFlight build picks up the native additions (react-native-view-shot for the 9:16 share image, widget risk state) — no EAS run from Claude without your go-ahead.
+
 ### (Dani) — from the E2E pass
 - [ ] **(Dani)** F5: today's drop is hardcoded ("DROP 27 · soft launch", fake archive) — decide the real daily-content rotation (ties into the existing prompt-packs item + IMPROVEMENT_PLAN Phase 1). The day label now shows the real weekday (fixed).
 
 ## In progress
 
-_(F1 reanimated upgrade verification — see above)_
+_(nothing right now)_
 
 ## Done
+- [x] **(Claude)** **2026-07-02 build-all sprint — every remaining Claude-buildable IMPROVEMENT_PLAN item** (`d77f95b`..`30b2679`, on top of the parallel session's P4 `473d258`): 4.5 fake surfaces killed (homeScreen 83% mock deleted, gallery out, photo stub gone) · 3.4 streak grace (24h catch-up at 80% + streak repair, weekly freeze earn-back/refund, post-reveal submit immutability — 0022, 25 pgTAP) · 1.5+2.3 reveal payload (mutual-read 🔥 escalation, biggest-miss conversation spark, D2 twin beat, D3 widget ask) · 1.3 intent-weighted rotation + 1.4 became_prompt_id flywheel + 5.3 send_pack/repair_streak (0024, 12 pgTAP) · 3.2 streak-saver + drift pushes with claim ledger + honest reveal copy + 3.8 Resend re-engagement (0023, 31 pgTAP) · 5.1–5.4 honest monetization (one paywall, lifetime $79.99, real pack samples/sends, paywall-moments law) · 2.2 invite expiry + regenerate + 24/72h pending reminders · 0.4 dropDetail renders the real drop (0025, 9 pgTAP) · 2.5 couple_created/first_mutual_reveal events · 3.5d widget streak-at-risk (TS+Swift) · 3.7 practice round · 6.1 real 9:16 share image. Gates: tsc 0 · jest 92 suites/671 tests pristine · expo export ✓ · clean-reset pgTAP 22/295 ✓.
 - [x] **(Claude)** IMPROVEMENT_PLAN P0 complete + deployed to prod (migrations 0014-0017, refocus + notify-partner edge fns): server-driven reveal/wave/streak, couple-local days, honest states everywhere, solo Refocus, auth dead-ends, fabricated signals removed (`d96c5df`..`e573cdb`)
 - [x] **(Claude)** 90-drop/270-prompt rotating content catalog live on prod (0015) — spice-aware, no repeats (`8d31f07`)
 - [x] **(Claude)** nudge push + 1/day rate limit (0016), notify-partner actor fix, real streak surface + milestone events (0017), honest share card + real Wrapped (`e573cdb`)
