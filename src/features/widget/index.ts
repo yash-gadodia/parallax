@@ -14,7 +14,8 @@ export { syncWidgetState, APP_GROUP, SNAPSHOT_KEY } from './sync';
 export function syncWidgetFromToday(
   today: TodayState | null,
   couple: Couple | null,
-  partnerName: string
+  partnerName: string,
+  now: Date = new Date()
 ): boolean {
-  return syncWidgetState(computeWidgetSnapshot(today, couple, partnerName));
+  return syncWidgetState(computeWidgetSnapshot(today, couple, partnerName, now));
 }

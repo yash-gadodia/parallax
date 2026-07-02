@@ -55,6 +55,7 @@ enum WidgetMood {
   case synced(wave: Int, streak: Int)  // (b) both done
   case waiting                         // (c) neither answered
   case none                            // (d) no data yet
+  case risk(streak: Int)               // (e) 20:00+, streak alive, not revealed
 }
 
 func localDayString(_ date: Date = Date()) -> String {
@@ -64,7 +65,7 @@ func localDayString(_ date: Date = Date()) -> String {
   return fmt.string(from: date)
 }
 
-func readMood() -> WidgetMood {
+func readMood(at date: Date = Date()) -> WidgetMood {
   guard
     let defaults = UserDefaults(suiteName: appGroup),
     let raw = defaults.string(forKey: snapshotKey),
@@ -74,13 +75,22 @@ func readMood() -> WidgetMood {
     return .none
   }
   // A snapshot from a previous day is stale: a fresh drop is waiting.
-  if snap.date != localDayString() {
+  if snap.date != localDayString(date) {
     return .waiting
   }
+  // The app may have synced hours ago, so the 20:00 streak-risk flip is also
+  // derived here (mirrors src/features/widget/snapshot.ts: risk outranks guess,
+  // never a revealed day, never without a streak to lose).
+  let isRiskHour = Calendar.current.component(.hour, from: date) >= 20
   switch snap.state {
-  case "guess": return .guess(partner: snap.partnerName)
+  case "risk": return .risk(streak: snap.streak)
+  case "guess":
+    return (isRiskHour && snap.streak > 0)
+      ? .risk(streak: snap.streak)
+      : .guess(partner: snap.partnerName)
   case "synced": return .synced(wave: snap.wavePct, streak: snap.streak)
-  case "waiting": return .waiting
+  case "waiting":
+    return (isRiskHour && snap.streak > 0) ? .risk(streak: snap.streak) : .waiting
   default: return .none
   }
 }
@@ -108,8 +118,18 @@ struct Provider: TimelineProvider {
       matching: DateComponents(hour: 0, minute: 0, second: 30),
       matchingPolicy: .nextTime
     ) ?? now.addingTimeInterval(60 * 60 * 6)
-    // One entry now; refresh just past midnight so yesterday's state degrades to the teaser.
-    completion(Timeline(entries: [Entry(date: now, mood: readMood())], policy: .after(midnight)))
+    // One entry now, plus one at 20:00 so the streak-risk flip happens even if
+    // the app hasn't synced since the morning; refresh just past midnight so
+    // yesterday's state degrades to the teaser.
+    var entries = [Entry(date: now, mood: readMood(at: now))]
+    if let eightPM = Calendar.current.nextDate(
+      after: now,
+      matching: DateComponents(hour: 20, minute: 0, second: 0),
+      matchingPolicy: .nextTime
+    ), eightPM < midnight {
+      entries.append(Entry(date: eightPM, mood: readMood(at: eightPM)))
+    }
+    completion(Timeline(entries: entries, policy: .after(midnight)))
   }
 }
 
@@ -207,6 +227,31 @@ struct WaitingView: View {
   }
 }
 
+struct RiskView: View {
+  let streak: Int
+  let isMedium: Bool
+  var body: some View {
+    VStack(alignment: .leading, spacing: 6) {
+      HStack(spacing: 5) {
+        Circle().fill(Tokens.p1Deep).frame(width: 6, height: 6)
+        KickLabel(text: "streak on the line", color: Tokens.p1Deep)
+      }
+      Spacer(minLength: 0)
+      Text("play before midnight 🔥")
+        .font(.system(size: isMedium ? 17 : 14, weight: .bold, design: .rounded))
+        .foregroundStyle(Tokens.ink)
+        .lineLimit(3)
+        .minimumScaleFactor(0.8)
+      Text("\(streak) day\(streak == 1 ? "" : "s") to keep")
+        .font(.system(size: isMedium ? 12 : 10, weight: .bold, design: .rounded))
+        .foregroundStyle(Tokens.p1Deep)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 3)
+        .background(Capsule().fill(Tokens.p1.opacity(0.16)))
+    }
+  }
+}
+
 struct EmptyStateView: View {
   var body: some View {
     VStack(spacing: 6) {
@@ -237,6 +282,8 @@ struct ParallaxWidgetView: View {
               GuessView(partner: partner, isMedium: isMedium)
             case .synced(let wave, let streak):
               SyncedView(wave: wave, streak: streak, isMedium: isMedium)
+            case .risk(let streak):
+              RiskView(streak: streak, isMedium: isMedium)
             case .waiting, .none:
               WaitingView(isMedium: isMedium)
             }

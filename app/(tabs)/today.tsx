@@ -768,6 +768,43 @@ export default function TodayScreen({
                           </View>
                         </Press>
                       )}
+                      {hasHistory && (
+                        <Press
+                          onPress={() => router.push('/practice')}
+                          scale={false}
+                          accessibilityLabel={`Practice reading ${partner.name}`}
+                        >
+                          <View
+                            style={{
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                              gap: 10,
+                              paddingVertical: 11,
+                              paddingHorizontal: 13,
+                              borderRadius: 14,
+                              backgroundColor: colors.sunken,
+                            }}
+                          >
+                            <Text style={{ fontSize: 19 }}>🎯</Text>
+                            <View style={{ flex: 1 }}>
+                              <Text
+                                style={{
+                                  fontSize: 13.5,
+                                  fontWeight: '700',
+                                  color: colors.ink,
+                                  fontFamily: fontFamily.ui,
+                                }}
+                              >
+                                practice reading {partner.name} 🎯
+                              </Text>
+                              <Kick style={{ marginTop: 3 }}>
+                                guess their past answers · nothing is sent
+                              </Kick>
+                            </View>
+                            <Icon d={ICONS.chevR} size={16} color={colors.inkMute} />
+                          </View>
+                        </Press>
+                      )}
                     </View>
                   )}
                 </>

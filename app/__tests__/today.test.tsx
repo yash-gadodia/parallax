@@ -219,6 +219,25 @@ describe('Today Screen', () => {
     // (b) the nudge affordance, warm and pressure-free
     expect(getByText('send Jordan a nudge')).toBeTruthy();
     expect(getByText('a soft hello — zero pressure')).toBeTruthy();
+    // (c) the solo practice round, clearly marked as never sent
+    expect(getByText('practice reading Jordan 🎯')).toBeTruthy();
+    expect(getByText('guess their past answers · nothing is sent')).toBeTruthy();
+  });
+
+  it('routes the practice row to /practice', async () => {
+    mockLive({
+      streak: 3,
+      createdDaysAgo: 30,
+      iAnswered: true,
+      partnerAnswered: false,
+      state: 'one_done',
+      history: [HISTORY_ROW],
+      now: EVENING,
+    });
+
+    const { getByText } = await render(<TodayScreen now={() => EVENING} />);
+    fireEvent.press(getByText('practice reading Jordan 🎯'));
+    expect(mockPush).toHaveBeenCalledWith('/practice');
   });
 
   it('keeps the plain waiting card in the morning (no while-you-wait push)', async () => {
@@ -237,9 +256,10 @@ describe('Today Screen', () => {
     expect(getByText('Waiting on Jordan — the reveal unlocks the moment they play.')).toBeTruthy();
     expect(queryByText('while you wait')).toBeNull();
     expect(queryByText('send Jordan a nudge')).toBeNull();
+    expect(queryByText('practice reading Jordan 🎯')).toBeNull();
   });
 
-  it('skips the archive row (but keeps the nudge) when the couple has no history yet', async () => {
+  it('skips the archive and practice rows (but keeps the nudge) when the couple has no history yet', async () => {
     mockLive({
       streak: 3,
       createdDaysAgo: 30,
@@ -253,6 +273,7 @@ describe('Today Screen', () => {
     const { getByText, queryByText } = await render(<TodayScreen now={() => EVENING} />);
 
     expect(queryByText('remember this one?')).toBeNull();
+    expect(queryByText('practice reading Jordan 🎯')).toBeNull();
     expect(getByText('send Jordan a nudge')).toBeTruthy();
   });
 });
