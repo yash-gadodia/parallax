@@ -6,7 +6,7 @@ The code side is built (see GO_LIVE). This is the checklist + the App-Store-Conn
 | Item | Status | Owner |
 |---|---|---|
 | **App icon** (1024×1024 PNG, no alpha, no rounded corners) | ✅ DONE 2026-07-03 — `assets/icon.png` (para//ax slashes on dawn), wired in app.json + Android adaptive + splash. Dani may restyle anytime. | Done (Claude) |
-| **Screenshots** (6.7" + 6.5" iPhone, a few per size) | 🟡 DRAFTS in `store-assets/screenshots/` (simulator, demo data) — retake finals from the TestFlight build | Claude drafted / Dani finals |
+| **Screenshots** (6.7" + 6.5" iPhone, a few per size) | ❌ blocked on this Mac (no Xcode/simulator — CLT only). Capture on the MacBook sim or from the TestFlight build. Same blocker for the 3 IAP review screenshots (IAPs sit at MISSING_METADATA until uploaded). | Yash/Dani |
 | **Privacy Policy URL** (publicly reachable) | ✅ LIVE: https://yash-gadodia.github.io/parallax/legal/privacy.html (contact pirsquare.yash+parallax@gmail.com; lawyer review still recommended) | Done (Claude) |
 | **Terms of Service URL** | ✅ LIVE: https://yash-gadodia.github.io/parallax/legal/terms.html | Done (Claude) |
 | **Account deletion in-app** | ✅ built + deployed (`delete-account` edge fn) — reviewers test this | Done |
