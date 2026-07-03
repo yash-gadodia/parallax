@@ -2,7 +2,7 @@ import React from 'react';
 import { Animated } from 'react-native';
 import { render, userEvent } from '@testing-library/react-native';
 import WrappedScreen from '../wrapped';
-import { monthLabel } from '../../src/features/history/historyStats';
+import { monthLabel, monthName, monthShort } from '../../src/features/history/historyStats';
 
 jest.mock('../../src/features/profile/useIdentity', () => ({
   useIdentity: jest.fn(),
@@ -20,6 +20,8 @@ const { useCoupleHistory } = require('../../src/features/lovemap/useCoupleHistor
 
 const now = new Date();
 const month = monthLabel(now);
+const year = now.getFullYear();
+const yy = String(year).slice(-2);
 const iso = (d: Date, day: number) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
@@ -175,6 +177,111 @@ describe('WrappedScreen', () => {
 
     await user.press(getByText('try again'));
     expect(refetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('flips to the annual Wavelength Wrapped and walks slides computed from the real year', async () => {
+    const user = userEvent.setup();
+    const { getByText, getByLabelText } = await render(<WrappedScreen />);
+    const next = () => user.press(getByLabelText('Next slide'));
+
+    await user.press(getByText('rewind the whole year →'));
+
+    // Annual cover with the real year.
+    expect(getByText(`parallax · ${year}`)).toBeTruthy();
+    expect(getByText(new RegExp(`Wavelength\\s+Wrapped '${yy}`))).toBeTruthy();
+
+    // Drops played across the year.
+    await next();
+    expect(getByText('12')).toBeTruthy();
+    expect(getByText(`that's 12 drops revealed in ${year}.`)).toBeTruthy();
+
+    // Real annual average (996 / 12 = 83).
+    await next();
+    expect(getByText('83%')).toBeTruthy();
+    expect(getByText('your real average, across every reveal this year.')).toBeTruthy();
+
+    // Only one month played -> no curve slide; straight to the most telepathic month.
+    await next();
+    expect(getByText(month)).toBeTruthy();
+    expect(getByText(`12 drops at 83% average — your closest month of ${year}.`)).toBeTruthy();
+
+    // Archetype derived from the real rows: 12 twins over 12 drops.
+    await next();
+    expect(getByText('the mind readers')).toBeTruthy();
+    expect(
+      getByText('12 twin answers across 12 drops — you two keep landing on the same thought.')
+    ).toBeTruthy();
+
+    // Share slide carries the real year average.
+    await next();
+    expect(getByText(/world your year/)).toBeTruthy();
+    expect(getByText('ALEX & JORDAN · 83% IN SYNC')).toBeTruthy();
+  });
+
+  it('shows the month-by-month hit-rate curve when the year spans multiple months', async () => {
+    // A second month of the same year (June, or January when now is January).
+    const otherMonth = now.getMonth() === 0 ? 5 : 0;
+    const otherRows = Array.from({ length: 4 }, (_, i) => ({
+      date: iso(new Date(year, otherMonth, 1), i + 1),
+      code: `Y${i + 1}`,
+      title: `year drop ${i + 1}`,
+      wavelength: 90,
+      twins_count: 0,
+    }));
+    mockData({ history: [...TWELVE_THIS_MONTH, ...otherRows] });
+
+    const user = userEvent.setup();
+    const { getByText, getByLabelText } = await render(<WrappedScreen />);
+    const next = () => user.press(getByLabelText('Next slide'));
+
+    await user.press(getByText('rewind the whole year →'));
+
+    // 16 drops, (996 + 360) / 16 = 84.75 -> 85.
+    await next();
+    expect(getByText('16')).toBeTruthy();
+    await next();
+    expect(getByText('85%')).toBeTruthy();
+
+    // The curve slide: exact per-month averages with their month labels.
+    await next();
+    expect(getByText('your average wavelength, every month you played.')).toBeTruthy();
+    expect(getByText('90')).toBeTruthy();
+    expect(getByText('83')).toBeTruthy();
+    expect(getByText(monthShort(otherMonth + 1))).toBeTruthy();
+    expect(getByText(monthShort(now.getMonth() + 1))).toBeTruthy();
+
+    // Most telepathic month: the 90% month beats this month's 83%.
+    await next();
+    expect(getByText('90%')).toBeTruthy();
+    expect(getByText(monthName(otherMonth + 1))).toBeTruthy();
+    expect(getByText(`4 drops at 90% average — your closest month of ${year}.`)).toBeTruthy();
+  });
+
+  it('gates the annual wrapped behind its own minimum and toggles back', async () => {
+    // 6 drops: enough for the month (>= 5), not for the year (< 10).
+    mockData({ history: TWELVE_THIS_MONTH.slice(0, 6) });
+    const user = userEvent.setup();
+    const { getByText, queryByText } = await render(<WrappedScreen />);
+
+    expect(getByText(`parallax · ${month}`)).toBeTruthy();
+
+    await user.press(getByText('rewind the whole year →'));
+    expect(getByText('your year is still writing itself')).toBeTruthy();
+    expect(queryByText(`parallax · ${year}`)).toBeNull();
+
+    await user.press(getByText('back to this month →'));
+    expect(getByText(`parallax · ${month}`)).toBeTruthy();
+  });
+
+  it('lets a sparse month rewind the year from the not-yet state', async () => {
+    mockData({ history: TWELVE_THIS_MONTH.slice(0, 4) });
+    const user = userEvent.setup();
+    const { getByText } = await render(<WrappedScreen />);
+
+    expect(getByText('your first month is still writing itself')).toBeTruthy();
+
+    await user.press(getByText('rewind the whole year →'));
+    expect(getByText('your year is still writing itself')).toBeTruthy();
   });
 
   it('does not count reveals from a previous month', async () => {

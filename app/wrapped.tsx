@@ -18,8 +18,13 @@ import { useCoupleHistory } from '../src/features/lovemap/useCoupleHistory';
 import {
   monthStats,
   monthLabel,
+  monthName,
+  monthShort,
   dayLabel,
   weeklyDots,
+  yearStats,
+  archetypeFor,
+  MIN_DROPS_FOR_YEAR_WRAPPED,
 } from '../src/features/history/historyStats';
 
 // A couple needs this many revealed drops in the month for a recap to mean
@@ -27,7 +32,7 @@ import {
 const MIN_DROPS_FOR_WRAPPED = 5;
 
 interface Slide {
-  kind: 'cover' | 'stat' | 'share';
+  kind: 'cover' | 'stat' | 'curve' | 'archetype' | 'share';
   bg: readonly [string, string, ...string[]];
   kicker?: string;
   big?: string;
@@ -41,6 +46,7 @@ export default function WrappedScreen() {
   const { couple } = useCouple();
   const { history, loading, error, refetch } = useCoupleHistory();
   const [slideIdx, setSlideIdx] = useState(0);
+  const [range, setRange] = useState<'month' | 'year'>('month');
   const barAnim = useRef(new RNAnimated.Value(0)).current;
 
   useEffect(() => {
@@ -54,20 +60,89 @@ export default function WrappedScreen() {
 
   const now = new Date();
   const month = monthLabel(now);
+  const year = now.getFullYear();
+  const yy = String(year).slice(-2);
   const stats = monthStats(history, now);
+  const yStats = yearStats(history, year);
+  const archetype = archetypeFor(yStats);
+  const isYear = range === 'year';
   const streak = couple?.streak ?? 0;
 
   const handleClose = () => {
     safeBack(router);
   };
 
+  const handleToggleRange = () => {
+    setRange(isYear ? 'month' : 'year');
+    setSlideIdx(0);
+  };
+
   const handleShare = () => {
     router.push('/(sheets)/share');
   };
 
-  // Every slide is computed from the couple's real month — no canned numbers,
-  // no archetype. Slides without a real data source simply don't exist.
-  const slides: Slide[] = [
+  // Every slide is computed from the couple's real month (or real year) — no
+  // canned numbers, and the annual archetype is derived purely from their own
+  // patterns. Slides without a real data source simply don't exist.
+  const yearSlides: Slide[] = [
+    { kind: 'cover', bg: ['#FF8E7A', '#9D95F5'] },
+    {
+      kind: 'stat',
+      bg: ['#7064E6', '#C387C9'],
+      kicker: 'you showed up',
+      big: String(yStats.count),
+      unit: 'drops, together',
+      sub: `that's ${yStats.count} drops revealed in ${year}.`,
+    },
+    ...(yStats.avgWave != null
+      ? [
+          {
+            kind: 'stat',
+            bg: ['#54C2A0', '#9D95F5'],
+            kicker: 'in sync',
+            big: `${yStats.avgWave}%`,
+            unit: 'average wavelength',
+            sub: 'your real average, across every reveal this year.',
+          } as Slide,
+        ]
+      : []),
+    ...(yStats.curve.length > 1
+      ? [
+          {
+            kind: 'curve',
+            bg: ['#EF6A53', '#C387C9'],
+            kicker: 'month by month',
+            sub: 'your average wavelength, every month you played.',
+          } as Slide,
+        ]
+      : []),
+    ...(yStats.bestMonth
+      ? [
+          {
+            kind: 'stat',
+            bg: gradients.us.colors,
+            kicker: 'peak telepathy',
+            big: `${yStats.bestMonth.avg}%`,
+            unit: monthName(yStats.bestMonth.month),
+            sub: `${yStats.bestMonth.count} drops at ${yStats.bestMonth.avg}% average — your closest month of ${year}.`,
+          } as Slide,
+        ]
+      : []),
+    ...(archetype
+      ? [
+          {
+            kind: 'archetype',
+            bg: ['#7064E6', '#C387C9'],
+            kicker: 'your year had a shape',
+            big: archetype.name,
+            sub: archetype.line,
+          } as Slide,
+        ]
+      : []),
+    { kind: 'share', bg: ['#9D95F5', '#FF8E7A'] },
+  ];
+
+  const monthSlides: Slide[] = [
     { kind: 'cover', bg: ['#FF8E7A', '#9D95F5'] },
     {
       kind: 'stat',
@@ -116,6 +191,7 @@ export default function WrappedScreen() {
     { kind: 'share', bg: ['#9D95F5', '#FF8E7A'] },
   ];
 
+  const slides = isYear ? yearSlides : monthSlides;
   const slide = slides[Math.min(slideIdx, slides.length - 1)];
   const isLastSlide = slideIdx >= slides.length - 1;
 
@@ -235,8 +311,11 @@ export default function WrappedScreen() {
     );
   }
 
-  // Not enough real reveals this month for a recap: the warm not-yet state.
-  if (!loading && stats.count < MIN_DROPS_FOR_WRAPPED) {
+  // Not enough real reveals for a recap in this range: the warm not-yet state.
+  const tooFew = isYear
+    ? yStats.count < MIN_DROPS_FOR_YEAR_WRAPPED
+    : stats.count < MIN_DROPS_FOR_WRAPPED;
+  if (!loading && tooFew) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: '#000' }}>
         <LinearGradient
@@ -276,7 +355,9 @@ export default function WrappedScreen() {
             c="#fff"
             style={{ lineHeight: 41, marginTop: 16, textAlign: 'center' }}
           >
-            your first month is still writing itself
+            {isYear
+              ? 'your year is still writing itself'
+              : 'your first month is still writing itself'}
           </Serif>
           <Text
             allowFontScaling={false}
@@ -290,14 +371,35 @@ export default function WrappedScreen() {
               fontFamily: fontFamily.ui,
             }}
           >
-            come back when you've played a few more drops — your recap is built
-            from your real reveals, nothing else.
+            {isYear
+              ? "come back when you've played a few more drops — your year gets wrapped from your real reveals, nothing else."
+              : "come back when you've played a few more drops — your recap is built from your real reveals, nothing else."}
           </Text>
           <View style={{ marginTop: 26, width: '100%' }}>
             <Btn kind="soft" onPress={handleClose}>
               back to today
             </Btn>
           </View>
+          <Press
+            onPress={handleToggleRange}
+            scale={false}
+            accessibilityLabel={isYear ? 'See this month wrapped' : 'See your year wrapped'}
+            style={{ marginTop: 18, width: 'auto' }}
+          >
+            <Text
+              allowFontScaling={false}
+              style={{
+                fontSize: 14,
+                fontWeight: '600',
+                color: 'rgba(255,255,255,0.9)',
+                lineHeight: 20,
+                textAlign: 'center',
+                fontFamily: fontFamily.ui,
+              }}
+            >
+              {isYear ? 'back to this month →' : 'rewind the whole year →'}
+            </Text>
+          </Press>
         </LinearGradient>
       </SafeAreaView>
     );
@@ -442,7 +544,9 @@ export default function WrappedScreen() {
                 </View>
               </View>
 
-              <Kick c="rgba(255,255,255,0.85)">{`parallax · ${month}`}</Kick>
+              <Kick c="rgba(255,255,255,0.85)">
+                {isYear ? `parallax · ${year}` : `parallax · ${month}`}
+              </Kick>
               <Serif
                 s={62}
                 c="#fff"
@@ -452,7 +556,7 @@ export default function WrappedScreen() {
                   textAlign: 'center',
                 }}
               >
-                Your month,{'\n'}wrapped
+                {isYear ? `Wavelength\nWrapped '${yy}` : `Your month,\nwrapped`}
               </Serif>
               <Text
                 allowFontScaling={false}
@@ -466,6 +570,26 @@ export default function WrappedScreen() {
               >
                 {`${me.name} & ${partner.name} · tap to begin →`}
               </Text>
+              <Press
+                onPress={handleToggleRange}
+                scale={false}
+                accessibilityLabel={isYear ? 'See this month wrapped' : 'See your year wrapped'}
+                style={{ marginTop: 20, width: 'auto' }}
+              >
+                <Text
+                  allowFontScaling={false}
+                  style={{
+                    fontSize: 14,
+                    fontWeight: '600',
+                    color: 'rgba(255,255,255,0.9)',
+                    lineHeight: 20,
+                    textAlign: 'center',
+                    fontFamily: fontFamily.ui,
+                  }}
+                >
+                  {isYear ? 'back to this month →' : 'rewind the whole year →'}
+                </Text>
+              </Press>
             </View>
           )}
 
@@ -518,6 +642,99 @@ export default function WrappedScreen() {
             </View>
           )}
 
+          {/* CURVE SLIDE (the year's hit-rate, month by month) */}
+          {slide.kind === 'curve' && (
+            <View style={{ alignItems: 'center', width: '100%' }}>
+              <Kick c="rgba(255,255,255,0.85)">{slide.kicker}</Kick>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'flex-end',
+                  gap: 7,
+                  marginTop: 30,
+                }}
+              >
+                {yStats.curve.map((m) => (
+                  <View key={`curve-${m.month}`} style={{ alignItems: 'center', gap: 6 }}>
+                    <Text
+                      allowFontScaling={false}
+                      style={{
+                        fontSize: 12,
+                        color: 'rgba(255,255,255,0.92)',
+                        lineHeight: 16,
+                        fontFamily: fontFamily.mono,
+                      }}
+                    >
+                      {String(m.avg)}
+                    </Text>
+                    <View
+                      style={{
+                        width: 16,
+                        height: Math.max(8, Math.round(m.avg * 1.1)),
+                        borderRadius: 8,
+                        backgroundColor: 'rgba(255,255,255,0.92)',
+                      }}
+                    />
+                    <Text
+                      allowFontScaling={false}
+                      style={{
+                        fontSize: 11,
+                        color: 'rgba(255,255,255,0.8)',
+                        lineHeight: 14,
+                        fontFamily: fontFamily.mono,
+                      }}
+                    >
+                      {monthShort(m.month)}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+              <Text
+                allowFontScaling={false}
+                style={{
+                  fontSize: 16,
+                  color: 'rgba(255,255,255,0.92)',
+                  lineHeight: 24,
+                  marginTop: 26,
+                  maxWidth: 280,
+                  textAlign: 'center',
+                  fontFamily: fontFamily.ui,
+                }}
+              >
+                {slide.sub}
+              </Text>
+            </View>
+          )}
+
+          {/* ARCHETYPE SLIDE (derived from the couple's real patterns) */}
+          {slide.kind === 'archetype' && slide.big != null && (
+            <View style={{ alignItems: 'center' }}>
+              <Kick c="rgba(255,255,255,0.85)">{slide.kicker}</Kick>
+              <Serif
+                s={46}
+                italic
+                c="#fff"
+                style={{ lineHeight: 52, marginTop: 14, textAlign: 'center' }}
+              >
+                {slide.big}
+              </Serif>
+              <Text
+                allowFontScaling={false}
+                style={{
+                  fontSize: 16,
+                  color: 'rgba(255,255,255,0.92)',
+                  lineHeight: 24,
+                  marginTop: 18,
+                  maxWidth: 280,
+                  textAlign: 'center',
+                  fontFamily: fontFamily.ui,
+                }}
+              >
+                {slide.sub}
+              </Text>
+            </View>
+          )}
+
           {/* SHARE SLIDE */}
           {slide.kind === 'share' && (
             <View style={{ width: '100%', alignItems: 'center' }}>
@@ -529,7 +746,7 @@ export default function WrappedScreen() {
                   textAlign: 'center',
                 }}
               >
-                Show the{'\n'}world your month.
+                {`Show the\nworld your ${isYear ? 'year' : 'month'}.`}
               </Serif>
 
               {/* Share preview card - frosted glass, spoiler-free */}
@@ -571,7 +788,7 @@ export default function WrappedScreen() {
                     fontFamily: fontFamily.mono,
                   }}
                 >
-                  {`${me.name.toUpperCase()} & ${partner.name.toUpperCase()} · ${stats.avgWave}% IN SYNC`}
+                  {`${me.name.toUpperCase()} & ${partner.name.toUpperCase()} · ${isYear ? yStats.avgWave : stats.avgWave}% IN SYNC`}
                 </Text>
               </BlurView>
 
