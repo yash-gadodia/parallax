@@ -2,6 +2,21 @@
 
 You don't need to know code to build here. You describe what you want; Claude does the engineering, checks its own work, and shows you the result. This page is everything you need.
 
+## Getting the code (first time on a new Mac only)
+
+If `parallax` is already on the Mac (it is, on Yash's), skip this. Otherwise, one command in Terminal:
+
+```
+git clone https://github.com/yash-gadodia/parallax.git
+```
+
+The full setup path (installing tools, starting the local backend) is in `docs/DEV_SETUP.md` — but you don't have to follow it yourself. Open the folder, start Claude (below), and say **"set me up from DEV_SETUP"** — it runs the steps and tells you if it needs anything.
+
+Two things worth knowing:
+
+- **Secrets aren't your problem.** The repo is public, so real keys live in a private `.secrets/` folder that Yash AirDrops — you never need to open it, copy from it, or worry about it. If a task turns out to need a key or a paid account, Claude reassigns it to Yash automatically. If you ever *see* something that looks like a real key or password inside a normal file, just tell Yash — quick fix, no drama.
+- **The one flag:** if you ever install dependencies yourself, it's `npm install --legacy-peer-deps` (Claude knows this; it's also automatic via the repo's `.npmrc`).
+
 ## Starting a session
 
 1. Open the **Terminal** app on the Mac.
@@ -48,8 +63,8 @@ You never run git, SQL, or build commands. If Claude ever asks you to — tell i
 
 ## Seeing your changes
 
-- **On the Mac:** type `npm run dev` in the Terminal (or just tell Claude "open the app"). It health-checks everything and launches the app on the iPhone simulator.
-- **On your phone:** type `npm start`, then scan the QR code that appears using the **Expo Go** app (free on the App Store). Phone and Mac must be on the same Wi-Fi.
+- **On your phone (works on any Mac):** type `npm start`, then scan the QR code that appears using the **Expo Go** app (free on the App Store). Phone and Mac must be on the same Wi-Fi.
+- **On the Mac simulator (needs Xcode — the MacBook, not the Mini):** type `npm run dev` in the Terminal (or just tell Claude "open the app"). It health-checks everything and launches the app on the iPhone simulator.
 - **No sign-in needed for looks:** without logging in, the app shows demo content — perfect for checking UI and copy. To test the real flow: "I already have an account" → `test@parallax.app` / `parallax123`.
 
 ## Your lane vs Yash's lane

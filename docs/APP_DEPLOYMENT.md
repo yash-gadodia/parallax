@@ -2,7 +2,7 @@
 
 How to build Parallax and ship it to the **App Store** (iOS) + **Play Store** (Android) with **EAS** (Expo Application Services, expo.dev). Pairs with `docs/GO_LIVE.md`, `docs/PROD_SETUP.md`, `docs/CREDENTIALS.md`.
 
-> ⚠️ **Public repo — no credentials here.** Expo tokens, Apple keys, DB passwords live in **1Password / EAS / the dashboards**, never in tracked files. See `docs/CREDENTIALS.md`.
+> ⚠️ **Public repo — no credentials here.** This doc is the *generic, value-free* runbook. Expo tokens, Apple keys, DB passwords live in **`.secrets/` (gitignored) / 1Password / EAS / the dashboards**, never in tracked files. The map of what lives where is `docs/CREDENTIALS.md`; the **private, values-included** build & deploy runbook for this app is **`.secrets/BUILD_AND_DEPLOY.md`** (gitignored — never copy from it into tracked docs).
 
 ## One-time EAS setup
 1. Install: `npm i -g eas-cli` (or just use `npx eas-cli`).
