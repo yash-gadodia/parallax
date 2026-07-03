@@ -37,6 +37,9 @@ The shared task list. Plain-English, owner-tagged, and the Claude agent reads & 
 - [ ] **(Yash)** Universal (https) invite links: host `apple-app-site-association`, add `associatedDomains: ["applinks:yourdomain"]` to `app.json`, swap the share URL to https. (Custom `parallax://` links already work in standalone builds.)
 - [ ] **(Dani/Yash)** Dynamic-type / font-scaling a11y: the app uses `allowFontScaling={false}` for fidelity — a future pass to respect user text-size needs a scaled-token decision.
 
+- [ ] **(Yash)** 🔴 **Paid Apps Agreement is UNSIGNED** (ASC → Business shows status "New", verified 03-07-2026): Edit Legal Entity → accept the Paid Apps Agreement → add bank account + tax forms (W-8BEN). Until Active, Plus purchases return empty everywhere (TestFlight included). Free loop unaffected.
+- [ ] **(Yash)** Upload 3 IAP review screenshots (annual/monthly/lifetime sit at MISSING_METADATA) — capture the paywall from the TestFlight build or MacBook sim; Claude can upload via ASC API once images exist.
+
 ### (Dani) — onboarding, product & design decisions
 - [ ] **(Dani)** Review `docs/COMPETITIVE_PAIRED.md` — Paired teardown + R1–R7 gap-closing roadmap. Your calls especially: **R1** (content library — mostly editorial) and **R3** (how far to demote the "wavelength %" score)
 - [ ] **(Dani)** Get set up locally + learn the stack — start with `WORKING_WITH_CLAUDE.md`, then `docs/DEV_SETUP.md` (run `npm run dev`), and skim `docs/FLOWS.md` for how the app works
