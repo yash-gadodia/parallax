@@ -83,13 +83,19 @@ export async function submitMyAnswers(
   coupleId: string,
   picks: (number | null)[],
   hunches: (number | null)[],
-  opts?: { catchUp?: boolean }
+  opts?: { catchUp?: boolean; coupleDropId?: string }
 ): Promise<SubmitResult> {
   try {
-    // Ensure the target drop exists: today's, or yesterday's for a catch-up.
-    const coupleDropId = opts?.catchUp
-      ? await ensureYesterdayDrop(coupleId)
-      : await ensureTodayDrop(coupleId);
+    // Submit against the EXACT drop whose prompts were answered. Re-running
+    // ensure_* at submit time can resolve a DIFFERENT drop when couple-local
+    // midnight passes mid-play (a catch-up finished at 00:02 would silently
+    // map the answers onto the new day's questions). ensure_* remains only
+    // the fallback for callers that never loaded content.
+    const coupleDropId =
+      opts?.coupleDropId ??
+      (opts?.catchUp
+        ? await ensureYesterdayDrop(coupleId)
+        : await ensureTodayDrop(coupleId));
 
     // Fetch the prompts of THIS drop (not the whole catalog), in order
     const { data: coupleDrop, error: cdError } = await supabase

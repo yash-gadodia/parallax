@@ -47,13 +47,22 @@ const pairedCouple = {
   freezes_remaining: 2,
 } as Couple;
 
+const daysAgoISO = (n: number) =>
+  new Date(Date.now() - n * 86400000).toISOString().slice(0, 10);
+
 const lapsedCouple = {
   id: 'couple-1',
   streak: 0,
   longest_streak: 9,
   freezes_remaining: 1,
   lapsed_streak: 5,
-  lapsed_on: '2026-07-01',
+  lapsed_on: daysAgoISO(2),
+} as unknown as Couple;
+
+// Lapsed too long ago — the server would refuse, so the card must not offer.
+const staleLapsedCouple = {
+  ...lapsedCouple,
+  lapsed_on: daysAgoISO(10),
 } as unknown as Couple;
 
 const zeroSurface = {
@@ -115,6 +124,15 @@ describe('StreakScreen', () => {
     expect(getByText('longest streak together · 20 days')).toBeTruthy();
 
     // Nothing lapsed -> no repair card at all.
+    expect(queryByText('Repair your streak')).toBeNull();
+  });
+
+  it('no repair card when the lapse is older than the 7-day window (the server would refuse)', async () => {
+    mockUseCouple.mockReturnValue({ couple: staleLapsedCouple, loading: false, status: 'active' });
+    mockRpc.mockResolvedValue({ data: zeroSurface, error: null });
+
+    const { queryByText } = await render(<StreakScreen />);
+
     expect(queryByText('Repair your streak')).toBeNull();
   });
 

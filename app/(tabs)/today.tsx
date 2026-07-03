@@ -119,9 +119,12 @@ export default function TodayScreen({
   }, [isLive, today, couple, partner.name]);
 
   // 2.5 funnel: the first mutual reveal is THE activation moment. history
-  // counts revealed drops, so exactly 1 + today revealed = the first one.
+  // counts exactly the revealed drops, so length 1 = the first one — however
+  // it happened (today's flow, a catch-up, or noticed on a later open). The
+  // AsyncStorage key dedupes; requiring today.state too lost the event
+  // whenever history hadn't refetched within the reveal session.
   useEffect(() => {
-    if (!isLive || today?.state !== 'revealed' || history.length !== 1) return;
+    if (!isLive || history.length !== 1) return;
     const KEY = `first-reveal-tracked-${couple?.id ?? ''}`;
     AsyncStorage.getItem(KEY)
       .then((seen) => {
@@ -130,7 +133,7 @@ export default function TodayScreen({
         return AsyncStorage.setItem(KEY, '1');
       })
       .catch(() => {});
-  }, [isLive, today?.state, history.length, couple?.id]);
+  }, [isLive, history.length, couple?.id]);
 
   // 2.2: pending → schedule the 24/72h invite reminders once per pending
   // spell; the moment the couple goes active they're cancelled.

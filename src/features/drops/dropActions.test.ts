@@ -118,6 +118,27 @@ describe('dropActions', () => {
 
       expect(mockSupabase.rpc).toHaveBeenNthCalledWith(1, 'ensure_today_drop', { p_couple: 'couple-1' });
     });
+
+    it('submits against the EXACT loaded drop id — no re-ensure at submit time (midnight-straddle guard)', async () => {
+      mockSupabase.rpc.mockResolvedValueOnce({
+        data: { success: true, couple_drop_id: 'cd-loaded', new_state: 'one_done', wave_pct: null },
+        error: null,
+      }); // submit_answers ONLY
+      mockSubmitTables(['p1']);
+
+      const result = await submitMyAnswers('couple-1', [0], [1], {
+        catchUp: true,
+        coupleDropId: 'cd-loaded',
+      });
+
+      // The FIRST rpc call is already submit_answers — ensure_* never ran.
+      expect(mockSupabase.rpc).toHaveBeenNthCalledWith(1, 'submit_answers', {
+        p_couple_drop: 'cd-loaded',
+        p_answers: [{ prompt_id: 'p1', pick: 0, hunch: 1 }],
+      });
+      expect(mockSupabase.rpc).toHaveBeenCalledTimes(1);
+      expect(result.coupleDropId).toBe('cd-loaded');
+    });
   });
 
   describe('submitMyAnswers', () => {

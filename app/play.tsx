@@ -34,11 +34,15 @@ export default function PlayScreen() {
   const { couple } = useCouple();
   const { me, partner } = useIdentity();
   const { idx, phase, myPicks, myHunches, reset } = usePlayStore();
-  const { content } = useTodayState(session && couple ? couple.id : null);
+  const { today, content } = useTodayState(session && couple ? couple.id : null);
   const [submitting, setSubmitting] = useState(false);
   // Catch-up mode (0021): playing YESTERDAY's drop, scored at 80%.
   const isCatchUp = catchup === '1';
   const [catchUpContent, setCatchUpContent] = useState<DropContent | null>(null);
+  // The exact drop these prompts belong to — submit by id, never re-resolve.
+  // A midnight-straddling session must not map answers onto the next day's
+  // questions (the ensure_* fns resolve by couple-local date at call time).
+  const [catchUpDropId, setCatchUpDropId] = useState<string | null>(null);
   // Guards the answer→hunch / hunch→next-prompt transition: a tap landing
   // during the re-render otherwise binds to the NEW phase's option at the
   // same position (E2E finding F6).
@@ -76,6 +80,7 @@ export default function PlayScreen() {
         if (cancelled) return;
         if (!yesterdayContent) throw new Error('no content');
         setCatchUpContent(yesterdayContent);
+        setCatchUpDropId(yesterdayId);
       } catch {
         if (!cancelled) safeBack(router);
       }
@@ -116,7 +121,12 @@ export default function PlayScreen() {
               couple.id,
               currentState.myPicks,
               currentState.myHunches,
-              { catchUp: isCatchUp }
+              {
+                catchUp: isCatchUp,
+                coupleDropId: isCatchUp
+                  ? catchUpDropId ?? undefined
+                  : today?.couple_drop_id,
+              }
             );
             track(EVENTS.DROP_SUBMITTED);
             usePlayStore.setState({ done: true, coupleDropId: result.coupleDropId });

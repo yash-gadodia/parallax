@@ -80,11 +80,16 @@ export default function StreakScreen() {
   const prevM = [0, ...MILES].reverse().find((m) => m <= streak) || 0;
   const prog = next === prevM ? 1 : Math.min(1, (streak - prevM) / (next - prevM));
 
-  // 5.3: a lapsed streak is repairable (server checks the 7-day window).
-  // Hidden entirely when nothing lapsed; Plus repairs free; non-Plus sees the
-  // paywall first — never a silent repair.
+  // 5.3: a lapsed streak is repairable (server enforces the 7-day window;
+  // the same check here keeps the card honest — offering a repair the server
+  // will refuse is a lie). Hidden when nothing lapsed; Plus repairs free;
+  // non-Plus sees the paywall first — never a silent repair.
   const lapsedStreak = (couple as CoupleWithLapse | null)?.lapsed_streak ?? 0;
-  const showRepair = !!couple?.id && !repaired && streak === 0 && lapsedStreak > 0;
+  const lapsedOn = (couple as CoupleWithLapse | null)?.lapsed_on ?? null;
+  const lapsedRecently =
+    !!lapsedOn && (Date.now() - new Date(lapsedOn).getTime()) / 86400000 <= 7;
+  const showRepair =
+    !!couple?.id && !repaired && streak === 0 && lapsedStreak > 0 && lapsedRecently;
 
   const showToast = (msg: string) => {
     setToastMsg(msg);
