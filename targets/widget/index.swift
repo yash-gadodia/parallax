@@ -320,5 +320,6 @@ struct ParallaxWidget: Widget {
 struct ParallaxWidgetBundle: WidgetBundle {
   var body: some Widget {
     ParallaxWidget()
+    StreakLiveActivity() // streak-countdown Live Activity (StreakActivity.swift)
   }
 }

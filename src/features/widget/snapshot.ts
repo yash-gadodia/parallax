@@ -1,4 +1,5 @@
 import type { Couple, TodayState } from '../../types/db';
+import { localDayKey } from '../drops/useTodayState';
 
 /**
  * The five widget states rendered natively in targets/widget/index.swift:
@@ -53,4 +54,22 @@ export function computeWidgetSnapshot(
     return { state: 'guess', partnerName, wavePct: 0, streak, date: today.date };
   }
   return { state: 'waiting', partnerName, wavePct: 0, streak, date: today.date };
+}
+
+/**
+ * Re-derives what a snapshot means when READ at `now`, mirroring the Swift
+ * widget's readMood (targets/widget/index.swift): a snapshot from a previous
+ * day degrades to 'waiting' (a fresh drop is out), and the 20:00 streak-risk
+ * flip is applied at read time — the app may have written the snapshot hours
+ * before the evening. Shared by the Live Activity state machine so the risk
+ * rule lives in exactly one place per language.
+ */
+export function effectiveWidgetState(snapshot: WidgetSnapshot, now: Date): WidgetState {
+  if (snapshot.state === 'none') return 'none';
+  if (snapshot.date !== localDayKey(now)) return 'waiting';
+  const isRiskHour = now.getHours() >= 20;
+  if (snapshot.state === 'guess' || snapshot.state === 'waiting') {
+    return isRiskHour && snapshot.streak > 0 ? 'risk' : snapshot.state;
+  }
+  return snapshot.state;
 }

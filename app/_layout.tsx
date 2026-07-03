@@ -12,6 +12,7 @@ import { flushQueue } from '../src/lib/offlineQueue';
 import { submitMyAnswers } from '../src/features/drops/dropActions';
 import { supabase } from '../src/lib/supabase';
 import { registerPushToken } from '../src/features/notifications';
+import { attachLiveActivityLifecycle } from '../src/features/liveActivity';
 import { init as initAnalytics, identify, reset, track, EVENTS } from '../src/lib/analytics';
 
 export default function RootLayout() {
@@ -33,6 +34,10 @@ export default function RootLayout() {
       }
     });
 
+    // Re-evaluate the streak-countdown Live Activity whenever the app
+    // foregrounds (iOS only lets a foregrounded app start one).
+    const liveActivitySub = attachLiveActivityLifecycle();
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
         identify(session.user.id);
@@ -42,7 +47,10 @@ export default function RootLayout() {
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      liveActivitySub.remove();
+    };
   }, []);
 
   // Branded frame (font-free) instead of a blank white flash while fonts load.
