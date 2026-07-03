@@ -1,74 +1,72 @@
-# Working with Claude on Parallax (for Dani)
+# Working on Parallax (Dani's guide)
 
-You don't need to be technical to build here. Claude Code does the engineering — you describe what you want in plain English, and it plans, writes the code, tests it, and shows you the result. This guide is everything you need.
+You don't need to know code to build here. You describe what you want; Claude does the engineering, checks its own work, and shows you the result. This page is everything you need.
 
-## The one thing to know
+## Starting a session
 
-**Describe the outcome you want, like you'd tell a designer or a friend. Claude figures out the how.** You don't need the right words, file names, or code terms. If Claude needs to know something, it will ask you 2–3 short questions first.
+1. Open the **Terminal** app on the Mac.
+2. Type `cd parallax` and press Enter.
+3. Type `claude` and press Enter.
 
-## How to ask for things (real examples)
+That's it — now just talk to it like a (very fast) teammate.
 
-Good prompts are specific about the *what*, not the *how*:
+## The golden rule
 
-- "On the Today screen, make the 'Get started' button a bit bigger and add more space above it."
-- "The reveal screen feels cramped. Here's a screenshot — make it match the design." *(drag in a screenshot)*
-- "Add a setting to turn off daily notifications."
-- "Something's broken when I tap a prompt — here's what I see." *(screenshot)*
+**Describe the outcome, not the code.** You never need file names, technical words, or the "right" phrasing. Say what you want the app to *feel like* or *do*:
+
+- "Make the streak flame feel more alive."
+- "The reveal says 'you matched' — make it say 'same wavelength'."
+- "Add a travel-themed drop pack."
+
+If Claude needs a decision from you, it'll ask 2–3 short questions first. Screenshots are gold — drag one into the chat whenever something looks wrong.
+
+## Example prompts (copy, paste, tweak)
+
 - "Change the welcome tagline to 'see each other clearly'."
-- "Write a new daily prompt pack about travel."
+- "The 'Get started' button feels small — make it bigger with more breathing room."
+- "The reveal screen feels cramped compared to the design. Here's a screenshot." *(drag it in)*
+- "Write a new pack of daily drops about travel and adventure."
+- "Add 5 spicier date-night prompts."
+- "Work on the backlog." *(Claude picks the next task on the shared list and builds it)*
+- "What did you change today?" *(plain-English summary — or type `/whatschanged`)*
+- "Undo that last change."
+- "When I tap a prompt on the Today screen, nothing happens. Here's what I see." *(screenshot)*
+- "Show me the Today screen in the simulator."
+- "The streak number looks wrong after midnight — can you check?"
+- "Save this." *(Claude runs all the checks and commits — or type `/checkpoint`)*
 
-**Screenshots are gold.** When something looks wrong, paste a picture. Claude can see it and match the design.
+Handy shortcuts you can type directly: `/content` (add/edit drop prompts), `/polish` (screenshot-driven UI fixing), `/whatschanged`, `/checkpoint` (check everything + save).
 
-## What Claude does automatically (you don't have to ask)
+## What Claude does automatically
 
-- **Plans** bigger changes and asks you to confirm before doing a lot of work.
-- **Writes tests** and **runs them** so changes don't break other things.
-- **Checks the app still builds** and often **opens it on the phone simulator and screenshots it** to confirm it looks right.
-- **Won't claim "done" without proof** — it shows you the result.
-- **Records what it learns** so it gets smarter over time.
+- **Plans** bigger changes and confirms with you before doing lots of work.
+- **Writes and runs tests** so a change doesn't quietly break something else.
+- **Verifies before saying "done"** — it runs the app, screenshots it, and shows you.
+- **Saves checkpoints** (commit + push) so work is never lost and always undoable.
 
-So you can just say "make this change" and trust it'll verify its own work.
+You never run git, SQL, or build commands. If Claude ever asks you to — tell it to do it itself.
 
-## When something's not right
+## Seeing your changes
 
-- "That didn't work — the button is still small." (It'll re-check and try again.)
-- "Hmm, that's not what I meant. I wanted ___." (Re-describe; no need to apologize or be precise.)
-- "Show me what it looks like now." (It'll screenshot the running app.)
-- If it goes in circles, say: **"Stop and rethink this from scratch."** (There's a built-in rule to do exactly that after 2 failed tries.)
+- **On the Mac:** type `npm run dev` in the Terminal (or just tell Claude "open the app"). It health-checks everything and launches the app on the iPhone simulator.
+- **On your phone:** type `npm start`, then scan the QR code that appears using the **Expo Go** app (free on the App Store). Phone and Mac must be on the same Wi-Fi.
+- **No sign-in needed for looks:** without logging in, the app shows demo content — perfect for checking UI and copy. To test the real flow: "I already have an account" → `test@parallax.app` / `parallax123`.
 
-## Seeing your changes on the phone
+## Your lane vs Yash's lane
 
-- Ask: **"Open the app"** — Claude launches it on the iPhone simulator and shows you.
-- To log in for testing without the email step: on the welcome screen tap **"I already have an account"** → email `test@parallax.app`, password `parallax123`.
+The shared to-do list lives in `docs/BACKLOG.md` — every item is tagged with an owner.
 
-## Things you do NOT need to worry about
+- **You (Dani):** product, design, copy, drop content, "how should this feel" decisions. Add ideas in plain words — Claude files them under the right owner.
+- **Yash:** accounts, credentials/keys, deploys to the App Store, anything involving money or legal.
+- **Claude:** builds. Say "work on the backlog" and it does the next buildable task.
 
-- Git, branches, commits — Claude handles version history. (Just say "save this" / "ship it" if you want it committed.)
-- Tests passing, builds, types — Claude keeps these green; it'll tell you if something's genuinely blocked.
-- Breaking the app — changes are tested before they're called done, and everything is recoverable.
+If your request needs something from Yash's lane (a password, a paid account), Claude will build up to that point and flag what's needed — just leave it for him.
 
-## A few useful shortcuts (type them in the prompt)
+## When things look stuck
 
-- **`/preview`** — opens the app on the phone simulator and shows you how it looks right now.
-- **`/fix <describe it>`** — Claude finds and fixes a bug or something that looks wrong, then proves it's fixed. (A screenshot helps a lot.)
-- **`/ship`** — saves your changes to GitHub (after checking everything still works). Say this when you're happy with a change.
-- **`/goal <what you want>`** — sets a target Claude must fully finish before it stops (e.g. `/goal make the Us screen match the design`). Great for "don't stop until it's actually done."
-- **`! <command>`** — runs a terminal command for you if Claude ever asks you to (rare).
-- Just talking normally works for everything else.
+- Press **Escape** to interrupt Claude mid-task.
+- Say **"stop"** — it stops.
+- Ask **"where are we?"** — it recaps what it's doing and what's left.
+- If it keeps failing at the same thing, say: "Stop and rethink this from scratch."
 
-## Your to-do list
-
-`docs/BACKLOG.md` is the shared task list. Each item is tagged with who owns it — **(Dani)** for product/design calls (that's you), **(Yash)** for accounts/credentials, **(Claude)** for things the agent builds.
-
-- Add anything you want in plain words — Claude files it under the right person.
-- Say **"work on the backlog"** and Claude builds the next **(Claude)** task and ticks it off.
-- Your **(Dani)** items are decisions only you can make (e.g. "ship the Wrapped feature?") — answer them in chat and Claude takes it from there.
-
-## Where the deeper docs live (for Claude, or a technical helper)
-
-- `README.md` — setup + commands · `docs/DEV_SETUP.md` — run it locally
-- `docs/FLOWS.md` — how every feature works · `docs/HANDOFF.md` — extending it + go-live
-- `docs/DECISIONS.md` — why things are built the way they are
-- `CLAUDE.md` + `.claude/rules/` — the rules Claude follows automatically
-
-If you ever get stuck, paste the error or a screenshot and say "help me fix this." That's enough.
+Nothing you do here can break things permanently — every change is checkpointed and reversible. When in doubt, just ask.

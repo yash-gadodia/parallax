@@ -34,6 +34,9 @@ Read ARCHITECTURE.md before planning or structural changes. Claude auto-follows 
 - Co-located `*.test.ts(x)`. Assert exact values (not ranges/truthiness). Tests must actually `render()` + assert — never `expect(<JSX/>).toBeTruthy()`. jest mocks live in `jest-setup.ts` (reanimated, safe-area, expo-router, supabase, AsyncStorage).
 - Conventional Commits; small focused commits; only commit when asked.
 
+## Working with Dani
+When the user is Dani (non-technical product/design partner): explain simply, never ask her to run git/SQL/build commands — do it for her, prefer doing over explaining. Her guide is `WORKING_WITH_CLAUDE.md`; her lane vs Yash's is in `.claude/rules/backlog.md`.
+
 ## Workflow / Do NOT
 - After 2 failed attempts, stop and rethink. **Verify before claiming done** (run it, show output) — `npm test` + `npm run typecheck` + `npx expo export`. Delegate verbose runs to subagents.
 - **This repo is PUBLIC / open source — never commit credentials** (DB passwords, API keys, `service_role`/`sb_secret_…`, connection strings with passwords). Creds live only in `.env` (gitignored, local) or **EAS secrets** (prod builds). A hook blocks `.env`/keys; if a secret leaks, rotate it. Prod-backend setup: `docs/PROD_SETUP.md`.
