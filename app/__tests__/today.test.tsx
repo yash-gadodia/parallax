@@ -6,6 +6,7 @@ jest.mock('expo-router', () => ({
   __esModule: true,
   useRouter: () => ({ push: mockPush, replace: jest.fn(), back: jest.fn(), navigate: jest.fn(), dismiss: jest.fn() }),
   useLocalSearchParams: () => ({}),
+  useFocusEffect: () => {},
 }));
 
 jest.mock('../../src/features/pairing/useCouple', () => ({

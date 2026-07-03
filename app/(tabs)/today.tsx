@@ -63,6 +63,7 @@ import {
   cancelPendingReminders,
 } from '../../src/features/notifications';
 import { track, EVENTS } from '../../src/lib/analytics';
+import { useRefetchOnRefocus } from '../../src/lib/useRefetchOnRefocus';
 
 // One-per-day dedupe keys (device-local day, see localDayKey).
 const STREAK_PULSE_SEEN_KEY = 'parallax:streak_pulse_seen_on';
@@ -86,9 +87,14 @@ export default function TodayScreen({
   const { items: dbActivity, unreadCount } = useActivity(couple?.id || null);
   const { history } = useCoupleHistory();
   // The milestone journey surface (0028): a quiet row, never a shout.
-  const { state: journeyState, stages: journeyStages } = useJourneyState(
-    session && couple ? couple.id : null
-  );
+  const {
+    state: journeyState,
+    stages: journeyStages,
+    refetch: refetchJourney,
+  } = useJourneyState(session && couple ? couple.id : null);
+  // The journey row goes stale after a check-in/advance on the pushed journey
+  // screen — refresh it whenever the tab regains focus.
+  useRefetchOnRefocus(refetchJourney);
   const { spiceLevel } = useProfile();
   const { me, partner } = useIdentity();
   const staticDrop = selectDropForSpice(DROP, normaliseSpiceLevel(spiceLevel) as SpiceLevel);

@@ -25,6 +25,7 @@ import { useDropEmojis } from '../../src/features/history/useDropEmojis';
 import { useProfile } from '../../src/features/profile/useProfile';
 import { useMoneyDate } from '../../src/features/moneyDates/useMoneyDate';
 import { describeLastMoneyDate } from '../../src/features/moneyDates/cards';
+import { useRefetchOnRefocus } from '../../src/lib/useRefetchOnRefocus';
 
 export default function UsScreen() {
   const router = useRouter();
@@ -40,7 +41,10 @@ export default function UsScreen() {
   // only covers the demo codes, so it stays as the demo fallback below.
   const dropEmojis = useDropEmojis(history.map((h) => h.code));
   const { name, partnerName, streak, togetherSince } = useProfile();
-  const { state: moneyDateState } = useMoneyDate();
+  const { state: moneyDateState, refetch: refetchMoneyDate } = useMoneyDate();
+  // The money-date row goes stale after a session completes on the pushed
+  // screen — refresh it whenever the tab regains focus.
+  useRefetchOnRefocus(refetchMoneyDate);
 
   const currentWave = history.length > 0 ? `${history[0].wavelength}` : null;
 
@@ -365,8 +369,8 @@ export default function UsScreen() {
                 ))}
               </View>
               <View style={{ marginTop: 24, gap: 10 }}>
-                <Skeleton h={70} br={20} testID="us-skeleton-row" />
-                <Skeleton h={70} br={20} testID="us-skeleton-row" />
+                <Skeleton h={70} br={20} testID="us-skeleton-row-1" />
+                <Skeleton h={70} br={20} testID="us-skeleton-row-2" />
               </View>
             </View>
           ) : historyError ? (

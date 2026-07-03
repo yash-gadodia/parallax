@@ -7,6 +7,7 @@ const mockPush = jest.fn();
 jest.mock('expo-router', () => ({
   __esModule: true,
   useRouter: () => ({ push: mockPush, back: jest.fn(), replace: jest.fn(), navigate: jest.fn() }),
+  useFocusEffect: () => {},
 }));
 
 jest.mock('../../../src/features/lovemap/useLearnings', () => ({
@@ -94,7 +95,8 @@ describe('UsScreen', () => {
 
     expect(getByTestId('us-skeleton-chart')).toBeTruthy();
     expect(getAllByTestId('us-skeleton-stat')).toHaveLength(3);
-    expect(getAllByTestId('us-skeleton-row')).toHaveLength(2);
+    expect(getByTestId('us-skeleton-row-1')).toBeTruthy();
+    expect(getByTestId('us-skeleton-row-2')).toBeTruthy();
     // Neither the empty state nor the chart pops in while loading.
     expect(queryByText('YOUR STORY STARTS HERE')).toBeNull();
     expect(queryByText('LAST 7 DROPS')).toBeNull();
