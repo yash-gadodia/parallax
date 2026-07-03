@@ -39,7 +39,7 @@ Owner legend: most of this is **infra/creds (Yash)**; a few are one-time edits y
 - [ ] **Analytics** (optional): set `EXPO_PUBLIC_ANALYTICS_KEY` (PostHog) — no-ops until then.
 
 ## 4. Push notifications (the habit loop + retention)
-- [~] **APNs `.p8` key** created (App ID has Push capability) — ⚠️ **scoped Sandbox-only; recreate as Sandbox+Production before TestFlight** (TestFlight/App Store use the Production APNs env). Then upload to EAS (`eas credentials` → iOS → Push Notifications Key) + add **FCM** for Android.
+- [x] **APNs** — CONFIRMED OK 2026-07-03 (verified on expo.dev credentials): EAS uses push key `5KKY3JZJ3T` (.p8 keys are Sandbox+Production by design); dist cert + provisioning profile Valid. The old Sandbox-only `2Z8W5MDLTJ` note is moot — not in use. Remaining: **FCM** for Android (later).
 - [x] `projectId` passed to `getExpoPushTokenAsync` (standalone builds need it to mint a push token).
 - [x] **OTA updates** (`expo-updates`) configured — ship JS-only fixes without a rebuild (`eas update --branch production`).
 
