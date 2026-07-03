@@ -78,3 +78,23 @@ Wired the iOS launch credentials end-to-end. Reusable steps + gotchas → `docs/
 - Tighten the loop between "screenshot the running app" and "auto-detect visual drift from the design."
 
 _This log is meant to be appended to. When a session produces a reusable lesson, add it._
+
+## 2026-07-03 — screen-gallery capture session (MacBook sim → docs/screens/)
+
+- **Stale-bundle trap (cost ~1h):** bare `xcrun simctl launch` of the dev client boots a
+  **cached JS bundle** — ours was old enough to predate the resilient-couple-lookup fix, so
+  every relaunch showed pair-up/"Tap retry" + fallback identity ("Y", streak 0) despite a
+  healthy DB/session. Launch with
+  `xcrun simctl openurl booted "com.anonymous.parallax://expo-development-client/?url=http%3A%2F%2F127.0.0.1%3A8081"`
+  (confirm the "Open in parallax?" dialog) to force a fresh Metro bundle. Frontend rule
+  updated the hard way.
+- **Headless auth without typing:** mint a session via
+  `POST /auth/v1/token?grant_type=password` and write the JSON over the AsyncStorage value
+  file (`.../RCTAsyncLocalStorage_V1/<md5 of "sb-127-auth-token">`) with the app terminated —
+  supabase-js restores it on next launch. (UI typing via cliclick is unreliable for RN buttons.)
+- **Sheets stack under deep links:** `(sheets)` routes opened via `parallax://plus|share|spice`
+  stay mounted over subsequently deep-linked screens; backdrop taps/drag-down don't dismiss
+  them in automation. Relaunch the app to reset the nav stack between sheet captures.
+- Deep-linked `parallax://reveal` (no play-flow context) shows the honest error state by
+  design — the celebration is only reachable through Today → "See the reveal".
+- Full gallery + ASC IAP screenshots now live in `docs/screens/` (see SCREENS.md).
