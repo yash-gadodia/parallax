@@ -194,4 +194,24 @@ describe('TimelineScreen', () => {
     fireEvent.press(getByText('the ick list'));
     expect(mockPush).toHaveBeenCalledWith('/dropDetail?code=DROP 26');
   });
+
+  it('demo (isSample): labels the fabricated story as a sample', async () => {
+    mockUseTimeline.mockReturnValue({
+      entries: [
+        { kind: 'pairup', id: 'pairup', date: '2024-02-01', label: 'Yash & Dani paired up' },
+      ] as TimelineEntry[],
+      loading: false,
+      isSample: true,
+      error: null,
+      refetch: jest.fn(),
+    });
+
+    const { getByText } = await render(<TimelineScreen />);
+    expect(getByText('sample story · pair up to start writing yours')).toBeTruthy();
+  });
+
+  it('signed-in: never shows the sample label on a real story', async () => {
+    const { queryByText } = await render(<TimelineScreen />);
+    expect(queryByText('sample story · pair up to start writing yours')).toBeNull();
+  });
 });

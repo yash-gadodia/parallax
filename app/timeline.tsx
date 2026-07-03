@@ -163,6 +163,12 @@ export default function TimelineScreen() {
         >
           <View style={styles.topSpacer} />
 
+          {isSample && !loading && (
+            <Kick c={colors.p2Deep} style={{ marginBottom: 12 }} testID="timeline-sample-label">
+              sample story · pair up to start writing yours
+            </Kick>
+          )}
+
           {loading ? (
             <View style={styles.items}>
               <Skeleton h={16} w={110} br={8} testID="timeline-skeleton-month" />
