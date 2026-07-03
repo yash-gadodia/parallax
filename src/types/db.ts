@@ -32,6 +32,7 @@ export interface Drop {
   title: string | null;
   theme: string | null;
   pack_id: string | null;
+  couple_id: string | null;
   created_at: string;
 }
 
