@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, act } from '@testing-library/react-native';
+import { render, act, fireEvent } from '@testing-library/react-native';
 import WaitingScreen from '../waiting';
 import { usePlayStore } from '../../src/store/play';
 
@@ -7,6 +7,8 @@ import { usePlayStore } from '../../src/store/play';
 let mockSession: object | null = null;
 let mockCouple: object | null = null;
 let mockCoupleDrop: { id: string; state: string } | null = null;
+let mockDropError: Error | null = null;
+const mockRefetchDrop = jest.fn();
 // Captures the id arg passed to useDropState by the component under test
 let capturedDropStateId: string | null | undefined = undefined;
 
@@ -22,7 +24,8 @@ jest.mock('../../src/features/drops/useDropState', () => ({
     return {
       coupleDrop: id !== null ? mockCoupleDrop : null,
       loading: false,
-      error: null,
+      error: id !== null ? mockDropError : null,
+      refetch: mockRefetchDrop,
     };
   },
 }));
@@ -33,6 +36,8 @@ describe('WaitingScreen — demo mode (no session)', () => {
     mockSession = null;
     mockCouple = null;
     mockCoupleDrop = null;
+    mockDropError = null;
+    mockRefetchDrop.mockClear();
     capturedDropStateId = undefined;
     usePlayStore.setState({ coupleDropId: null });
   });
@@ -73,6 +78,8 @@ describe('WaitingScreen — live mode (session + couple)', () => {
     mockSession = { user: { id: 'me' } };
     mockCouple = { id: 'couple-1', member_a: 'me', member_b: 'them' };
     mockCoupleDrop = null;
+    mockDropError = null;
+    mockRefetchDrop.mockClear();
     capturedDropStateId = undefined;
     usePlayStore.setState({ coupleDropId: 'cd-99' });
   });
@@ -99,5 +106,25 @@ describe('WaitingScreen — live mode (session + couple)', () => {
     const { getByText } = await render(<WaitingScreen />);
     // Should still render — not yet revealed, so we stay on waiting screen
     expect(getByText('looking for Dani…')).toBeTruthy();
+  });
+
+  it("shows the honest can't-check state with retry when the drop status fails to load", async () => {
+    mockDropError = new Error('offline');
+
+    const { getByText, queryByText } = await render(<WaitingScreen />);
+
+    expect(getByText("can't check on Dani")).toBeTruthy();
+    expect(
+      getByText(
+        "Your answers are safe — we just can't see whether Dani has played. Check your connection."
+      )
+    ).toBeTruthy();
+    // The indefinite wait copy and its dots are replaced, not stacked.
+    expect(queryByText('looking for Dani…')).toBeNull();
+    // The answers-saved status line stays true and visible.
+    expect(getByText("you're in ✓")).toBeTruthy();
+
+    fireEvent.press(getByText('try again'));
+    expect(mockRefetchDrop).toHaveBeenCalledTimes(1);
   });
 });

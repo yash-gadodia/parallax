@@ -23,19 +23,24 @@ jest.mock('../../src/features/drops/useTodayState', () => ({
 }));
 
 jest.mock('../../src/features/profile/useProfile', () => ({
-  useProfile: jest.fn(() => ({
-    name: 'Alex',
-    partnerName: 'Jordan',
-    spiceLevel: 'Spicy',
-    notifyTime: null,
-    togetherSince: 'March 2023',
-    streak: 42,
-    loading: false,
-    updateProfile: jest.fn(),
-  })),
+  useProfile: jest.fn(),
 }));
 
+import { useProfile } from '../../src/features/profile/useProfile';
+
 const mockUseTodayState = useTodayState as jest.Mock;
+const mockUseProfile = useProfile as jest.Mock;
+
+const PROFILE = {
+  name: 'Alex',
+  partnerName: 'Jordan',
+  spiceLevel: 'Spicy',
+  notifyTime: null,
+  togetherSince: 'March 2023',
+  streak: 42,
+  loading: false,
+  updateProfile: jest.fn(),
+};
 
 function todayState(overrides: Partial<TodayState>): TodayState {
   return {
@@ -54,6 +59,7 @@ function todayState(overrides: Partial<TodayState>): TodayState {
 describe('ProfileScreen', () => {
   beforeEach(() => {
     mockUseTodayState.mockReturnValue({ today: null, loading: false, refresh: jest.fn() });
+    mockUseProfile.mockReturnValue(PROFILE);
   });
 
   it('renders real identity from useProfile', async () => {
@@ -63,6 +69,19 @@ describe('ProfileScreen', () => {
     expect(getByText('paired with')).toBeTruthy();
     expect(getByText('Jordan')).toBeTruthy();
     expect(getByText('Spicy')).toBeTruthy();
+  });
+
+  it('shows identity skeletons while the profile loads — never a name flash', async () => {
+    mockUseProfile.mockReturnValue({ ...PROFILE, loading: true });
+
+    const { getByTestId, queryByText } = await render(<ProfileScreen />);
+
+    expect(getByTestId('profile-skeleton-tok')).toBeTruthy();
+    expect(getByTestId('profile-skeleton-name')).toBeTruthy();
+    expect(getByTestId('profile-skeleton-pair')).toBeTruthy();
+    expect(queryByText('Alex')).toBeNull();
+    expect(queryByText('paired with')).toBeNull();
+    expect(queryByText('Jordan')).toBeNull();
   });
 
   it('shows the nudge banner only when I answered and my partner has not', async () => {

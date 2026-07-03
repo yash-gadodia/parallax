@@ -1,4 +1,4 @@
-import { renderHook, waitFor } from '@testing-library/react-native';
+import { renderHook, waitFor, act } from '@testing-library/react-native';
 import { useOnThisDay } from './useOnThisDay';
 
 jest.mock('../auth/useSession', () => ({ useSession: jest.fn() }));
@@ -118,5 +118,26 @@ describe('useOnThisDay', () => {
     expect(result.current.memory?.title).toBe('the deep end');
     expect(result.current.prompts).toEqual([]);
     expect(result.current.answers).toEqual([]);
+    expect(result.current.error?.message).toBe('offline');
+  });
+
+  it('refetch clears the error and loads the answers on recovery', async () => {
+    mockCoupleDropLookup('cd-92');
+    mockFetchReveal.mockRejectedValueOnce(new Error('offline'));
+
+    const { result } = await renderHook(() => useOnThisDay());
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.error?.message).toBe('offline');
+
+    await act(async () => {
+      result.current.refetch();
+    });
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.error).toBeNull();
+    expect(mockFetchReveal).toHaveBeenCalledTimes(2);
+    expect(result.current.prompts).toEqual(PROMPTS);
+    expect(result.current.answers).toEqual(ANSWERS);
   });
 });

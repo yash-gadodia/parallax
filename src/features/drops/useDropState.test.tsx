@@ -188,6 +188,49 @@ describe('useDropState', () => {
     expect(capturedState.coupleDrop).toBeNull();
   });
 
+  it('refetch clears the error, re-runs the fetch and recovers', async () => {
+    const mockError = new Error('Network error');
+    const mockDropData = { id: 'drop-1', state: 'one_done' };
+    mockSupabase.from
+      .mockReturnValueOnce(builder({ data: null, error: mockError }))
+      .mockReturnValue(builder({ data: mockDropData, error: null }));
+    mockSupabase.channel.mockReturnValue({
+      on: jest.fn().mockReturnThis(),
+      subscribe: jest.fn(),
+    });
+
+    let capturedState: any = null;
+
+    function TestComponent() {
+      const state = useDropState('drop-1');
+      capturedState = state;
+      return null;
+    }
+
+    await act(async () => {
+      render(<TestComponent />);
+    });
+
+    await act(async () => {
+      await new Promise(resolve => setTimeout(resolve, 50));
+    });
+
+    expect(capturedState.error).toEqual(mockError);
+    expect(capturedState.coupleDrop).toBeNull();
+
+    await act(async () => {
+      capturedState.refetch();
+    });
+
+    await act(async () => {
+      await new Promise(resolve => setTimeout(resolve, 50));
+    });
+
+    expect(capturedState.error).toBeNull();
+    expect(capturedState.loading).toBe(false);
+    expect(capturedState.coupleDrop).toEqual({ id: 'drop-1', state: 'one_done' });
+  });
+
   it('converts non-Error thrown errors to Error objects', async () => {
     mockSupabase.from.mockImplementation(() => {
       throw 'string error';

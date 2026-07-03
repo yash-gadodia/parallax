@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, act } from '@testing-library/react-native';
+import { render, act, fireEvent } from '@testing-library/react-native';
 
 let mockParams: { code?: string; cdid?: string; day?: string } = {};
 
@@ -67,6 +67,41 @@ describe('DropDetailScreen', () => {
 
     expect(getByText('opening this drop…')).toBeTruthy();
     expect(queryByText("This drop isn't available yet")).toBeNull();
+  });
+
+  it('shows the honest retryable error when the live drop fails to load, and retry recovers', async () => {
+    mockParams = { code: 'W12', cdid: 'cd-real-3', day: '2026-06-30' };
+    mockGetDropContent.mockRejectedValueOnce(new Error('offline')).mockResolvedValue({
+      code: 'W12',
+      title: 'the deep end',
+      prompts: [
+        { id: 'p1', emoji: '🌊', q: 'comfort rewatch?', opts: ['the office', 'ghibli', 'f1'] },
+      ],
+    });
+    mockFetchReveal.mockResolvedValue({
+      state: 'revealed',
+      reveal: { yourHits: 1, theirHits: 0, twins: 1, wave: 80 },
+      promptAnswers: [{ youPick: 1, youHunch: 1, themPick: 1, themHunch: 0 }],
+      prompts: [],
+      caughtUp: true,
+    });
+
+    const { getByText, queryByText } = await render(<DropDetailScreen />);
+    await act(async () => {});
+
+    // A fetch failure is a distinct, honest error — not the "unavailable" empty state.
+    expect(getByText("hmm, that didn't load")).toBeTruthy();
+    expect(getByText("Your answers are safe — we just couldn't reach this drop.")).toBeTruthy();
+    expect(queryByText("This drop isn't available yet")).toBeNull();
+
+    await act(async () => {
+      fireEvent.press(getByText('try again'));
+    });
+
+    expect(mockGetDropContent).toHaveBeenCalledTimes(2);
+    expect(getByText('the deep end')).toBeTruthy();
+    expect(getByText('comfort rewatch?')).toBeTruthy();
+    expect(queryByText("hmm, that didn't load")).toBeNull();
   });
 
   it('renders the requested archive drop with questions and labels', async () => {

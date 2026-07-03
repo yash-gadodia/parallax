@@ -43,6 +43,7 @@ export default function StreakScreen() {
   const isPro = usePurchases((s) => s.isPro);
   const [surface, setSurface] = useState<StreakSurface | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [surfaceError, setSurfaceError] = useState(false);
   const [repairing, setRepairing] = useState(false);
   const [repaired, setRepaired] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
@@ -58,9 +59,14 @@ export default function StreakScreen() {
       const { data, error } = await supabase.rpc('get_streak_surface', {
         p_couple: couple.id,
       });
-      // Quiet failure by design: the local fallback below stays up rather
-      // than an error state — same posture as getTodayState.
-      if (cancelled || error || !data) return;
+      if (cancelled) return;
+      // The couple-row fallback numbers stay up (never a blank screen), but a
+      // failed live fetch is SAID, with a retry — the week grid may be stale.
+      if (error || !data) {
+        setSurfaceError(true);
+        return;
+      }
+      setSurfaceError(false);
       setSurface(data as StreakSurface);
     })();
     return () => {
@@ -298,6 +304,43 @@ export default function StreakScreen() {
               )}
             </View>
           </View>
+        )}
+
+        {/* Live surface failed: the fallback numbers stay, but say so (4.1) */}
+        {surfaceError && (
+          <Press
+            onPress={() => setReloadKey((k) => k + 1)}
+            scale={false}
+            accessibilityLabel="Retry loading live streak"
+          >
+            <View
+              style={{
+                marginTop: 16,
+                paddingVertical: 10,
+                paddingHorizontal: 14,
+                borderRadius: 14,
+                backgroundColor: colors.sunken,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 8,
+              }}
+            >
+              <Text allowFontScaling={false} style={{ fontSize: 15 }}>🌫</Text>
+              <Text
+                allowFontScaling={false}
+                style={{
+                  flex: 1,
+                  fontSize: 12.5,
+                  lineHeight: 17.5,
+                  color: colors.inkSoft,
+                  fontFamily: fontFamily.ui,
+                }}
+              >
+                live numbers didn't load — this may be a beat behind
+              </Text>
+              <Kick c={colors.p2Deep}>try again</Kick>
+            </View>
+          </Press>
         )}
 
         {/* This week */}

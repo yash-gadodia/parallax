@@ -13,6 +13,7 @@ import { colors, gradients, radius, shadows, space } from '../src/design/tokens'
 import { fontFamily } from '../src/design/typography';
 import { Kick, Serif } from '../src/components/Text';
 import TopBar from '../src/components/TopBar';
+import Btn from '../src/components/Btn';
 import Card from '../src/components/Card';
 import Chip from '../src/components/Chip';
 import GradientText from '../src/components/GradientText';
@@ -44,6 +45,7 @@ export default function DropDetailScreen() {
 
   const [live, setLive] = useState<DetailDrop | null>(null);
   const [liveFailed, setLiveFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     if (!cdid) return;
@@ -77,7 +79,7 @@ export default function DropDetailScreen() {
     return () => {
       cancelled = true;
     };
-  }, [cdid, code, dayLabel]);
+  }, [cdid, code, dayLabel, attempt]);
 
   // A real drop renders from the server; the static ARCHIVE only ever serves
   // the unauthenticated demo codes. Never substitute a different drop.
@@ -110,6 +112,65 @@ export default function DropDetailScreen() {
   const handleBack = () => {
     safeBack(router);
   };
+
+  // Live drop failed to load: an honest, retryable error — distinct from the
+  // "not available" empty state (this drop exists; we just couldn't reach it).
+  if (cdid && liveFailed) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.bg0 }}>
+        <LinearGradient
+          colors={gradients.dawn.colors}
+          locations={gradients.dawn.locations}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={{ position: 'absolute', inset: 0 }}
+        />
+        <DawnBlobs />
+
+        <TopBar title={code ?? 'drop'} onBack={handleBack} />
+
+        <View
+          style={{
+            flex: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingHorizontal: space.gutter,
+          }}
+        >
+          <Text allowFontScaling={false} style={{ fontSize: 30, marginBottom: 10 }}>
+            🫧
+          </Text>
+          <Serif s={28} italic c={colors.ink} style={{ textAlign: 'center' }}>
+            hmm, that didn't load
+          </Serif>
+          <Text
+            allowFontScaling={false}
+            style={{
+              fontSize: 14,
+              lineHeight: 20,
+              color: colors.inkSoft,
+              fontFamily: fontFamily.ui,
+              textAlign: 'center',
+              marginTop: 8,
+              marginBottom: 16,
+            }}
+          >
+            Your answers are safe — we just couldn't reach this drop.
+          </Text>
+          <Btn
+            kind="soft"
+            onPress={() => {
+              setLiveFailed(false);
+              setAttempt((a) => a + 1);
+            }}
+            style={{ alignSelf: 'stretch' }}
+          >
+            try again
+          </Btn>
+        </View>
+      </View>
+    );
+  }
 
   if (!d) {
     return (

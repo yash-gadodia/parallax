@@ -199,7 +199,7 @@ describe('StreakScreen', () => {
     mockUseCouple.mockReturnValue({ couple: pairedCouple, loading: false, status: 'active' });
     mockRpc.mockResolvedValue({ data: null, error: { message: 'offline' } });
 
-    const { getAllByText, getByText, getByTestId } = await render(<StreakScreen />);
+    const { getAllByText, getByText, getByTestId, queryByText } = await render(<StreakScreen />);
 
     await waitFor(() => expect(mockRpc).toHaveBeenCalledTimes(1));
 
@@ -213,6 +213,17 @@ describe('StreakScreen', () => {
     }
     expect(getByText('Streak freeze · 2 equipped')).toBeTruthy();
     expect(getByText('longest streak together · 9 days')).toBeTruthy();
+
+    // 4.1: the failure is SAID, not silent — and retry re-fetches the surface.
+    expect(getByText("live numbers didn't load — this may be a beat behind")).toBeTruthy();
+    mockRpc.mockResolvedValue({ data: zeroSurface, error: null });
+    await act(async () => {
+      fireEvent.press(getByText('try again'));
+    });
+    expect(mockRpc).toHaveBeenCalledTimes(2);
+    expect(
+      queryByText("live numbers didn't load — this may be a beat behind")
+    ).toBeNull();
   });
 
   it('demo (no couple): keeps the local fallback, never fetches, and never shows an armed freeze', async () => {

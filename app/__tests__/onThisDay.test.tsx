@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react-native';
+import { render, fireEvent } from '@testing-library/react-native';
 import OnThisDayScreen from '../onThisDay';
 
 jest.mock('../../src/features/profile/useIdentity', () => ({
@@ -105,5 +105,28 @@ describe('OnThisDayScreen', () => {
 
     expect(getByText('the deep end')).toBeTruthy();
     expect(getByText('finding your answers…')).toBeTruthy();
+  });
+
+  it('offers an honest retry when the answers fail to load, keeping the memory header', async () => {
+    const refetch = jest.fn();
+    mockUseOnThisDay.mockReturnValue({
+      memory: MEMORY,
+      prompts: [],
+      answers: [],
+      loading: false,
+      error: new Error('offline'),
+      refetch,
+    });
+
+    const { getByText, queryByText } = await render(<OnThisDayScreen />);
+
+    expect(getByText('the deep end')).toBeTruthy();
+    expect(
+      getByText("couldn't load the answers right now — the memory is safe.")
+    ).toBeTruthy();
+    expect(queryByText('finding your answers…')).toBeNull();
+
+    fireEvent.press(getByText('try again'));
+    expect(refetch).toHaveBeenCalledTimes(1);
   });
 });

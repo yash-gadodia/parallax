@@ -122,6 +122,22 @@ describe('Today Screen', () => {
     });
   });
 
+  it('holds the drop card with a skeleton during a live cold start — never the demo content (4.1)', async () => {
+    mockLive({});
+    mockUseTodayState.mockReturnValue({
+      today: null,
+      content: null,
+      loading: true,
+      refresh: jest.fn(),
+    });
+
+    const { getByTestId, queryByText } = await render(<TodayScreen now={() => MORNING} />);
+
+    expect(getByTestId('today-card-skeleton')).toBeTruthy();
+    expect(queryByText("Play today's three")).toBeNull();
+    expect(queryByText('soft launch')).toBeNull();
+  });
+
   it('offers the catch-up card when the server says yesterday is still open (0021)', async () => {
     mockLive({ catchUp: true });
     const { getByText } = await render(<TodayScreen now={() => MORNING} />);

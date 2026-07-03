@@ -147,6 +147,38 @@ describe('Reveal Screen — server mode (session + couple + coupleDropId)', () =
     expect(getAllByText('67%').length).toBeGreaterThan(0);
   });
 
+  it('holds on the honest fetching state while the server reveal loads — never a fake reveal', async () => {
+    mockFetchReveal.mockReturnValue(new Promise(() => {}));
+
+    const { getByText, queryByText, queryAllByText } = await render(<RevealScreen />);
+
+    expect(getByText('fetching your reveal…')).toBeTruthy();
+    // No server data yet → no prompts and no wave, fabricated or otherwise.
+    expect(queryByText('Coffee order?')).toBeNull();
+    expect(queryAllByText('67%')).toHaveLength(0);
+    expect(queryByText("can't reach your reveal")).toBeNull();
+  });
+
+  it('shows the honest retryable error when the reveal fetch fails, and Try again recovers', async () => {
+    mockFetchReveal.mockRejectedValueOnce(new Error('offline'));
+
+    const { getByText, getAllByText, queryByText } = await render(<RevealScreen />);
+    await act(async () => {});
+
+    expect(getByText("can't reach your reveal")).toBeTruthy();
+    expect(getByText('your answers are safe · check your connection')).toBeTruthy();
+    expect(getByText('back to today')).toBeTruthy();
+    expect(queryByText('Coffee order?')).toBeNull();
+
+    await act(async () => {
+      fireEvent.press(getByText('Try again'));
+    });
+
+    expect(mockFetchReveal).toHaveBeenCalledTimes(2);
+    expect(getAllByText('67%').length).toBeGreaterThan(0);
+    expect(queryByText("can't reach your reveal")).toBeNull();
+  });
+
   it('renders a reaction row under each of the 3 compare cards', async () => {
     const { getAllByText } = await render(<RevealScreen />);
     await act(async () => {});

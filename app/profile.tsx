@@ -18,6 +18,7 @@ import Toast from '../src/components/Toast';
 import { Icon, ICONS } from '../src/components/Icon';
 import { Kick, Serif } from '../src/components/Text';
 import { Mark } from '../src/components/Mark';
+import { Skeleton } from '../src/components/Skeleton';
 
 import { colors, gradients, radius, shadows, space } from '../src/design/tokens';
 import { fontFamily } from '../src/design/typography';
@@ -133,7 +134,7 @@ export default function ProfileScreen() {
   const { couple } = useCouple();
   const { today } = useTodayState(couple?.id ?? null);
   const isPro = usePurchases((s) => s.isPro);
-  const { name, partnerName, spiceLevel, notifyTime } = useProfile();
+  const { name, partnerName, spiceLevel, notifyTime, loading: profileLoading } = useProfile();
   const plus = isPro;
   // Nudge only makes sense when I've played and my partner genuinely hasn't.
   const showNudge =
@@ -285,7 +286,23 @@ export default function ProfileScreen() {
       <TopBar title="you & settings" onBack={() => safeBack(router)} />
 
       <ScrollView contentContainerStyle={scrollContentStyle}>
-        {/* Identity Card - editable */}
+        {/* Identity Card - editable. While the real names load it keeps its
+            shape with skeletons — never a flash of the demo persona. */}
+        {profileLoading ? (
+          <View style={identityCardStyle}>
+            <Skeleton h={64} w={64} br={radius.pill} testID="profile-skeleton-tok" />
+            <View style={identityContentStyle}>
+              <Skeleton h={30} w={150} br={10} testID="profile-skeleton-name" />
+              <Skeleton
+                h={16}
+                w={120}
+                br={8}
+                testID="profile-skeleton-pair"
+                style={{ marginTop: 8 }}
+              />
+            </View>
+          </View>
+        ) : (
         <Press onPress={() => router.push('/editProfile')} scale={false}>
           <View style={identityCardStyle}>
             <View style={{ position: 'relative' }}>
@@ -324,6 +341,7 @@ export default function ProfileScreen() {
             <Icon d={ICONS.chevR} size={18} color={colors.inkMute} />
           </View>
         </Press>
+        )}
 
         {/* Nudge Banner — only when I've played and my partner hasn't yet */}
         {showNudge && (

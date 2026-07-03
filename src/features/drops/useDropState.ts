@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import type { CoupleDrop } from '../../types/db';
 
@@ -16,12 +16,13 @@ interface DropState {
  * Hook to subscribe to couple_drop state changes in real-time.
  * Useful for waiting.tsx to detect when partner has answered.
  */
-export function useDropState(couplDropId: string | null): DropState {
+export function useDropState(couplDropId: string | null): DropState & { refetch: () => void } {
   const [state, setState] = useState<DropState>({
     coupleDrop: null,
     loading: true,
     error: null,
   });
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     if (!couplDropId) {
@@ -91,7 +92,14 @@ export function useDropState(couplDropId: string | null): DropState {
       cancelled = true;
       if (channel) supabase.removeChannel(channel);
     };
-  }, [couplDropId]);
+  }, [couplDropId, reloadKey]);
 
-  return state;
+  // Retry after a failed fetch/subscribe: clears the error, re-enters loading,
+  // re-runs the effect (same posture as useCoupleHistory.refetch).
+  const refetch = useCallback(() => {
+    setState({ coupleDrop: null, loading: true, error: null });
+    setReloadKey((k) => k + 1);
+  }, []);
+
+  return { ...state, refetch };
 }

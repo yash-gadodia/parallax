@@ -33,6 +33,7 @@ import Card from '../../src/components/Card';
 import Btn from '../../src/components/Btn';
 import { Kick, Serif } from '../../src/components/Text';
 import GradientText from '../../src/components/GradientText';
+import { Skeleton } from '../../src/components/Skeleton';
 import { colors, gradients, radius, shadows, space } from '../../src/design/tokens';
 import { fontFamily } from '../../src/design/typography';
 import { DROP } from '../../src/content/drop';
@@ -77,7 +78,9 @@ export default function TodayScreen({
   const playState = usePlayStore();
   const { session } = useSession();
   const { couple } = useCouple();
-  const { today, content } = useTodayState(session && couple ? couple.id : null);
+  const { today, content, loading: todayLoading } = useTodayState(
+    session && couple ? couple.id : null
+  );
   const { items: dbActivity, unreadCount } = useActivity(couple?.id || null);
   const { history } = useCoupleHistory();
   const { spiceLevel } = useProfile();
@@ -508,7 +511,25 @@ export default function TodayScreen({
             </Press>
           )}
 
-          {/* Today's drop card */}
+          {/* Live cold start: hold the card with a skeleton until the REAL
+              assigned drop arrives — never flash the static demo content at a
+              real couple (4.1). */}
+          {isLive && todayLoading && !content ? (
+            <Card
+              style={{
+                borderRadius: radius.cardLg,
+                paddingHorizontal: 18,
+                paddingVertical: 20,
+                gap: 12,
+              }}
+              testID="today-card-skeleton"
+            >
+              <Skeleton h={14} w="34%" />
+              <Skeleton h={30} w="72%" />
+              <Skeleton h={52} />
+              <Skeleton h={52} />
+            </Card>
+          ) : (
           <Card
             style={{
               borderRadius: radius.cardLg,
@@ -860,6 +881,7 @@ export default function TodayScreen({
               )}
             </View>
           </Card>
+          )}
 
           {/* Catch-up (0021): yesterday slipped — one bad day ≠ death. Warm,
               never guilt; the 80% rule is stated up front. */}

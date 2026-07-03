@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useSession } from '../auth/useSession';
 import { useCouple } from '../pairing/useCouple';
@@ -22,6 +22,8 @@ export interface UseOnThisDayReturn {
   prompts: OnThisDayPrompt[];
   answers: PromptAnswers[];
   loading: boolean;
+  error: Error | null;
+  refetch: () => void;
 }
 
 /**
@@ -47,6 +49,8 @@ export function useOnThisDay(): UseOnThisDayReturn {
     answers: PromptAnswers[];
   } | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState<Error | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   const coupleId = couple?.id ?? null;
   const memoryDate = memory?.date ?? null;
@@ -70,7 +74,8 @@ export function useOnThisDay(): UseOnThisDayReturn {
           .eq('couple_id', coupleId)
           .eq('date', memoryDate)
           .maybeSingle();
-        if (cancelled || error) return;
+        if (cancelled) return;
+        if (error) throw error;
 
         const coupleDropId = (data as { id: string } | null)?.id;
         if (!coupleDropId) return;
@@ -82,9 +87,13 @@ export function useOnThisDay(): UseOnThisDayReturn {
           prompts: result.prompts,
           answers: result.promptAnswers,
         });
-      } catch {
-        // Quiet failure: the screen still shows the memory's title/date/wave
-        // from couple_history; only the answer compare stays unavailable.
+      } catch (err) {
+        // The screen still shows the memory's title/date/wave from
+        // couple_history; the error lets it offer an honest retry for the
+        // answer compare instead of a dead end.
+        if (!cancelled) {
+          setDetailError(err instanceof Error ? err : new Error('Failed to load the memory answers'));
+        }
       } finally {
         if (!cancelled) setDetailLoading(false);
       }
@@ -93,7 +102,15 @@ export function useOnThisDay(): UseOnThisDayReturn {
     return () => {
       cancelled = true;
     };
-  }, [coupleId, memoryDate]);
+  }, [coupleId, memoryDate, reloadKey]);
+
+  // Retry after a failed detail fetch: clears the error, re-enters loading,
+  // re-runs the effect (same posture as useCoupleHistory.refetch).
+  const refetch = useCallback(() => {
+    setDetailError(null);
+    setDetailLoading(true);
+    setReloadKey((k) => k + 1);
+  }, []);
 
   const detailMatches = detail !== null && detail.forDate === memoryDate;
 
@@ -102,5 +119,7 @@ export function useOnThisDay(): UseOnThisDayReturn {
     prompts: detailMatches ? detail.prompts : [],
     answers: detailMatches ? detail.answers : [],
     loading: coupleLoading || historyLoading || detailLoading,
+    error: detailError,
+    refetch,
   };
 }

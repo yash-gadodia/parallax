@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Peek } from '../src/components/Peek';
 import { Float } from '../src/components/Float';
+import Btn from '../src/components/Btn';
 import Press from '../src/components/Press';
 import { Icon, ICONS } from '../src/components/Icon';
 import { Kick, Serif } from '../src/components/Text';
@@ -33,7 +34,9 @@ export default function WaitingScreen() {
   // When session+couple exists, pass the real coupleDropId so we subscribe to
   // real-time state changes and advance only when state becomes 'revealed'.
   // In demo mode (no session) coupleDropId is null — useDropState returns null state.
-  const { coupleDrop } = useDropState(session && couple ? coupleDropId : null);
+  const { coupleDrop, error: dropError, refetch: refetchDrop } = useDropState(
+    session && couple ? coupleDropId : null
+  );
 
   const isLive = !!(session && couple);
 
@@ -182,59 +185,91 @@ export default function WaitingScreen() {
           you're in ✓
         </Kick>
 
-        {/* Main heading */}
-        <Serif
-          s={34}
-          italic
-          c={colors.ink}
-          style={{ marginTop: 12, marginBottom: 10, textAlign: 'center' }}
-        >
-          looking for {partner.name}…
-        </Serif>
+        {isLive && dropError ? (
+          /* The status check failed: an honest, retryable state — never an
+             indefinite silent wait. The answers are already saved. */
+          <>
+            <Serif
+              s={34}
+              italic
+              c={colors.ink}
+              style={{ marginTop: 12, marginBottom: 10, textAlign: 'center' }}
+            >
+              can't check on {partner.name}
+            </Serif>
 
-        {/* Description text */}
-        <View style={{ maxWidth: 268, marginBottom: 26, marginTop: 0 }}>
-          <Kick
-            c={colors.inkSoft}
-            style={{ fontSize: 15, lineHeight: 22, textAlign: 'center' }}
-          >
-            Your two views are still apart. The moment {partner.name} plays, they snap into focus, that's the reveal.
-          </Kick>
-        </View>
+            <View style={{ maxWidth: 268, marginBottom: 26, marginTop: 0 }}>
+              <Kick
+                c={colors.inkSoft}
+                style={{ fontSize: 15, lineHeight: 22, textAlign: 'center' }}
+              >
+                Your answers are safe — we just can't see whether {partner.name} has played. Check your connection.
+              </Kick>
+            </View>
 
-        {/* Three floating dots animation */}
-        <View
-          style={{
-            flexDirection: 'row',
-            gap: 6,
-            justifyContent: 'center',
-            marginTop: 26,
-          }}
-        >
-          {[0, 1, 2].map((i) => (
-            <Animated.View
-              key={i}
+            <View style={{ width: '100%', marginTop: 10 }}>
+              <Btn kind="soft" onPress={refetchDrop}>
+                try again
+              </Btn>
+            </View>
+          </>
+        ) : (
+          <>
+            {/* Main heading */}
+            <Serif
+              s={34}
+              italic
+              c={colors.ink}
+              style={{ marginTop: 12, marginBottom: 10, textAlign: 'center' }}
+            >
+              looking for {partner.name}…
+            </Serif>
+
+            {/* Description text */}
+            <View style={{ maxWidth: 268, marginBottom: 26, marginTop: 0 }}>
+              <Kick
+                c={colors.inkSoft}
+                style={{ fontSize: 15, lineHeight: 22, textAlign: 'center' }}
+              >
+                Your two views are still apart. The moment {partner.name} plays, they snap into focus, that's the reveal.
+              </Kick>
+            </View>
+
+            {/* Three floating dots animation */}
+            <View
               style={{
-                width: 8,
-                height: 8,
-                borderRadius: 999,
-                backgroundColor: colors.p2,
-                opacity: dotAnims[i].interpolate({
-                  inputRange: [0, 0.5, 1],
-                  outputRange: [0.3, 1, 0.3],
-                }),
-                transform: [
-                  {
-                    translateY: dotAnims[i].interpolate({
-                      inputRange: [0, 0.5, 1],
-                      outputRange: [0, -7, 0],
-                    }),
-                  },
-                ],
+                flexDirection: 'row',
+                gap: 6,
+                justifyContent: 'center',
+                marginTop: 26,
               }}
-            />
-          ))}
-        </View>
+            >
+              {[0, 1, 2].map((i) => (
+                <Animated.View
+                  key={i}
+                  style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: 999,
+                    backgroundColor: colors.p2,
+                    opacity: dotAnims[i].interpolate({
+                      inputRange: [0, 0.5, 1],
+                      outputRange: [0.3, 1, 0.3],
+                    }),
+                    transform: [
+                      {
+                        translateY: dotAnims[i].interpolate({
+                          inputRange: [0, 0.5, 1],
+                          outputRange: [0, -7, 0],
+                        }),
+                      },
+                    ],
+                  }}
+                />
+              ))}
+            </View>
+          </>
+        )}
       </View>
     </LinearGradient>
   );

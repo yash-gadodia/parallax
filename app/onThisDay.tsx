@@ -100,7 +100,7 @@ function MemoryCompareCard({
 export default function OnThisDayScreen() {
   const router = useRouter();
   const { partner } = useIdentity();
-  const { memory, prompts, answers, loading } = useOnThisDay();
+  const { memory, prompts, answers, loading, error, refetch } = useOnThisDay();
 
   const handleBack = () => {
     safeBack(router);
@@ -240,21 +240,32 @@ export default function OnThisDayScreen() {
                 />
               ))
             ) : (
-              <Text
-                allowFontScaling={false}
-                style={{
-                  fontSize: 13.5,
-                  lineHeight: 20,
-                  color: colors.inkSoft,
-                  fontFamily: fontFamily.ui,
-                  textAlign: 'center',
-                  marginTop: 8,
-                }}
-              >
-                {loading
-                  ? 'finding your answers…'
-                  : "couldn't load the answers right now — the memory is safe, try again in a bit."}
-              </Text>
+              <>
+                <Text
+                  allowFontScaling={false}
+                  style={{
+                    fontSize: 13.5,
+                    lineHeight: 20,
+                    color: colors.inkSoft,
+                    fontFamily: fontFamily.ui,
+                    textAlign: 'center',
+                    marginTop: 8,
+                  }}
+                >
+                  {loading
+                    ? 'finding your answers…'
+                    : error
+                      ? "couldn't load the answers right now — the memory is safe."
+                      : "couldn't load the answers right now — the memory is safe, try again in a bit."}
+                </Text>
+                {!loading && error && (
+                  <View style={{ marginTop: 14 }}>
+                    <Btn kind="soft" onPress={refetch}>
+                      try again
+                    </Btn>
+                  </View>
+                )}
+              </>
             )}
           </View>
         </SafeAreaView>
