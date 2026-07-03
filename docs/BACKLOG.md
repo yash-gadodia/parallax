@@ -63,7 +63,7 @@ _From the 2026-07-02 E2E pass — details in `docs/E2E_FINDINGS_2026-07-02.md`._
 ### (Yash) — from the 2026-07-02 build-all sprint (code done, needs your keys/actions)
 - [ ] **(Yash)** Wire an HOURLY cron invoking the `scheduled-pushes` + `email-reengage` edge fns with the service-role bearer (streak-saver ~10pm couple-local, ritual-drift reminder, 3-day-silent email; server-side claim ledger makes reruns safe). Steps + rationale in the `0023_scheduled_pushes.sql` header.
 - [ ] **(Yash)** Set `RESEND_API_KEY` (+ optional `RESEND_FROM`) as function secrets — until then `email-reengage` no-ops with a clear log line.
-- [ ] **(Yash)** Deploy the sprint to prod when ready: `supabase db push` (0020–0025) + deploy edge fns `scheduled-pushes`, `email-reengage`, updated `notify-partner` / `generate-drops` / `refocus`. Verified locally: clean `db reset` + full pgTAP 22 files / 295 tests PASS.
+- [x] **(Claude)** ~~Deploy the sprint to prod~~ — DONE 2026-07-03 via Management API: prod at migration **0026**, all 6 edge fns ACTIVE (incl. fixed scheduled-pushes/email-reengage/generate-drops), doubled `reset-stale-streaks-daily` cron removed (was double-spending freezes), reviewer couple seeded with 3 revealed drops @83% + streak 3.
 - [ ] **(Yash)** Next TestFlight build picks up the native additions (react-native-view-shot for the 9:16 share image, widget risk state) — no EAS run from Claude without your go-ahead.
 
 ### (Dani) — from the E2E pass
