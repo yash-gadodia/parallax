@@ -29,6 +29,11 @@ jest.mock('../../src/features/engagement/useActivity', () => ({
 jest.mock('../../src/features/profile/useIdentity', () => ({
   useIdentity: jest.fn(),
 }));
+// Keep the REAL pure helpers (stageProgressLabel via journeyLogic) — only the
+// server hook is faked.
+jest.mock('../../src/features/journeys/useJourneyState', () => ({
+  useJourneyState: jest.fn(),
+}));
 
 import { useCouple } from '../../src/features/pairing/useCouple';
 import { useSession } from '../../src/features/auth/useSession';
@@ -36,6 +41,7 @@ import { useTodayState } from '../../src/features/drops/useTodayState';
 import { useCoupleHistory } from '../../src/features/lovemap/useCoupleHistory';
 import { useActivity } from '../../src/features/engagement/useActivity';
 import { useIdentity } from '../../src/features/profile/useIdentity';
+import { useJourneyState } from '../../src/features/journeys/useJourneyState';
 
 const mockUseCouple = useCouple as jest.Mock;
 const mockUseSession = useSession as jest.Mock;
@@ -43,6 +49,7 @@ const mockUseTodayState = useTodayState as jest.Mock;
 const mockUseCoupleHistory = useCoupleHistory as jest.Mock;
 const mockUseActivity = useActivity as jest.Mock;
 const mockUseIdentity = useIdentity as jest.Mock;
+const mockUseJourneyState = useJourneyState as jest.Mock;
 
 // Injectable clock: a quiet Thursday morning unless a test says otherwise.
 const MORNING = new Date(2026, 6, 2, 10, 0, 0);
@@ -119,6 +126,13 @@ describe('Today Screen', () => {
       me: { name: 'Alex', initial: 'A' },
       partner: { name: 'Jordan', initial: 'J', hasPartner: true },
       loading: false,
+    });
+    mockUseJourneyState.mockReturnValue({
+      state: null,
+      stages: [],
+      loading: false,
+      error: null,
+      refetch: jest.fn(),
     });
   });
 
@@ -297,6 +311,81 @@ describe('Today Screen', () => {
     expect(getByText('See the reveal →')).toBeTruthy();
     // the old score-first headline copy is gone
     expect(queryByText('on the same wavelength')).toBeNull();
+  });
+
+  it('shows the quiet journey discovery row when no journey is active, routing to /journeys', async () => {
+    mockLive({});
+    const { getByText } = await render(<TodayScreen now={() => MORNING} />);
+
+    expect(getByText('Milestone journeys')).toBeTruthy();
+    expect(
+      getByText('the bto journey is here · walk the big eras together')
+    ).toBeTruthy();
+
+    fireEvent.press(getByText('Milestone journeys'));
+    expect(mockPush).toHaveBeenCalledWith('/journeys');
+  });
+
+  it('shows the active journey with its stage marker, routing to /journey', async () => {
+    mockLive({});
+    mockUseJourneyState.mockReturnValue({
+      state: {
+        exists: true,
+        couple_journey_id: 'cj1',
+        journey_id: 'j1',
+        slug: 'bto',
+        title: 'the bto journey',
+        emoji: '🏠',
+        stage_count: 7,
+        current_stage: 3,
+        completed_at: null,
+        i_checked_in: false,
+        partner_checked_in: false,
+      },
+      stages: [
+        { id: 's3', journey_id: 'j1', position: 3, title: 'the long wait' },
+      ],
+      loading: false,
+      error: null,
+      refetch: jest.fn(),
+    });
+
+    const { getByText, queryByText } = await render(<TodayScreen now={() => MORNING} />);
+
+    expect(getByText('the bto journey')).toBeTruthy();
+    expect(getByText('stage 3 of 7 · the long wait')).toBeTruthy();
+    expect(queryByText('Milestone journeys')).toBeNull();
+
+    fireEvent.press(getByText('the bto journey'));
+    expect(mockPush).toHaveBeenCalledWith('/journey');
+  });
+
+  it('rests a completed journey back to the discovery row', async () => {
+    mockLive({});
+    mockUseJourneyState.mockReturnValue({
+      state: {
+        exists: true,
+        couple_journey_id: 'cj1',
+        journey_id: 'j1',
+        slug: 'bto',
+        title: 'the bto journey',
+        emoji: '🏠',
+        stage_count: 7,
+        current_stage: 7,
+        completed_at: '2026-07-01T00:00:00Z',
+        i_checked_in: true,
+        partner_checked_in: true,
+      },
+      stages: [],
+      loading: false,
+      error: null,
+      refetch: jest.fn(),
+    });
+
+    const { getByText, queryByText } = await render(<TodayScreen now={() => MORNING} />);
+
+    expect(getByText('Milestone journeys')).toBeTruthy();
+    expect(queryByText('stage 7 of 7')).toBeNull();
   });
 
   it('skips the archive and practice rows (but keeps the nudge) when the couple has no history yet', async () => {

@@ -193,6 +193,85 @@ export interface CoupleHistoryRow {
   caught_up: boolean;
 }
 
+// 0028: milestone journeys. The catalog (journeys, journey_stages) is global
+// and readable by any authenticated user; enrollment rows are member-only.
+// All writes go through the DEFINER RPCs (enroll_journey,
+// record_journey_checkin, advance_journey_stage).
+export interface Journey {
+  id: string;
+  slug: string;
+  title: string;
+  emoji: string | null;
+  tagline: string | null;
+  description: string | null;
+  active: boolean;
+  created_at: string;
+}
+
+// A stage's "decisions to align on" prompt, stored in talk_prompts jsonb.
+export interface JourneyTalkPrompt {
+  emoji: string;
+  text: string;
+}
+
+export interface JourneyStage {
+  id: string;
+  journey_id: string;
+  position: number;
+  emoji: string | null;
+  title: string;
+  kick: string | null;
+  description: string | null;
+  talk_prompts: Json;
+  checkin_prompt: string;
+  theme: string | null;
+  created_at: string;
+}
+
+export interface CoupleJourney {
+  id: string;
+  couple_id: string;
+  journey_id: string;
+  current_stage: number;
+  started_at: string;
+  completed_at: string | null;
+  created_at: string;
+}
+
+export interface CoupleJourneyStage {
+  id: string;
+  couple_journey_id: string;
+  stage_position: number;
+  entered_at: string;
+  completed_at: string | null;
+}
+
+export interface JourneyCheckin {
+  id: string;
+  couple_journey_id: string;
+  stage_position: number;
+  author: string;
+  note: string | null;
+  created_at: string;
+}
+
+// get_journey_state (0028): the couple's journey surface in one round-trip.
+export interface JourneyState {
+  exists: boolean;
+  couple_journey_id?: string;
+  journey_id?: string;
+  slug?: string;
+  title?: string;
+  emoji?: string | null;
+  stage_count?: number;
+  current_stage?: number;
+  started_at?: string;
+  completed_at?: string | null;
+  i_checked_in?: boolean;
+  partner_checked_in?: boolean;
+  stages?: { position: number; entered_at: string; completed_at: string | null }[];
+}
+
 export type Json = unknown;
 
 export interface Database {
@@ -252,6 +331,31 @@ export interface Database {
         Row: RefocusSession;
         Insert: Omit<RefocusSession, 'id' | 'created_at'>;
         Update: Partial<Omit<RefocusSession, 'id' | 'created_at'>>;
+      };
+      journeys: {
+        Row: Journey;
+        Insert: Omit<Journey, 'id' | 'created_at'>;
+        Update: Partial<Omit<Journey, 'id' | 'created_at'>>;
+      };
+      journey_stages: {
+        Row: JourneyStage;
+        Insert: Omit<JourneyStage, 'id' | 'created_at'>;
+        Update: Partial<Omit<JourneyStage, 'id' | 'created_at'>>;
+      };
+      couple_journeys: {
+        Row: CoupleJourney;
+        Insert: Omit<CoupleJourney, 'id' | 'created_at'>;
+        Update: Partial<Omit<CoupleJourney, 'id' | 'created_at'>>;
+      };
+      couple_journey_stages: {
+        Row: CoupleJourneyStage;
+        Insert: Omit<CoupleJourneyStage, 'id'>;
+        Update: Partial<Omit<CoupleJourneyStage, 'id'>>;
+      };
+      journey_checkins: {
+        Row: JourneyCheckin;
+        Insert: Omit<JourneyCheckin, 'id' | 'created_at'>;
+        Update: Partial<Omit<JourneyCheckin, 'id' | 'created_at'>>;
       };
       money_date_sessions: {
         Row: MoneyDateSession;
@@ -375,6 +479,28 @@ export interface Database {
       delete_my_account: {
         Args: object;
         Returns: void;
+      };
+      enroll_journey: {
+        Args: {
+          p_couple: string;
+          p_journey: string;
+        };
+        Returns: string;
+      };
+      get_journey_state: {
+        Args: { p_couple: string };
+        Returns: Json;
+      };
+      record_journey_checkin: {
+        Args: {
+          p_couple_journey: string;
+          p_note?: string | null;
+        };
+        Returns: void;
+      };
+      advance_journey_stage: {
+        Args: { p_couple_journey: string };
+        Returns: Json;
       };
       start_money_date: {
         Args: { p_couple: string };

@@ -50,6 +50,8 @@ import { useCouple } from '../../src/features/pairing/useCouple';
 import { useActivity } from '../../src/features/engagement/useActivity';
 import { nudge } from '../../src/features/engagement/engagementActions';
 import { useCoupleHistory } from '../../src/features/lovemap/useCoupleHistory';
+import { useJourneyState } from '../../src/features/journeys/useJourneyState';
+import { stageProgressLabel } from '../../src/features/journeys/journeyLogic';
 import { useSession } from '../../src/features/auth/useSession';
 import { useProfile } from '../../src/features/profile/useProfile';
 import { useIdentity } from '../../src/features/profile/useIdentity';
@@ -83,6 +85,10 @@ export default function TodayScreen({
   );
   const { items: dbActivity, unreadCount } = useActivity(couple?.id || null);
   const { history } = useCoupleHistory();
+  // The milestone journey surface (0028): a quiet row, never a shout.
+  const { state: journeyState, stages: journeyStages } = useJourneyState(
+    session && couple ? couple.id : null
+  );
   const { spiceLevel } = useProfile();
   const { me, partner } = useIdentity();
   const staticDrop = selectDropForSpice(DROP, normaliseSpiceLevel(spiceLevel) as SpiceLevel);
@@ -269,6 +275,18 @@ export default function TodayScreen({
 
   const handlePacks = () => {
     router.push('/packs');
+  };
+
+  // Journey row state: an in-progress journey shows its stage; otherwise the
+  // quiet discovery entry. (Completed journeys rest in /journeys.)
+  const activeJourney =
+    journeyState?.exists && !journeyState.completed_at ? journeyState : null;
+  const activeJourneyStageTitle = activeJourney
+    ? journeyStages.find((s) => s.position === activeJourney.current_stage)?.title ?? null
+    : null;
+
+  const handleJourney = () => {
+    router.push(activeJourney ? '/journey' : '/journeys');
   };
 
   const handleCatchUp = () => {
@@ -994,6 +1012,64 @@ export default function TodayScreen({
                 </Text>
                 <Kick style={{ marginTop: 3 }}>
                   themed drops · deep, spicy, silly & more
+                </Kick>
+              </View>
+              <Icon d={ICONS.chevR} size={17} color={colors.inkMute} />
+            </Card>
+          </Press>
+
+          {/* Milestone journey row (0028): in progress → stage marker; none →
+              quiet discovery. Same register as the pack row — never a shout. */}
+          <Press
+            onPress={handleJourney}
+            accessibilityLabel={
+              activeJourney ? 'Open your journey' : 'Browse milestone journeys'
+            }
+          >
+            <Card
+              style={{
+                borderRadius: 22,
+                paddingHorizontal: 16,
+                paddingVertical: 14,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 12,
+                marginTop: 12,
+              }}
+            >
+              <View
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 11,
+                  backgroundColor: colors.sunken,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Text style={{ fontSize: 20 }}>
+                  {activeJourney ? activeJourney.emoji ?? '🧭' : '🧭'}
+                </Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text
+                  style={{
+                    fontSize: 14,
+                    fontWeight: '700',
+                    color: colors.ink,
+                    fontFamily: fontFamily.ui,
+                  }}
+                >
+                  {activeJourney ? activeJourney.title : 'Milestone journeys'}
+                </Text>
+                <Kick style={{ marginTop: 3 }}>
+                  {activeJourney
+                    ? `${stageProgressLabel(
+                        activeJourney.current_stage ?? 1,
+                        activeJourney.stage_count ?? 0,
+                        false
+                      )}${activeJourneyStageTitle ? ` · ${activeJourneyStageTitle}` : ''}`
+                    : 'the bto journey is here · walk the big eras together'}
                 </Kick>
               </View>
               <Icon d={ICONS.chevR} size={17} color={colors.inkMute} />
