@@ -53,5 +53,23 @@ export const PACKS: Pack[] = [
     locked: true,
     theme: 'memory',
   },
+  {
+    id: 'sg',
+    emoji: '🍜',
+    title: 'Little red dot',
+    tag: 'sg couple things',
+    tint: 'var(--p1)',
+    locked: true,
+    theme: 'sg',
+  },
+  {
+    id: 'ldr',
+    emoji: '✈️',
+    title: 'Same moon',
+    tag: 'miles apart',
+    tint: 'var(--p2)',
+    locked: true,
+    theme: 'ldr',
+  },
 ];
 
