@@ -519,8 +519,25 @@ export default function UsScreen() {
           {/* Drop history (only once there's a story to list) */}
           {history.length > 0 && (
           <>
-          <View style={{ marginTop: 24, marginBottom: 10 }}>
+          <View
+            style={{
+              marginTop: 24,
+              marginBottom: 10,
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
             <Kick>your drop history</Kick>
+            <Press
+              onPress={() => router.push('/timeline')}
+              scale={false}
+              style={{ width: 'auto' }}
+              accessibilityLabel="See your whole story"
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Kick c={colors.p2Deep}>see your whole story →</Kick>
+            </Press>
           </View>
 
           <View style={{ flexDirection: 'column', gap: 10 }}>

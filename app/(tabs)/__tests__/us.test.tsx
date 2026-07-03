@@ -3,6 +3,12 @@ import { render, fireEvent } from '@testing-library/react-native';
 import UsScreen from '../us';
 import { useCoupleHistory } from '../../../src/features/lovemap/useCoupleHistory';
 
+const mockPush = jest.fn();
+jest.mock('expo-router', () => ({
+  __esModule: true,
+  useRouter: () => ({ push: mockPush, back: jest.fn(), replace: jest.fn(), navigate: jest.fn() }),
+}));
+
 jest.mock('../../../src/features/lovemap/useLearnings', () => ({
   useLearnings: jest.fn(() => ({
     items: [],
@@ -137,6 +143,12 @@ describe('UsScreen', () => {
   it('renders the drop history label', async () => {
     const { getByText } = await render(<UsScreen />);
     expect(getByText('your drop history')).toBeTruthy();
+  });
+
+  it('links to the full timeline from the drop-history header', async () => {
+    const { getByText } = await render(<UsScreen />);
+    fireEvent.press(getByText('see your whole story →'));
+    expect(mockPush).toHaveBeenCalledWith('/timeline');
   });
 
   it('computes the trend delta from the two latest drops (82 vs 74 → ▲ 8%)', async () => {

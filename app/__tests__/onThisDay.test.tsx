@@ -1,6 +1,12 @@
 import { render, fireEvent } from '@testing-library/react-native';
 import OnThisDayScreen from '../onThisDay';
 
+const mockPush = jest.fn();
+jest.mock('expo-router', () => ({
+  __esModule: true,
+  useRouter: () => ({ push: mockPush, back: jest.fn(), replace: jest.fn(), navigate: jest.fn() }),
+}));
+
 jest.mock('../../src/features/profile/useIdentity', () => ({
   useIdentity: jest.fn(),
 }));
@@ -71,6 +77,20 @@ describe('OnThisDayScreen', () => {
 
     // A memory, not a report card — and no empty state.
     expect(queryByText('your story starts today')).toBeNull();
+  });
+
+  it('chains onward from a single memory to the whole story', async () => {
+    mockUseOnThisDay.mockReturnValue({
+      memory: MEMORY,
+      prompts: PROMPTS,
+      answers: ANSWERS,
+      loading: false,
+    });
+
+    const { getByText } = await render(<OnThisDayScreen />);
+
+    fireEvent.press(getByText('see your whole story →'));
+    expect(mockPush).toHaveBeenCalledWith('/timeline');
   });
 
   it('shows the warm empty state when there is no revealed history', async () => {

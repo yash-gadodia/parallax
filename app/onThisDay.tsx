@@ -268,6 +268,13 @@ export default function OnThisDayScreen() {
               </>
             )}
           </View>
+
+          {/* Chain onward: a single memory → the whole story. */}
+          <View style={{ alignItems: 'center', marginTop: 24 }}>
+            <Btn kind="soft" onPress={() => router.push('/timeline')}>
+              see your whole story →
+            </Btn>
+          </View>
         </SafeAreaView>
       </ScrollView>
     </View>
