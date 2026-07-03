@@ -794,9 +794,9 @@ function Step5NotifyTime({
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <Kick>your daily moment</Kick>
+        <Kick>your ritual, together</Kick>
         <Serif s={38} style={{ marginTop: 10, marginBottom: 6 }}>
-          When's your moment?
+          When do you two do this?
         </Serif>
         <Text
           allowFontScaling={false}
@@ -808,8 +808,9 @@ function Step5NotifyTime({
             fontFamily: fontFamily.ui,
           }}
         >
-          We'll nudge you both once a day, when you've got a quiet minute.
-          Couples who pick a time stick with it.
+          Morning coffee ☕ or lights-out 🛏️ — pick the minute that's already
+          yours as a couple. Everything gently anchors to it, and couples with
+          a moment stick.
         </Text>
 
         <View style={styles.chipsContainer}>
