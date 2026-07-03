@@ -106,6 +106,12 @@ const DROPS_TOOL = {
                 required: ["emoji", "question", "options"],
               },
             },
+            source_learnings: {
+              type: "array",
+              items: { type: "integer", minimum: 1 },
+              description:
+                "Numbers from the numbered love map learnings list that THIS drop genuinely grew from. Attribute sparingly — only cite a learning the drop truly digs into; empty or omitted is normal.",
+            },
           },
           required: ["title", "theme", "spice", "prompts"],
         },
@@ -153,6 +159,7 @@ ${STYLE_ANCHORS}
 Hard rules:
 - Every drop must be NEW. Do not restate, closely paraphrase, or lightly remix any question in the AVOID list you are given.
 - When you are given a couple's graph (learnings, past answers, hunch hits and misses, intents), write drops that dig into THEIR specifics: follow the threads their misses opened, go deeper where a learning points, honor their intents. Personal beats generic every time.
+- If a drop genuinely grew from one or more numbered love map learnings, cite their numbers in that drop's source_learnings. Attribute sparingly — only real sources, never the whole list; most drops cite none.
 - Always answer by calling the provide_drops tool.`;
 
 // ---------------------------------------------------------------------------
@@ -171,7 +178,9 @@ interface AnswerRow {
   hunch: number | null;
 }
 
-async function coupleContext(coupleId: string): Promise<{ context: string; avoid: string[] }> {
+async function coupleContext(
+  coupleId: string,
+): Promise<{ context: string; avoid: string[]; learningIds: string[] }> {
   const couples = (await dbGet(
     `couples?id=eq.${coupleId}&select=id,member_a,member_b,together_since`,
   )) as { member_a: string | null; member_b: string | null; together_since: string | null }[];
@@ -229,9 +238,10 @@ async function coupleContext(coupleId: string): Promise<{ context: string; avoid
   if (intents.length > 0) lines.push(`their stated intents: ${intents.join(", ")}`);
   if (learnings.length > 0) {
     lines.push(
-      "love map learnings (things one partner learned about the other):",
+      "love map learnings (numbered — cite a number in a drop's source_learnings ONLY if that drop genuinely grew from it):",
       ...learnings.map(
-        (l) => `- ${l.emoji ?? ""} ${l.need ?? ""}${l.detail ? `: ${l.detail}` : ""}`.trim(),
+        (l, i) =>
+          `- [${i + 1}] ${`${l.emoji ?? ""} ${l.need ?? ""}${l.detail ? `: ${l.detail}` : ""}`.trim()}`,
       ),
     );
   }
@@ -246,10 +256,11 @@ async function coupleContext(coupleId: string): Promise<{ context: string; avoid
       ? `THE COUPLE'S GRAPH:\n${lines.join("\n")}`
       : "THE COUPLE'S GRAPH: no history yet — write warm, early-relationship drops.",
     avoid,
+    learningIds: learnings.map((l) => l.id),
   };
 }
 
-async function globalContext(): Promise<{ context: string; avoid: string[] }> {
+async function globalContext(): Promise<{ context: string; avoid: string[]; learningIds: string[] }> {
   const drops = (await dbGet(
     `drops?position=not.is.null&select=title,theme&order=position.asc&limit=90`,
   )) as { title: string | null; theme: string | null }[];
@@ -266,6 +277,7 @@ async function globalContext(): Promise<{ context: string; avoid: string[] }> {
       `GLOBAL CATALOG: ${drops.length} drops in rotation by theme — ${summary}. ` +
       "Author fresh drops that extend this catalog (favor under-represented themes).",
     avoid: [],
+    learningIds: [],
   };
 }
 
@@ -285,6 +297,7 @@ interface CandidateDrop {
   theme?: unknown;
   spice?: unknown;
   prompts?: unknown;
+  source_learnings?: unknown;
 }
 
 function nonEmptyString(v: unknown): v is string {
@@ -339,10 +352,12 @@ Deno.serve(async (req: Request) => {
 
   let context: string;
   let avoid: string[];
+  let learningIds: string[];
   try {
     const ctx = coupleId ? await coupleContext(coupleId) : await globalContext();
     avoid = [...new Set([...ctx.avoid, ...(await catalogQuestionSample())])];
     context = ctx.context;
+    learningIds = ctx.learningIds;
   } catch (e) {
     const msg = String(e);
     if (msg.includes("couple_not_found")) return json({ error: "couple_not_found" }, 404);
@@ -400,6 +415,19 @@ Author exactly ${count} brand-new drops in the house voice. Call provide_drops.`
       continue;
     }
     const spice = Math.min(2, Math.max(0, Math.trunc(Number(d.spice) || 0)));
+    // 1.4 flywheel: publish stamps these learnings' became_prompt_id, making
+    // "now a question in your drops" literally true in the Love Map — so only
+    // the learnings the model attributed THIS drop to, never the whole list.
+    const sourceIds = Array.isArray(d.source_learnings)
+      ? [...new Set(
+        d.source_learnings
+          .filter((n): n is number =>
+            typeof n === "number" && Number.isInteger(n) &&
+            n >= 1 && n <= learningIds.length
+          )
+          .map((n) => learningIds[n - 1]),
+      )]
+      : [];
     const ok = await dbInsert("drop_candidates", {
       couple_id: coupleId,
       title: (d.title as string).trim(),
@@ -408,9 +436,7 @@ Author exactly ${count} brand-new drops in the house voice. Call provide_drops.`
       prompts: d.prompts,
       source: "llm",
       status: "pending",
-      // 1.4 flywheel: publish stamps these learnings' became_prompt_id, making
-      // "now a question in your drops" literally true in the Love Map.
-      source_learning_ids: learnings.length > 0 ? learnings.map((l) => l.id) : null,
+      source_learning_ids: sourceIds.length > 0 ? sourceIds : null,
     });
     if (ok) inserted++;
     else rejected++;

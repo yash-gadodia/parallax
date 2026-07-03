@@ -58,13 +58,65 @@ interface ExpoPushMessage {
   sound: "default";
 }
 
-async function sendExpoPush(messages: ExpoPushMessage[]): Promise<void> {
-  if (messages.length === 0) return;
-  await fetch("https://exp.host/--/api/v2/push/send", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify(messages),
-  });
+interface OutgoingPush {
+  coupleId: string;
+  message: ExpoPushMessage;
+}
+
+interface ExpoPushTicket {
+  status?: string;
+  message?: string;
+}
+
+// At-most-once by design: the SQL candidate RPCs burn the day's push_ledger
+// claim as they select, and we never unclaim. So a failed send is a lost
+// push — it MUST be loud in the logs (couple ids included), never swallowed.
+// Expo caps each /push/send request at 100 messages; chunk accordingly.
+const EXPO_CHUNK = 100;
+
+async function sendExpoPush(kind: string, pushes: OutgoingPush[]): Promise<number> {
+  let sent = 0;
+  for (let i = 0; i < pushes.length; i += EXPO_CHUNK) {
+    const chunk = pushes.slice(i, i + EXPO_CHUNK);
+    const coupleIds = chunk.map((p) => p.coupleId).join(", ");
+    let resp: Response;
+    try {
+      resp = await fetch("https://exp.host/--/api/v2/push/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify(chunk.map((p) => p.message)),
+      });
+    } catch (e) {
+      console.error(
+        `scheduled-pushes: ${kind} expo push fetch threw (${String(e)}) — lost for couples: ${coupleIds}`,
+      );
+      continue;
+    }
+    if (!resp.ok) {
+      const detail = await resp.text().catch(() => "");
+      console.error(
+        `scheduled-pushes: ${kind} expo push failed (${resp.status}) — lost for couples: ${coupleIds}${detail ? ` — ${detail}` : ""}`,
+      );
+      continue;
+    }
+    const data = (await resp.json().catch(() => null)) as
+      | { data?: ExpoPushTicket[] }
+      | null;
+    const tickets = Array.isArray(data?.data) ? data.data : [];
+    chunk.forEach((p, idx) => {
+      const ticket = tickets[idx];
+      if (ticket?.status === "ok") {
+        sent++;
+      } else {
+        console.error(
+          `scheduled-pushes: ${kind} expo ticket error for couple ${p.coupleId}: ${
+            ticket?.message ?? `status=${ticket?.status ?? "missing"}`
+          }`,
+        );
+      }
+    });
+  }
+  return sent;
 }
 
 interface StreakSaverRow {
@@ -98,32 +150,60 @@ Deno.serve(async (req: Request) => {
     return json({ error: "unauthorized" }, 401);
   }
 
+  // Each kind claims (the RPC burns the day's ledger rows) immediately before
+  // ITS OWN send, so a failure in one kind never strands the other's claims.
+  let streakCount = 0;
+  let driftCount = 0;
+  let sent = 0;
+  const errors: string[] = [];
+
   try {
     const streak = await rpc<StreakSaverRow[]>("_streak_saver_candidates");
-    const drift = await rpc<DriftRow[]>("_drift_reminder_candidates");
-
-    const messages: ExpoPushMessage[] = [
-      ...streak.map((r) => ({
-        to: r.push_token,
-        title: streakSaverTitle(r.partner_name),
-        body: streakSaverBody(r.partner_name),
-        sound: "default" as const,
+    streakCount = streak.length;
+    sent += await sendExpoPush(
+      "streak-saver",
+      streak.map((r) => ({
+        coupleId: r.couple_id,
+        message: {
+          to: r.push_token,
+          title: streakSaverTitle(r.partner_name),
+          body: streakSaverBody(r.partner_name),
+          sound: "default" as const,
+        },
       })),
-      ...drift.map((r) => ({
-        to: r.push_token,
-        title: driftTitle(),
-        body: driftReminderBody(r.partner_name, r.local_day),
-        sound: "default" as const,
-      })),
-    ];
-
-    await sendExpoPush(messages);
-    return json({
-      streak_saver: streak.length,
-      drift: drift.length,
-      sent: messages.length,
-    });
+    );
   } catch (e) {
-    return json({ error: "internal_error", detail: String(e) }, 500);
+    console.error(`scheduled-pushes: streak-saver pass failed: ${String(e)}`);
+    errors.push(`streak_saver: ${String(e)}`);
   }
+
+  try {
+    const drift = await rpc<DriftRow[]>("_drift_reminder_candidates");
+    driftCount = drift.length;
+    sent += await sendExpoPush(
+      "drift",
+      drift.map((r) => ({
+        coupleId: r.couple_id,
+        message: {
+          to: r.push_token,
+          title: driftTitle(),
+          body: driftReminderBody(r.partner_name, r.local_day),
+          sound: "default" as const,
+        },
+      })),
+    );
+  } catch (e) {
+    console.error(`scheduled-pushes: drift pass failed: ${String(e)}`);
+    errors.push(`drift: ${String(e)}`);
+  }
+
+  return json(
+    {
+      streak_saver: streakCount,
+      drift: driftCount,
+      sent,
+      ...(errors.length > 0 ? { errors } : {}),
+    },
+    errors.length > 0 ? 500 : 200,
+  );
 });

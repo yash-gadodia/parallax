@@ -85,20 +85,29 @@ function emailText(row: ReengageRow): string {
   return lines.join("\n");
 }
 
+// At-most-once by design: the RPC burns the 14-day ledger claim as it
+// selects and we never unclaim — so any failed send MUST log the couple id,
+// and one couple's failure must never abort the rest of the batch.
 async function sendResendEmail(row: ReengageRow): Promise<boolean> {
-  const resp = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${RESEND_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from: RESEND_FROM,
-      to: [row.email],
-      subject: emailSubject(row),
-      text: emailText(row),
-    }),
-  });
+  let resp: Response;
+  try {
+    resp = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${RESEND_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: RESEND_FROM,
+        to: [row.email],
+        subject: emailSubject(row),
+        text: emailText(row),
+      }),
+    });
+  } catch (e) {
+    console.error(`email-reengage: resend send threw (${String(e)}) for couple ${row.couple_id}`);
+    return false;
+  }
   if (!resp.ok) {
     console.error(`email-reengage: resend send failed (${resp.status}) for couple ${row.couple_id}`);
   }
@@ -133,7 +142,7 @@ Deno.serve(async (req: Request) => {
     for (const row of rows) {
       if (await sendResendEmail(row)) sent++;
     }
-    return json({ candidates: rows.length, sent });
+    return json({ candidates: rows.length, sent, failed: rows.length - sent });
   } catch (e) {
     return json({ error: "internal_error", detail: String(e) }, 500);
   }
