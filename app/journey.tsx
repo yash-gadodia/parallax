@@ -118,10 +118,19 @@ export default function JourneyScreen() {
         .getState()
         .fireToast(result.completed ? 'journey complete 🎉' : "new era. let's go");
       refetch();
-    } catch {
+    } catch (err) {
+      // The server gate (0028: 'check in on this stage before moving on') can
+      // fire even when the local state looked advanceable — a stale check-in
+      // flag. Surface the real reason warmly, not a generic try-again.
+      const message = (err as { message?: string } | null)?.message ?? '';
       useUiStore
         .getState()
-        .fireToast("couldn't move the stage — try again in a bit");
+        .fireToast(
+          message.includes('check in on this stage')
+            ? 'check in on this stage first — then it unlocks'
+            : "couldn't move the stage — try again in a bit"
+        );
+      refetch();
     } finally {
       setBusy(false);
     }

@@ -214,6 +214,43 @@ describe('Journey screen', () => {
     await waitFor(() => expect(mockAdvance).toHaveBeenCalledWith('cj1'));
   });
 
+  it("surfaces the server's check-in gate warmly when advance loses the race (stale local flag)", async () => {
+    // Locally advanceable (i_checked_in true) but the server says otherwise —
+    // e.g. the check-in state changed under us. The specific reason must
+    // surface, not the generic try-again.
+    mockAdvance.mockRejectedValue(new Error('check in on this stage before moving on'));
+    const { refetch } = mockJourney({ state: liveState({ i_checked_in: true }) });
+    const { getByText } = await render(<JourneyScreen />);
+
+    await act(async () => {
+      fireEvent.press(getByText("We've moved on → next stage"));
+    });
+
+    await waitFor(() =>
+      expect(mockFireToast).toHaveBeenCalledWith(
+        'check in on this stage first — then it unlocks'
+      )
+    );
+    // The screen resyncs so the gate state matches the server again.
+    expect(refetch).toHaveBeenCalled();
+  });
+
+  it('keeps the generic warm failure for any other advance error', async () => {
+    mockAdvance.mockRejectedValue(new Error('network down'));
+    mockJourney({ state: liveState({ i_checked_in: true }) });
+    const { getByText } = await render(<JourneyScreen />);
+
+    await act(async () => {
+      fireEvent.press(getByText("We've moved on → next stage"));
+    });
+
+    await waitFor(() =>
+      expect(mockFireToast).toHaveBeenCalledWith(
+        "couldn't move the stage — try again in a bit"
+      )
+    );
+  });
+
   it('labels the final stage advance as finishing the journey', async () => {
     mockJourney({ state: liveState({ current_stage: 7, i_checked_in: true }) });
     const { getByText, getAllByText } = await render(<JourneyScreen />);
