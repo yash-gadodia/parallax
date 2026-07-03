@@ -53,6 +53,7 @@
     "typescript": "^5.3.0"
   },
   "scripts": {
+    "prepare": "git config core.hooksPath .githooks || true",
     "start": "expo start",
     "dev": "./scripts/dev.sh",
     "doctor": "./scripts/doctor.sh",

@@ -1,0 +1,36 @@
+#!/bin/sh
+# Blocks commits that contain secret-looking files or values.
+# Wired automatically by `npm install` (the package.json "prepare" script sets core.hooksPath).
+# Bypassing with --no-verify is against repo policy (.claude/rules/git.md).
+
+fail=0
+
+staged_files=$(git diff --cached --name-only --diff-filter=ACMR)
+[ -z "$staged_files" ] && exit 0
+
+# 1) File names that must never be committed (values live in .secrets/ or .env only)
+blocked=$(printf '%s\n' "$staged_files" | grep -E '(^|/)\.env(\.[a-z]+)?$|\.p8$|\.p12$|\.pfx$|\.pem$|\.key$|(^|/)\.secrets/' | grep -Ev '(^|/)\.env\.example$')
+if [ -n "$blocked" ]; then
+  echo "✖ pre-commit: refusing to commit secret-looking file(s):"
+  printf '  %s\n' $blocked
+  fail=1
+fi
+
+# 2) Secret-looking values inside staged content
+# sb_secret_ (Supabase secret key) · long JWTs · private key blocks · GitHub/Anthropic/AWS/Resend tokens
+pattern='sb_secret_[A-Za-z0-9_-]{16,}|eyJ[A-Za-z0-9_-]{40,}\.[A-Za-z0-9_-]{40,}|-----BEGIN [A-Z ]*PRIVATE KEY-----|ghp_[A-Za-z0-9]{36}|github_pat_[A-Za-z0-9_]{22,}|sk-ant-[A-Za-z0-9_-]{20,}|AKIA[0-9A-Z]{16}|re_[A-Za-z0-9]{30,}'
+hits=$(git diff --cached -U0 | grep -E '^\+' | grep -E "$pattern" | grep -v 'supabase-demo' | head -5)
+if [ -n "$hits" ]; then
+  echo "✖ pre-commit: staged content contains secret-looking value(s):"
+  echo "$hits" | cut -c1-80
+  fail=1
+fi
+
+if [ "$fail" = "1" ]; then
+  echo ""
+  echo "This repo is PUBLIC. Real values belong in .secrets/ or .env (both gitignored)."
+  echo "If this is a false positive, rewrite the line (use a placeholder like <KEY_ID>)."
+  echo "If a real secret was already pushed at some point: tell Yash — it must be rotated."
+  exit 1
+fi
+exit 0

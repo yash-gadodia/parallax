@@ -9,7 +9,7 @@ A from-scratch guide to get the app running on your Mac. Aimed at a first-time c
 > - **`.secrets/`** — real key files + a value index (`KEYS.md`). Yash AirDrops this folder to you; it never goes through git.
 > - **`.env`** — your local environment values (created in step 3 below).
 >
-> You don't have to be perfect — the tooling has your back: Claude's hooks block writes to key files (`.env`, `*.p8`, `*.pem`, `credentials*`, …), and `.gitignore` keeps both places out of commits. Just follow the habit: **a real value never goes into a tracked file** — not in code, not in docs, not in an example. `.env.example` gets placeholders only.
+> You don't have to be perfect — the tooling has your back: a **git pre-commit hook** (`.githooks/pre-commit`, wired automatically when you `npm install`) refuses any commit containing a secret-looking file or value, Claude's hooks block writes to key files (`.env`, `*.p8`, `*.pem`, `credentials*`, …), and `.gitignore` keeps both places out of commits. Just follow the habit: **a real value never goes into a tracked file** — not in code, not in docs, not in an example. `.env.example` gets placeholders only.
 >
 > And if you ever *do* spot a real key sitting in a tracked file: no panic, no shame — **tell Yash right away** so he can rotate it. Fast beats perfect here. 💛
 
