@@ -5,12 +5,12 @@ The code side is built (see GO_LIVE). This is the checklist + the App-Store-Conn
 ## A. Hard requirements that must exist before you submit
 | Item | Status | Owner |
 |---|---|---|
-| **App icon** (1024×1024 PNG, no alpha, no rounded corners) | ❌ **MISSING** — `app.json` has no `icon`. Needs a real designed icon. | Design (Dani) |
-| **Screenshots** (6.7" + 6.5" iPhone, a few per size) | ❌ missing — needs real screens of the app | Design / capture from a build |
-| **Privacy Policy URL** (publicly reachable) | Drafts in `docs/PRIVACY.md` — need **hosting** + a real **contact email** | You |
-| **Terms of Service URL** | Draft in `docs/TERMS.md` — host alongside privacy | You |
+| **App icon** (1024×1024 PNG, no alpha, no rounded corners) | ✅ DONE 2026-07-03 — `assets/icon.png` (para//ax slashes on dawn), wired in app.json + Android adaptive + splash. Dani may restyle anytime. | Done (Claude) |
+| **Screenshots** (6.7" + 6.5" iPhone, a few per size) | 🟡 DRAFTS in `store-assets/screenshots/` (simulator, demo data) — retake finals from the TestFlight build | Claude drafted / Dani finals |
+| **Privacy Policy URL** (publicly reachable) | ✅ LIVE: https://yash-gadodia.github.io/parallax/legal/privacy.html (contact pirsquare.yash+parallax@gmail.com; lawyer review still recommended) | Done (Claude) |
+| **Terms of Service URL** | ✅ LIVE: https://yash-gadodia.github.io/parallax/legal/terms.html | Done (Claude) |
 | **Account deletion in-app** | ✅ built + deployed (`delete-account` edge fn) — reviewers test this | Done |
-| **Demo/review account** | ⛔ create a pre-paired couple so the reviewer can experience the 2-player loop (see §C) | You + Claude |
+| **Demo/review account** | ✅ pre-paired on prod (Alex & Sam, 3 revealed drops @83%, streak 3) — creds in .secrets/KEYS.md | Done (Claude) |
 | **Apple Developer account active** + **App Store Connect app record** | ⏳ enrollment activating; create the record under your **personal** team | You |
 | **Working sign-up email** | ⛔ Supabase default email is rate-limited; set up **Resend** SMTP or reviewers can't register | You (GO_LIVE §3) |
 
