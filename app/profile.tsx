@@ -485,6 +485,11 @@ export default function ProfileScreen() {
             label="Replay intro"
             onPress={() => router.push('/(onboarding)?replay=1')}
           />
+          <Row
+            icon={ICONS.heart}
+            label="The science behind parallax"
+            onPress={() => router.push('/science')}
+          />
         </Group>
 
         {/* Account Group */}

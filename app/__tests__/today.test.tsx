@@ -275,6 +275,30 @@ describe('Today Screen', () => {
     expect(queryByText('practice reading Jordan 🎯')).toBeNull();
   });
 
+  it('leads the revealed teaser with the story; the wave% stays but is demoted', async () => {
+    mockLive({
+      streak: 5,
+      createdDaysAgo: 30,
+      iAnswered: true,
+      partnerAnswered: true,
+      state: 'revealed',
+    });
+
+    const { getByText, getAllByText, queryByText } = await render(
+      <TodayScreen now={() => MORNING} />
+    );
+
+    // Story leads
+    expect(getByText('round complete · you both played')).toBeTruthy();
+    expect(getByText('see how you read each other')).toBeTruthy();
+    // wave% is still present (80 from the mock) — now labelled + demoted, no longer the headline
+    expect(getByText('wavelength')).toBeTruthy();
+    expect(getAllByText('80%').length).toBeGreaterThan(0);
+    expect(getByText('See the reveal →')).toBeTruthy();
+    // the old score-first headline copy is gone
+    expect(queryByText('on the same wavelength')).toBeNull();
+  });
+
   it('skips the archive and practice rows (but keeps the nudge) when the couple has no history yet', async () => {
     mockLive({
       streak: 3,

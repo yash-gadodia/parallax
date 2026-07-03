@@ -834,39 +834,48 @@ export default function TodayScreen({
                 </>
               ) : (
                 <>
+                  {/* Revealed teaser: lead with the story, not the grade
+                      (STRATEGY §4.3). The wave% stays, demoted to a supporting
+                      line; the full round narrative lives on the reveal. */}
                   <Kick c={colors.matchDeep}>
                     round complete · you both played
                   </Kick>
+                  <Serif
+                    s={26}
+                    italic
+                    c={colors.ink}
+                    style={{ marginTop: 8, marginBottom: 4 }}
+                  >
+                    see how you read each other
+                  </Serif>
                   <View
                     style={{
                       flexDirection: 'row',
                       alignItems: 'baseline',
-                      gap: 10,
-                      marginTop: 8,
-                      marginBottom: 4,
+                      gap: 7,
                     }}
                   >
+                    <Text
+                      style={{
+                        fontFamily: fontFamily.mono,
+                        fontSize: 11,
+                        letterSpacing: 1.4,
+                        textTransform: 'uppercase',
+                        color: colors.inkMute,
+                      }}
+                    >
+                      wavelength
+                    </Text>
                     <GradientText
                       style={{
                         fontFamily: fontFamily.disp,
-                        fontSize: 52,
-                        lineHeight: 57,
+                        fontSize: 24,
+                        lineHeight: 26,
                         paddingRight: 2,
                       }}
                     >
                       {`${wave}%`}
                     </GradientText>
-                    <Text
-                      style={{
-                        fontSize: 15,
-                        lineHeight: 18,
-                        fontWeight: '600',
-                        color: colors.inkSoft,
-                        fontFamily: fontFamily.ui,
-                      }}
-                    >
-                      on the same wavelength
-                    </Text>
                   </View>
                   <View style={{ marginTop: 16 }}>
                     <Btn

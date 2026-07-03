@@ -1,6 +1,19 @@
 import { render, act, fireEvent } from '@testing-library/react-native';
 import { AccessibilityInfo } from 'react-native';
 
+// Local router mock so we can assert navigation (e.g. the science entry link).
+const mockPush = jest.fn();
+jest.mock('expo-router', () => ({
+  useRouter: () => ({
+    push: mockPush,
+    replace: jest.fn(),
+    back: jest.fn(),
+    navigate: jest.fn(),
+    dismiss: jest.fn(),
+    canGoBack: () => true,
+  }),
+}));
+
 // fetchReveal is only called in server path; mock it so we can control its output
 jest.mock('../../src/features/drops/dropActions', () => ({
   fetchReveal: jest.fn(),
@@ -114,6 +127,21 @@ describe('Reveal Screen — demo mode (no session)', () => {
     expect(queryByText('did tonight bring you two closer?')).toBeNull();
     expect(queryByText('🌱 closer')).toBeNull();
   });
+
+  it('keeps the ring hero in demo mode — no live story headline', async () => {
+    const { queryByText } = await render(<RevealScreen />);
+    await act(async () => {});
+    expect(queryByText(/twin answer/)).toBeNull();
+    expect(queryByText(/all new angles/)).toBeNull();
+    expect(queryByText(/you read .+ right on/)).toBeNull();
+  });
+
+  it('the science entry link navigates to /science', async () => {
+    const { getByText } = await render(<RevealScreen />);
+    await act(async () => {});
+    fireEvent.press(getByText('the science behind parallax →'));
+    expect(mockPush).toHaveBeenCalledWith('/science');
+  });
 });
 
 describe('Reveal Screen — server mode (session + couple + coupleDropId)', () => {
@@ -153,6 +181,51 @@ describe('Reveal Screen — server mode (session + couple + coupleDropId)', () =
     await act(async () => {});
     // server reveal says 67% — GradientText renders the string twice (mask + opacity-0 copy)
     expect(getAllByText('67%').length).toBeGreaterThan(0);
+  });
+
+  it('leads the reveal with the round story (twin count), and the wave% stays as a supporting stat', async () => {
+    // default mock: twins:1
+    const { getByText, getAllByText } = await render(<RevealScreen />);
+    await act(async () => {});
+    expect(getByText('1 twin answer tonight')).toBeTruthy();
+    // the score is still present — just no longer the headline
+    expect(getAllByText('67%').length).toBeGreaterThan(0);
+  });
+
+  it('when there are no twins, leads with the best read of the partner', async () => {
+    mockFetchReveal.mockResolvedValue({
+      state: 'revealed',
+      reveal: { yourHits: 2, theirHits: 0, twins: 0, wave: 33 },
+      promptAnswers: [
+        { youPick: 0, youHunch: 1, themPick: 1, themHunch: 3 },
+        { youPick: 2, youHunch: 3, themPick: 3, themHunch: 0 },
+        { youPick: 0, youHunch: 2, themPick: 1, themHunch: 2 },
+      ],
+      prompts: SERVER_PROMPTS,
+      caughtUp: false,
+    });
+    const { getByText, getAllByText } = await render(<RevealScreen />);
+    await act(async () => {});
+    expect(getByText('you read Dani right on 2 of 3')).toBeTruthy();
+    expect(getAllByText('33%').length).toBeGreaterThan(0);
+  });
+
+  it('when nothing landed, still leads with warm discovery framing — never a fail number', async () => {
+    mockFetchReveal.mockResolvedValue({
+      state: 'revealed',
+      reveal: { yourHits: 0, theirHits: 0, twins: 0, wave: 0 },
+      promptAnswers: [
+        { youPick: 0, youHunch: 2, themPick: 1, themHunch: 3 },
+        { youPick: 1, youHunch: 0, themPick: 2, themHunch: 3 },
+        { youPick: 2, youHunch: 1, themPick: 0, themHunch: 1 },
+      ],
+      prompts: SERVER_PROMPTS,
+      caughtUp: false,
+    });
+    const { getByText, getAllByText } = await render(<RevealScreen />);
+    await act(async () => {});
+    expect(getByText('all new angles on Dani tonight')).toBeTruthy();
+    expect(getAllByText('0%').length).toBeGreaterThan(0);
   });
 
   it('holds on the honest fetching state while the server reveal loads — never a fake reveal', async () => {

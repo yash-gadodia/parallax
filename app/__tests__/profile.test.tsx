@@ -138,4 +138,9 @@ describe('ProfileScreen', () => {
     expect(getByText('Log out')).toBeTruthy();
     expect(getByText('Unpair from Jordan')).toBeTruthy();
   });
+
+  it('offers a link to the science behind parallax in preferences', async () => {
+    const { getByText } = await render(<ProfileScreen />);
+    expect(getByText('The science behind parallax')).toBeTruthy();
+  });
 });

@@ -168,7 +168,7 @@ export default function RevealScreen() {
   const router = useRouter();
   const { session } = useSession();
   const { couple } = useCouple();
-  const { partner } = useIdentity();
+  const { me, partner } = useIdentity();
   const playState = usePlayStore();
   const coupleDropId = playState.coupleDropId;
 
@@ -263,8 +263,28 @@ export default function RevealScreen() {
       }))
     : DROP.prompts.map((p) => ({ ...p, why: p.why as string | undefined }));
 
-  const verdict =
-    reveal.wave >= 80
+  // --- reveal reframe (STRATEGY §4.3, laws #1/#3): for a real couple the round's
+  // STORY leads — twins, then the best read — and the wave% demotes to a small
+  // supporting stat. The score is earned, not the headline. Demo keeps its shape.
+  const promptTotal = renderPrompts.length || 3;
+  const heroTwins = reveal.twins;
+  const bestRead = reveal.yourHits;
+  const heroLine =
+    heroTwins > 0
+      ? `${heroTwins} twin answer${heroTwins === 1 ? '' : 's'} tonight`
+      : bestRead > 0
+        ? `you read ${partner.name} right on ${bestRead} of ${promptTotal}`
+        : `all new angles on ${partner.name} tonight`;
+
+  // Verdict roasts the ROUND, never the relationship (law #3). Live narrates the
+  // night's shape; demo keeps the focus adjectives.
+  const verdict = isLive
+    ? heroTwins > 0
+      ? 'Some you nailed without even guessing.'
+      : bestRead > 0
+        ? 'A few reads landed, a few caught you off guard.'
+        : 'Tonight was pure discovery — the fun part.'
+    : reveal.wave >= 80
       ? 'Crystal clear. You see in 3D.'
       : reveal.wave >= 55
         ? 'Mostly in focus.'
@@ -350,6 +370,10 @@ export default function RevealScreen() {
     safeBack(router);
   };
 
+  const handleScience = () => {
+    router.push('/science');
+  };
+
 
   // Live session, no server data yet: honest loading / error — never a fake reveal.
   if (!liveReady) {
@@ -433,47 +457,62 @@ export default function RevealScreen() {
 
             <Kick c={colors.inkMute}>{aligned ? 'in focus' : 'the reveal'}</Kick>
 
-            {/* Ring with percentage */}
-            <View
-              style={{
-                position: 'relative',
-                width: 168,
-                height: 168,
-                marginVertical: 18,
-                alignSelf: 'center',
-              }}
-            >
-              <Ring pct={show ? reveal.wave : 0} size={168} />
+            {isLive ? (
+              /* STORY HERO — the round's story leads; the score demotes below */
+              <View style={{ alignItems: 'center', marginTop: 18, marginBottom: 2, alignSelf: 'stretch' }}>
+                <Serif s={40} italic c={colors.ink} style={{ textAlign: 'center' }}>
+                  {heroLine}
+                </Serif>
+                <View
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12 }}
+                >
+                  <Tok who={{ name: me.name, initial: me.initial }} you size={30} decorative />
+                  <Tok who={{ name: partner.name, initial: partner.initial }} size={30} decorative />
+                </View>
+              </View>
+            ) : (
+              /* Demo keeps the ring as its hero */
               <View
                 style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                  position: 'relative',
+                  width: 168,
+                  height: 168,
+                  marginVertical: 18,
+                  alignSelf: 'center',
                 }}
               >
-                <GradientText
+                <Ring pct={show ? reveal.wave : 0} size={168} />
+                <View
                   style={{
-                    fontFamily: fontFamily.disp,
-                    fontSize: 50,
-                    lineHeight: 50,
-                    paddingRight: 3,
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}
                 >
-                  {`${reveal.wave}%`}
-                </GradientText>
-                <Kick style={{ marginTop: 4 }}>
-                  {serverReveal?.caughtUp ? 'in sync · caught up at 80%' : 'in sync'}
-                </Kick>
+                  <GradientText
+                    style={{
+                      fontFamily: fontFamily.disp,
+                      fontSize: 50,
+                      lineHeight: 50,
+                      paddingRight: 3,
+                    }}
+                  >
+                    {`${reveal.wave}%`}
+                  </GradientText>
+                  <Kick style={{ marginTop: 4 }}>
+                    {serverReveal?.caughtUp ? 'in sync · caught up at 80%' : 'in sync'}
+                  </Kick>
+                </View>
+                {/* A high wave earns a one-shot gentle sparkle as the ring lands */}
+                {reveal.wave >= 70 && (
+                  <SparkleBurst radius={112} delay={RING_START_MS + RING_DURATION_MS} />
+                )}
               </View>
-              {/* A high wave earns a one-shot gentle sparkle as the ring lands */}
-              {reveal.wave >= 70 && (
-                <SparkleBurst radius={112} delay={RING_START_MS + RING_DURATION_MS} />
-              )}
-            </View>
+            )}
 
             {/* Verdict text with anaglyph effect — coral ghost left, periwinkle right */}
             <View style={{ marginTop: 6, marginBottom: 4, alignSelf: 'stretch' }}>
@@ -532,6 +571,52 @@ export default function RevealScreen() {
               <View style={{ width: 1, backgroundColor: colors.line }} />
               <Stat big={String(reveal.twins)} label="twin moments" grad />
             </View>
+
+            {/* Live: the wave% lives here now — a smaller, earned supporting stat,
+                still animated, never the headline (STRATEGY §4.3) */}
+            {isLive && (
+              <View style={{ marginTop: 18, alignItems: 'center' }}>
+                <View
+                  style={{
+                    position: 'relative',
+                    width: 88,
+                    height: 88,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Ring pct={show ? reveal.wave : 0} size={88} />
+                  <View
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <GradientText
+                      style={{
+                        fontFamily: fontFamily.disp,
+                        fontSize: 26,
+                        lineHeight: 26,
+                        paddingRight: 2,
+                      }}
+                    >
+                      {`${reveal.wave}%`}
+                    </GradientText>
+                  </View>
+                  {reveal.wave >= 70 && (
+                    <SparkleBurst radius={96} delay={RING_START_MS + RING_DURATION_MS} />
+                  )}
+                </View>
+                <Kick style={{ marginTop: 6 }}>
+                  {serverReveal?.caughtUp ? 'in sync · caught up at 80%' : 'in sync'}
+                </Kick>
+              </View>
+            )}
 
             {/* 1.5: back-to-back mutual reads get the escalation line */}
             {readRun >= 3 && (
@@ -971,6 +1056,13 @@ export default function RevealScreen() {
               Done for today
             </Btn>
           </View>
+
+          {/* Quiet trust surface — the grounding behind the reveal (R6) */}
+          <Press onPress={handleScience} scale={false} accessibilityLabel="The science behind parallax">
+            <Kick c={colors.inkMute} style={{ marginTop: 18, textAlign: 'center' }}>
+              the science behind parallax →
+            </Kick>
+          </Press>
 
           {/* 5.4: quiet Plus line at the moment of delight — never blocks the
               loop, never day-0, never pre-first-reveal, never for Pro */}
