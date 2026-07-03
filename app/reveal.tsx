@@ -52,6 +52,7 @@ import { coupleAgeDays } from '../src/features/drops/useTodayState';
 import { usePurchases } from '../src/features/purchases/usePurchases';
 import { shouldOfferPlus } from '../src/features/purchases/paywallMoments';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { supabase } from '../src/lib/supabase';
 import { track, EVENTS } from '../src/lib/analytics';
 
 const WIDGET_PROMPT_DISMISSED_KEY = 'reveal-widget-prompt-dismissed';
@@ -277,6 +278,19 @@ export default function RevealScreen() {
   const missPrompt = missIdx != null ? renderPrompts[missIdx] : null;
   const missAnswers = missIdx != null ? liveAnswers[missIdx] : null;
   const [sparkOpen, setSparkOpen] = useState(false);
+
+  // North star: "did this bring you closer?" — the author's own signal, never
+  // shown to the partner (RLS is author-only). One tap, then the row swaps to
+  // an ack for the rest of the session; the unique constraint server-side
+  // makes any re-ask harmless.
+  const [closenessAnswer, setClosenessAnswer] = useState<boolean | null>(null);
+  const handleCloseness = (closer: boolean) => {
+    if (!coupleDropId) return;
+    setClosenessAnswer(closer);
+    track(EVENTS.CLOSENESS_FEEDBACK, { closer });
+    // @ts-expect-error supabase-js RPC overload limitation with multiple function signatures
+    supabase.rpc('record_closeness', { p_couple_drop: coupleDropId, p_closer: closer }).then(() => {});
+  };
 
   // --- 2.3: first-week beats on the reveal ----------------------------------
   const ageDays = coupleAgeDays(couple?.created_at ?? null, new Date());
@@ -813,6 +827,104 @@ export default function RevealScreen() {
                 <Kick style={{ marginTop: 8 }}>{sparkOpen ? 'tap to tuck away' : 'tap for an opener'}</Kick>
               </Card>
             </Press>
+          )}
+
+          {/* North star: one quiet post-reveal question — the answer stays the
+              author's own (never the partner's to see) */}
+          {isLive && !!serverReveal && (
+            <View style={{ marginTop: 14, minHeight: 34, justifyContent: 'center' }}>
+              {closenessAnswer == null ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Text
+                    allowFontScaling={false}
+                    style={{
+                      flex: 1,
+                      fontSize: 12.5,
+                      lineHeight: 17,
+                      color: colors.inkSoft,
+                      fontFamily: fontFamily.ui,
+                    }}
+                  >
+                    did tonight bring you two closer?
+                  </Text>
+                  <Press
+                    onPress={() => handleCloseness(true)}
+                    scale={false}
+                    style={{ width: 'auto' }}
+                    accessibilityLabel="Closer"
+                  >
+                    <View
+                      style={{
+                        paddingVertical: 7,
+                        paddingHorizontal: 12,
+                        borderRadius: radius.pill,
+                        borderWidth: 1,
+                        borderColor: colors.line,
+                        backgroundColor: 'rgba(255,253,253,0.72)',
+                      }}
+                    >
+                      <Text
+                        allowFontScaling={false}
+                        style={{
+                          fontSize: 12,
+                          lineHeight: 16,
+                          fontWeight: '600',
+                          color: colors.matchDeep,
+                          fontFamily: fontFamily.ui,
+                        }}
+                      >
+                        🌱 closer
+                      </Text>
+                    </View>
+                  </Press>
+                  <Press
+                    onPress={() => handleCloseness(false)}
+                    scale={false}
+                    style={{ width: 'auto' }}
+                    accessibilityLabel="Not really"
+                  >
+                    <View
+                      style={{
+                        paddingVertical: 7,
+                        paddingHorizontal: 12,
+                        borderRadius: radius.pill,
+                        borderWidth: 1,
+                        borderColor: colors.line,
+                        backgroundColor: 'rgba(255,253,253,0.72)',
+                      }}
+                    >
+                      <Text
+                        allowFontScaling={false}
+                        style={{
+                          fontSize: 12,
+                          lineHeight: 16,
+                          fontWeight: '600',
+                          color: colors.inkSoft,
+                          fontFamily: fontFamily.ui,
+                        }}
+                      >
+                        😐 not really
+                      </Text>
+                    </View>
+                  </Press>
+                </View>
+              ) : (
+                <Text
+                  allowFontScaling={false}
+                  style={{
+                    textAlign: 'center',
+                    fontSize: 12.5,
+                    lineHeight: 17,
+                    color: colors.inkMute,
+                    fontFamily: fontFamily.ui,
+                  }}
+                >
+                  {closenessAnswer
+                    ? 'noted — quietly, just for you 🌱'
+                    : 'some nights are quieter — noted, just for you 😌'}
+                </Text>
+              )}
+            </View>
           )}
 
           {/* 2.3 D3+: the widget ask lands at the post-reveal peak, once */}

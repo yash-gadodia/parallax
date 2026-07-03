@@ -11,6 +11,8 @@ export const EVENTS = {
   DROP_SUBMITTED: 'drop_submitted',
   REVEAL_VIEWED: 'reveal_viewed',
   FIRST_MUTUAL_REVEAL: 'first_mutual_reveal',
+  // 0027 north star: post-reveal "did this bring you closer?" micro-signal.
+  CLOSENESS_FEEDBACK: 'closeness_feedback',
   REFOCUS_COMPLETED: 'refocus_completed',
   PAYWALL_VIEWED: 'paywall_viewed',
   PURCHASE_COMPLETED: 'purchase_completed',

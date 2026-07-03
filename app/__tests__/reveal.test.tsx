@@ -51,6 +51,7 @@ import { fetchReveal } from '../../src/features/drops/dropActions';
 import { useReactions } from '../../src/features/reactions/useReactions';
 import * as haptics from '../../src/lib/haptics';
 import { usePlayStore } from '../../src/store/play';
+import { supabase } from '../../src/lib/supabase';
 
 const mockFetchReveal = fetchReveal as jest.Mock;
 const mockUseReactions = useReactions as jest.Mock;
@@ -105,6 +106,13 @@ describe('Reveal Screen — demo mode (no session)', () => {
     await act(async () => {});
     expect(queryAllByText('🥹')).toHaveLength(0);
     expect(mockUseReactions).toHaveBeenCalledWith(null);
+  });
+
+  it('never asks the closeness question in demo mode', async () => {
+    const { queryByText } = await render(<RevealScreen />);
+    await act(async () => {});
+    expect(queryByText('did tonight bring you two closer?')).toBeNull();
+    expect(queryByText('🌱 closer')).toBeNull();
   });
 });
 
@@ -214,6 +222,51 @@ describe('Reveal Screen — server mode (session + couple + coupleDropId)', () =
     expect(mockReact).toHaveBeenCalledTimes(1);
     expect(mockReact).toHaveBeenCalledWith('p1', '😂');
     expect(haptics.selection).toHaveBeenCalledTimes(1);
+  });
+
+  it('asks the closeness question on a live revealed fetch', async () => {
+    const { getByText } = await render(<RevealScreen />);
+    await act(async () => {});
+
+    expect(getByText('did tonight bring you two closer?')).toBeTruthy();
+    expect(getByText('🌱 closer')).toBeTruthy();
+    expect(getByText('😐 not really')).toBeTruthy();
+  });
+
+  it('tapping 🌱 records closeness via the RPC and swaps to the private ack', async () => {
+    const rpcSpy = jest.spyOn(supabase, 'rpc');
+    const { getByText, queryByText } = await render(<RevealScreen />);
+    await act(async () => {});
+
+    await act(async () => {
+      fireEvent.press(getByText('🌱 closer'));
+    });
+
+    expect(rpcSpy).toHaveBeenCalledWith('record_closeness', {
+      p_couple_drop: 'cd-42',
+      p_closer: true,
+    });
+    expect(getByText('noted — quietly, just for you 🌱')).toBeTruthy();
+    // the question never re-asks this session
+    expect(queryByText('did tonight bring you two closer?')).toBeNull();
+    expect(queryByText('😐 not really')).toBeNull();
+  });
+
+  it('tapping 😐 records closer: false and answers with the warm neutral ack', async () => {
+    const rpcSpy = jest.spyOn(supabase, 'rpc');
+    const { getByText, queryByText } = await render(<RevealScreen />);
+    await act(async () => {});
+
+    await act(async () => {
+      fireEvent.press(getByText('😐 not really'));
+    });
+
+    expect(rpcSpy).toHaveBeenCalledWith('record_closeness', {
+      p_couple_drop: 'cd-42',
+      p_closer: false,
+    });
+    expect(getByText('some nights are quieter — noted, just for you 😌')).toBeTruthy();
+    expect(queryByText('did tonight bring you two closer?')).toBeNull();
   });
 
   it('pops the 👯 badge on exactly the twin-moment cards', async () => {

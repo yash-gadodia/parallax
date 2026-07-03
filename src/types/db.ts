@@ -90,6 +90,17 @@ export interface Answer {
   created_at: string;
 }
 
+// 0027: post-reveal "did this bring you closer?" — the author's own signal
+// (RLS: author-only SELECT; the partner never sees it). Writes via record_closeness.
+export interface ClosenessFeedback {
+  id: string;
+  couple_id: string;
+  couple_drop_id: string;
+  author: string;
+  closer: boolean;
+  created_at: string;
+}
+
 // 0018: per-prompt emoji reaction on a revealed drop (one per author per prompt).
 export interface Reaction {
   id: string;
@@ -194,6 +205,11 @@ export interface Database {
         Row: Reaction;
         Insert: Omit<Reaction, 'id' | 'created_at'>;
         Update: Partial<Omit<Reaction, 'id' | 'created_at'>>;
+      };
+      closeness_feedback: {
+        Row: ClosenessFeedback;
+        Insert: Omit<ClosenessFeedback, 'id' | 'created_at'>;
+        Update: Partial<Omit<ClosenessFeedback, 'id' | 'created_at'>>;
       };
       activity: {
         Row: Activity;
@@ -312,6 +328,13 @@ export interface Database {
       repair_streak: {
         Args: { p_couple: string };
         Returns: Json;
+      };
+      record_closeness: {
+        Args: {
+          p_couple_drop: string;
+          p_closer: boolean;
+        };
+        Returns: void;
       };
       unpair: {
         Args: { p_couple: string };
