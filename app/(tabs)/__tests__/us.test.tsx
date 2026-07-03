@@ -24,6 +24,17 @@ jest.mock('../../../src/features/history/useDropEmojis', () => ({
   useDropEmojis: jest.fn(() => ({})),
 }));
 
+jest.mock('../../../src/features/moneyDates/useMoneyDate', () => ({
+  useMoneyDate: jest.fn(() => ({
+    state: null,
+    coupleId: null,
+    loading: false,
+    isSample: true,
+    error: null,
+    refetch: jest.fn(),
+  })),
+}));
+
 jest.mock('../../../src/features/profile/useProfile', () => ({
   useProfile: jest.fn(() => ({
     name: 'Alex',
@@ -40,6 +51,8 @@ jest.mock('../../../src/features/profile/useProfile', () => ({
 const mockUseCoupleHistory = useCoupleHistory as jest.Mock;
 const { useDropEmojis } = require('../../../src/features/history/useDropEmojis');
 const mockUseDropEmojis = useDropEmojis as jest.Mock;
+const { useMoneyDate } = require('../../../src/features/moneyDates/useMoneyDate');
+const mockUseMoneyDate = useMoneyDate as jest.Mock;
 
 // Real history so the wavelength chart + stat trio render (empty history
 // shows the first-run state instead). history[0] is the latest drop.
@@ -59,6 +72,14 @@ describe('UsScreen', () => {
       refetch: jest.fn(),
     });
     mockUseDropEmojis.mockReturnValue({});
+    mockUseMoneyDate.mockReturnValue({
+      state: null,
+      coupleId: null,
+      loading: false,
+      isSample: true,
+      error: null,
+      refetch: jest.fn(),
+    });
   });
 
   it('shows the history skeleton (chart, stat trio, rows) while history loads', async () => {
@@ -128,6 +149,37 @@ describe('UsScreen', () => {
   it('renders the love map card title', async () => {
     const { getByText } = await render(<UsScreen />);
     expect(getByText('Your Love Map')).toBeTruthy();
+  });
+
+  it('renders the Money Date row with the first-time invitation line', async () => {
+    const { getByText } = await render(<UsScreen />);
+    expect(getByText('Money Date')).toBeTruthy();
+    expect(getByText('a tiny money talk — no numbers needed')).toBeTruthy();
+  });
+
+  it('shows the last money date when the couple has completed one', async () => {
+    mockUseMoneyDate.mockReturnValue({
+      state: {
+        open: null,
+        last_completed_at: '2026-06-12T09:30:00.000Z',
+        last_agreed_action: 'coffee from home',
+        sessions_completed: 1,
+      },
+      coupleId: 'couple-1',
+      loading: false,
+      isSample: false,
+      error: null,
+      refetch: jest.fn(),
+    });
+    const { getByText, queryByText } = await render(<UsScreen />);
+    expect(getByText('last one · 12 jun')).toBeTruthy();
+    expect(queryByText('a tiny money talk — no numbers needed')).toBeNull();
+  });
+
+  it('opens the money date session from the row', async () => {
+    const { getByText } = await render(<UsScreen />);
+    fireEvent.press(getByText('Money Date'));
+    expect(mockPush).toHaveBeenCalledWith('/moneyDate');
   });
 
   it('renders the wavelength section', async () => {

@@ -23,6 +23,8 @@ import { useLearnings } from '../../src/features/lovemap/useLearnings';
 import { useCoupleHistory } from '../../src/features/lovemap/useCoupleHistory';
 import { useDropEmojis } from '../../src/features/history/useDropEmojis';
 import { useProfile } from '../../src/features/profile/useProfile';
+import { useMoneyDate } from '../../src/features/moneyDates/useMoneyDate';
+import { describeLastMoneyDate } from '../../src/features/moneyDates/cards';
 
 export default function UsScreen() {
   const router = useRouter();
@@ -38,6 +40,7 @@ export default function UsScreen() {
   // only covers the demo codes, so it stays as the demo fallback below.
   const dropEmojis = useDropEmojis(history.map((h) => h.code));
   const { name, partnerName, streak, togetherSince } = useProfile();
+  const { state: moneyDateState } = useMoneyDate();
 
   const currentWave = history.length > 0 ? `${history[0].wavelength}` : null;
 
@@ -315,6 +318,39 @@ export default function UsScreen() {
                   );
                 })}
               </View>
+            </Card>
+          </Press>
+
+          {/* Money Date row — the guided money conversation (0029) */}
+          <Press onPress={() => router.push('/moneyDate')} accessibilityLabel="Money Date">
+            <Card
+              style={{
+                borderRadius: 26,
+                paddingHorizontal: 18,
+                paddingVertical: 16,
+                marginTop: 14,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 10,
+              }}
+            >
+              <Text style={{ fontSize: 24 }}>☕</Text>
+              <View style={{ flex: 1 }}>
+                <Text
+                  style={{
+                    fontSize: 16,
+                    fontWeight: '700',
+                    color: colors.ink,
+                    fontFamily: fontFamily.ui,
+                  }}
+                >
+                  Money Date
+                </Text>
+                <Kick style={{ marginTop: 2 }}>
+                  {describeLastMoneyDate(moneyDateState?.last_completed_at ?? null)}
+                </Kick>
+              </View>
+              <Icon d={ICONS.chevR} size={18} color={colors.inkMute} />
             </Card>
           </Press>
 

@@ -33,6 +33,9 @@ export interface Drop {
   theme: string | null;
   pack_id: string | null;
   couple_id: string | null;
+  // 0029: 'classic' | 'gratitude' | 'are' | 'self_expansion' — a serving
+  // concern (reinforcement cadence); the play flow renders all kinds the same.
+  kind: string;
   created_at: string;
 }
 
@@ -155,6 +158,29 @@ export interface RefocusSession {
   revealed_at: string | null;
 }
 
+// 0029: a Money Date — the guided money conversation, done together on one
+// phone. Writes go through the DEFINER RPCs (start_money_date /
+// advance_money_date / complete_money_date); card copy lives in the client.
+export interface MoneyDateSession {
+  id: string;
+  couple_id: string;
+  started_by: string;
+  step: number;
+  responses: Json;
+  agreed_action: string | null;
+  state: 'open' | 'completed' | 'abandoned';
+  created_at: string;
+  completed_at: string | null;
+}
+
+// get_money_date_state (0029): the Us row + session screen in one round trip.
+export interface MoneyDateState {
+  open: { id: string; step: number; started_by: string } | null;
+  last_completed_at: string | null;
+  last_agreed_action: string | null;
+  sessions_completed: number;
+}
+
 export interface CoupleHistoryRow {
   // 0024: real id so detail views render the actual drop; wavelength is the
   // STORED server score (a caught-up round's 80% holds everywhere).
@@ -226,6 +252,11 @@ export interface Database {
         Row: RefocusSession;
         Insert: Omit<RefocusSession, 'id' | 'created_at'>;
         Update: Partial<Omit<RefocusSession, 'id' | 'created_at'>>;
+      };
+      money_date_sessions: {
+        Row: MoneyDateSession;
+        Insert: Omit<MoneyDateSession, 'id' | 'created_at'>;
+        Update: Partial<Omit<MoneyDateSession, 'id' | 'created_at'>>;
       };
     };
     Functions: {
@@ -343,6 +374,28 @@ export interface Database {
       };
       delete_my_account: {
         Args: object;
+        Returns: void;
+      };
+      start_money_date: {
+        Args: { p_couple: string };
+        Returns: string;
+      };
+      get_money_date_state: {
+        Args: { p_couple: string };
+        Returns: Json;
+      };
+      advance_money_date: {
+        Args: {
+          p_session: string;
+          p_note?: string | null;
+        };
+        Returns: number;
+      };
+      complete_money_date: {
+        Args: {
+          p_session: string;
+          p_action: string;
+        };
         Returns: void;
       };
     };
