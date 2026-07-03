@@ -87,7 +87,9 @@ export function useLearnings(): UseLearningsReturn {
     setReloadKey((k) => k + 1);
   }, []);
 
-  const isSample = !session || !couple || items.some((i) => LEARNINGS.find((l) => l.id === i.id));
+  // Sample-ness is an AUTH fact, never a data-shape guess (same rule as
+  // useCoupleHistory): only the signed-out / unpaired demo is a sample.
+  const isSample = !session || !couple;
 
   return { items, loading: loading || coupleLoading, isSample, error, refetch };
 }

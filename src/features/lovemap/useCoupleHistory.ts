@@ -76,7 +76,10 @@ export function useCoupleHistory(): UseCoupleHistoryReturn {
     setReloadKey((k) => k + 1);
   }, []);
 
-  const isSample = !session || !couple || history.length === ARCHIVE.length;
+  // Sample-ness is an AUTH fact, never a data-shape guess: a real couple that
+  // happens to have exactly ARCHIVE.length revealed drops must still see their
+  // real story (real pair-up date, rows routing by couple_drop_id).
+  const isSample = !session || !couple;
 
   return { history, loading: loading || coupleLoading, isSample, error, refetch };
 }
