@@ -1,8 +1,6 @@
 # Terms of Service — Parallax
 
-> ⚠️ **DRAFT.** Reasonable starting point, but **have a lawyer review before launch** and **host it at a public URL**. Fill the `<placeholders>`.
-
-**Last updated:** <DATE> · **Contact:** <SUPPORT_EMAIL> · **Operator:** <YOUR_NAME / ENTITY>, Singapore.
+**Last updated:** 3 July 2026 · **Contact:** pirsquare.yash+parallax@gmail.com · **Operator:** Yash Gadodia, Singapore.
 
 By using Parallax (the "app"), you agree to these Terms. If you don't agree, don't use the app.
 
@@ -40,4 +38,4 @@ We may update these Terms; we'll revise the "Last updated" date and surface mate
 These Terms are governed by the laws of **Singapore**, and disputes are subject to the courts of Singapore, except where local consumer law gives you other rights.
 
 ## 12. Contact
-**<SUPPORT_EMAIL>**.
+**pirsquare.yash+parallax@gmail.com**.

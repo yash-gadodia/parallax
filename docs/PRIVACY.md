@@ -1,8 +1,6 @@
 # Privacy Policy — Parallax
 
-> ⚠️ **DRAFT.** Tailored to how the app actually works, but **have a lawyer review before launch** (couples/relationship data is sensitive) and **host it at a public URL** (App Store requires a reachable Privacy Policy link). Fill the `<placeholders>`.
-
-**Last updated:** <DATE> · **Contact:** <PRIVACY_EMAIL> · **Operator:** <YOUR_NAME / ENTITY>, Singapore.
+**Last updated:** 3 July 2026 · **Contact:** pirsquare.yash+parallax@gmail.com · **Operator:** Yash Gadodia, Singapore.
 
 Parallax ("Parallax", "we", "us") is a couples app. This policy explains what we collect, why, who we share it with, and your choices.
 
@@ -30,7 +28,7 @@ Data is encrypted in transit. Access to intimate data is governed by Row-Level S
 We keep your data while your account is active. You can **export** your data and **delete your account** in-app: deletion erases your profile and answers and dissolves the couple link. (Some provider backups/logs may persist for a limited period per their policies.)
 
 ## 6. Your rights
-Access, export, correct, or delete your data — primarily self-serve in the app (Profile → Export my data / Delete account), or contact <PRIVACY_EMAIL>. Depending on your region (e.g., GDPR/PDPA), you may have additional rights.
+Access, export, correct, or delete your data — primarily self-serve in the app (Profile → Export my data / Delete account), or contact pirsquare.yash+parallax@gmail.com. Depending on your region (e.g., GDPR/PDPA), you may have additional rights.
 
 ## 7. Children
 Parallax is for adults in relationships and is **not directed to children**. You must be at least 18 (or the age of majority where you live) to use it.
@@ -39,4 +37,4 @@ Parallax is for adults in relationships and is **not directed to children**. You
 We'll update this policy as the app evolves and revise the "Last updated" date; material changes will be surfaced in-app.
 
 ## 9. Contact
-Questions or requests: **<PRIVACY_EMAIL>**.
+Questions or requests: **pirsquare.yash+parallax@gmail.com**.
