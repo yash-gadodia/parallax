@@ -61,23 +61,30 @@ $$;
 --     among themselves — the cadence branch, not catalog order, serves them.
 --     Spice 0 everywhere: appreciation and check-ins must reach sweet couples.
 -- ----------------------------------------------------------------------------
-insert into public.drops (id, code, title, theme, position, spice, couple_id, kind)
+-- NOTE (03-07-2026 ordering fix): this insert originally listed couple_id
+-- (always null), but drops.couple_id is only created by 0030 — on a virgin
+-- database, migrations apply 0029 BEFORE 0030 and the insert hard-failed
+-- (42703). couple_id is omitted here (null is also 0030's column default),
+-- so the end state is identical on databases that already applied the old
+-- text. See 0032_fix_next_drop_for_ordering.sql for the function-clobber
+-- half of the same ordering bug.
+insert into public.drops (id, code, title, theme, position, spice, kind)
 values
   -- gratitude: specific, other-praising appreciation
-  ('66666666-6666-6666-6666-000000000001', 'GLOW 01', 'the glow file',        'deeper', 301, 0, null, 'gratitude'),
-  ('66666666-6666-6666-6666-000000000002', 'GLOW 02', 'proud of you hours',   'deeper', 302, 0, null, 'gratitude'),
-  ('66666666-6666-6666-6666-000000000003', 'GLOW 03', 'the thank-you backlog','deeper', 303, 0, null, 'gratitude'),
-  ('66666666-6666-6666-6666-000000000004', 'GLOW 04', 'seen and noted',       'deeper', 304, 0, null, 'gratitude'),
+  ('66666666-6666-6666-6666-000000000001', 'GLOW 01', 'the glow file',        'deeper', 301, 0, 'gratitude'),
+  ('66666666-6666-6666-6666-000000000002', 'GLOW 02', 'proud of you hours',   'deeper', 302, 0, 'gratitude'),
+  ('66666666-6666-6666-6666-000000000003', 'GLOW 03', 'the thank-you backlog','deeper', 303, 0, 'gratitude'),
+  ('66666666-6666-6666-6666-000000000004', 'GLOW 04', 'seen and noted',       'deeper', 304, 0, 'gratitude'),
   -- are: accessibility / responsiveness / engagement check-ins
-  ('66666666-6666-6666-6666-000000000005', 'TUNE 01', 'can i reach you?',     'deeper', 305, 0, null, 'are'),
-  ('66666666-6666-6666-6666-000000000006', 'TUNE 02', 'do you catch me?',     'deeper', 306, 0, null, 'are'),
-  ('66666666-6666-6666-6666-000000000007', 'TUNE 03', 'all the way here',     'deeper', 307, 0, null, 'are'),
-  ('66666666-6666-6666-6666-000000000008', 'TUNE 04', 'the signal check',     'deeper', 308, 0, null, 'are'),
+  ('66666666-6666-6666-6666-000000000005', 'TUNE 01', 'can i reach you?',     'deeper', 305, 0, 'are'),
+  ('66666666-6666-6666-6666-000000000006', 'TUNE 02', 'do you catch me?',     'deeper', 306, 0, 'are'),
+  ('66666666-6666-6666-6666-000000000007', 'TUNE 03', 'all the way here',     'deeper', 307, 0, 'are'),
+  ('66666666-6666-6666-6666-000000000008', 'TUNE 04', 'the signal check',     'deeper', 308, 0, 'are'),
   -- self_expansion: novel shared-activity sparks
-  ('66666666-6666-6666-6666-000000000009', 'WILD 01', 'the never list',       'spark',  309, 0, null, 'self_expansion'),
-  ('66666666-6666-6666-6666-000000000010', 'WILD 02', 'plot twist night',     'spark',  310, 0, null, 'self_expansion'),
-  ('66666666-6666-6666-6666-000000000011', 'WILD 03', 'the someday heist',    'spark',  311, 0, null, 'self_expansion'),
-  ('66666666-6666-6666-6666-000000000012', 'WILD 04', 'strangers again',      'spark',  312, 0, null, 'self_expansion')
+  ('66666666-6666-6666-6666-000000000009', 'WILD 01', 'the never list',       'spark',  309, 0, 'self_expansion'),
+  ('66666666-6666-6666-6666-000000000010', 'WILD 02', 'plot twist night',     'spark',  310, 0, 'self_expansion'),
+  ('66666666-6666-6666-6666-000000000011', 'WILD 03', 'the someday heist',    'spark',  311, 0, 'self_expansion'),
+  ('66666666-6666-6666-6666-000000000012', 'WILD 04', 'strangers again',      'spark',  312, 0, 'self_expansion')
 on conflict (id) do nothing;
 
 insert into public.drop_prompts (id, drop_id, position, emoji, question, options)

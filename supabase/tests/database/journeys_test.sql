@@ -8,7 +8,7 @@
 -- ============================================================================
 begin;
   create extension if not exists pgtap;
-  select plan(20);
+  select plan(21);
 
   -- ---- SETUP -----------------------------------------------------------------
   insert into auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at)
@@ -161,6 +161,16 @@ begin;
     (select (public.get_journey_state('e2e2e2e2-0000-0000-0000-000000000001'::uuid))->>'i_checked_in'),
     'true',
     'the state reflects my check-in on the current stage'
+  );
+
+  -- 0032 regression: the note is capped like the money-date RPCs (2000 chars).
+  select throws_ok(
+    $q$select public.record_journey_checkin(
+         (select cj.id from public.couple_journeys cj
+          where cj.couple_id = 'e2e2e2e2-0000-0000-0000-000000000001'::uuid),
+         repeat('x', 2001))$q$,
+    'journey_note_too_long',
+    'a check-in note beyond 2000 chars is refused (0032)'
   );
 
   select is(
