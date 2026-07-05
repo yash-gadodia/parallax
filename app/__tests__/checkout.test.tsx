@@ -151,4 +151,41 @@ describe('CheckoutScreen', () => {
     expect(getByText("That didn't go through. No charge was made.")).toBeTruthy();
     expect(mockReplace).not.toHaveBeenCalled();
   });
+
+  it('shows honest trial disclosure for monthly plan', async () => {
+    const { getByText } = await render(<CheckoutScreen />);
+
+    // Select monthly plan
+    await act(async () => {
+      fireEvent.press(getByText('Monthly'));
+    });
+
+    // Check trial end date disclosure
+    const trialEndText = getByText(/Trial ends/);
+    expect(trialEndText).toBeTruthy();
+
+    // Check renewal price disclosure
+    const renewalText = getByText(/Then billed/);
+    expect(renewalText).toBeTruthy();
+
+    // Check cancel messaging
+    expect(getByText(/Cancel anytime in one tap — you keep access until the end of the period/)).toBeTruthy();
+  });
+
+  it('shows one-time charge disclosure for lifetime plan', async () => {
+    const { getByText, queryByText } = await render(<CheckoutScreen />);
+
+    // Select lifetime plan
+    await act(async () => {
+      fireEvent.press(getByText('Lifetime'));
+    });
+
+    // Should show one-time charge message
+    expect(getByText(/One charge only.*then access forever/)).toBeTruthy();
+    expect(getByText(/No subscriptions, no recurring charges/)).toBeTruthy();
+
+    // Should NOT show trial or renewal messaging
+    expect(queryByText(/Trial ends/)).toBeNull();
+    expect(queryByText(/Then billed/)).toBeNull();
+  });
 });

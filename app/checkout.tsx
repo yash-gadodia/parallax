@@ -23,6 +23,7 @@ import { usePurchases } from '../src/features/purchases/usePurchases';
 import Toast from '../src/components/Toast';
 import { track, EVENTS } from '../src/lib/analytics';
 import { useIdentity } from '../src/features/profile/useIdentity';
+import { getTrialEndDateString } from '../src/domain/billing';
 
 type PlanId = 'year' | 'month' | 'life';
 
@@ -307,6 +308,96 @@ export default function CheckoutScreen() {
               {restoring ? 'Restoring…' : 'Restore purchases'}
             </Text>
           </Press>
+
+          {/* Honest billing disclosure */}
+          {plan !== 'life' && (
+            <View
+              style={{
+                marginTop: 32,
+                paddingHorizontal: 12,
+                paddingVertical: 14,
+                backgroundColor: colors.surface,
+                borderRadius: radius.cardSm,
+                borderWidth: 1,
+                borderColor: colors.line,
+              }}
+            >
+              <Text
+                allowFontScaling={false}
+                style={{
+                  fontSize: 13,
+                  lineHeight: 18,
+                  color: colors.ink,
+                  fontFamily: fontFamily.ui,
+                  marginBottom: 8,
+                }}
+              >
+                Trial ends <Text style={{ fontWeight: '700' }}>{getTrialEndDateString(7)}</Text>
+              </Text>
+              <Text
+                allowFontScaling={false}
+                style={{
+                  fontSize: 13,
+                  lineHeight: 18,
+                  color: colors.ink,
+                  fontFamily: fontFamily.ui,
+                  marginBottom: 8,
+                }}
+              >
+                Then billed <Text style={{ fontWeight: '700' }}>{pl.price} {pl.per}</Text>
+              </Text>
+              <Text
+                allowFontScaling={false}
+                style={{
+                  fontSize: 12,
+                  lineHeight: 16,
+                  color: colors.inkSoft,
+                  fontFamily: fontFamily.ui,
+                }}
+              >
+                Cancel anytime in one tap — you keep access until the end of the period.
+              </Text>
+            </View>
+          )}
+
+          {/* Lifetime disclosure */}
+          {plan === 'life' && (
+            <View
+              style={{
+                marginTop: 32,
+                paddingHorizontal: 12,
+                paddingVertical: 14,
+                backgroundColor: colors.surface,
+                borderRadius: radius.cardSm,
+                borderWidth: 1,
+                borderColor: colors.line,
+              }}
+            >
+              <Text
+                allowFontScaling={false}
+                style={{
+                  fontSize: 13,
+                  lineHeight: 18,
+                  color: colors.ink,
+                  fontFamily: fontFamily.ui,
+                  marginBottom: 8,
+                }}
+              >
+                <Text style={{ fontWeight: '700' }}>One charge only</Text>, then access forever.
+              </Text>
+              <Text
+                allowFontScaling={false}
+                style={{
+                  fontSize: 12,
+                  lineHeight: 16,
+                  color: colors.inkSoft,
+                  fontFamily: fontFamily.ui,
+                }}
+              >
+                No subscriptions, no recurring charges.
+              </Text>
+            </View>
+          )}
         </ScrollView>
 
         {/* Sticky CTA Footer */}

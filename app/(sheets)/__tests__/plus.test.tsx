@@ -37,4 +37,19 @@ describe('PlusSheet', () => {
     // Assert a perk title to verify the perks list rendered
     expect(getByText('Every themed pack')).toBeTruthy();
   });
+
+  it('shows honest trial disclosure before the CTA', async () => {
+    const { getByText } = await render(<PlusSheet />);
+
+    // Check trial end date disclosure
+    const trialEndText = getByText(/Trial ends/);
+    expect(trialEndText).toBeTruthy();
+
+    // Check renewal price disclosure
+    const renewalText = getByText(/Then billed/);
+    expect(renewalText).toBeTruthy();
+
+    // Check cancel messaging
+    expect(getByText(/Cancel anytime in one tap — you keep access until the end of the period/)).toBeTruthy();
+  });
 });

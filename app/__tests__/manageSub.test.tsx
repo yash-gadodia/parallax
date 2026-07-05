@@ -118,7 +118,8 @@ describe('ManageSubScreen', () => {
     expect(getByText('parallax_plus_annual')).toBeTruthy();
     expect(getByText('Renews')).toBeTruthy();
     expect(getByText('Jul 15, 2026')).toBeTruthy();
-    expect(getByText('Manage subscription')).toBeTruthy();
+    expect(getByText('Cancel subscription')).toBeTruthy();
+    expect(getByText("You're billed once, through the App Store — never doubled across platforms.")).toBeTruthy();
     expect(queryByText('DEMO')).toBeNull();
   });
 

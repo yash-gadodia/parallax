@@ -12,6 +12,7 @@ import { Serif } from '../../src/components/Text';
 import { colors, space, radius, gradients } from '../../src/design/tokens';
 import { fontFamily } from '../../src/design/typography';
 import { useIdentity } from '../../src/features/profile/useIdentity';
+import { getTrialEndDateString } from '../../src/domain/billing';
 
 const perks = [
   {
@@ -128,6 +129,43 @@ export default function PlusSheet() {
               </View>
             </View>
           ))}
+        </View>
+
+        {/* Honest billing disclosure */}
+        <View
+          style={{
+            paddingHorizontal: 12,
+            paddingVertical: 12,
+            backgroundColor: colors.surface,
+            borderRadius: radius.cardSm,
+            borderWidth: 1,
+            borderColor: colors.line,
+            marginBottom: 14,
+          }}
+        >
+          <Text
+            allowFontScaling={false}
+            style={{
+              fontSize: 12,
+              lineHeight: 17,
+              color: colors.ink,
+              fontFamily: fontFamily.ui,
+              marginBottom: 6,
+            }}
+          >
+            Trial ends <Text style={{ fontWeight: '700' }}>{getTrialEndDateString(7)}</Text>. Then billed <Text style={{ fontWeight: '700' }}>$4.99/mo</Text>.
+          </Text>
+          <Text
+            allowFontScaling={false}
+            style={{
+              fontSize: 11,
+              lineHeight: 16,
+              color: colors.inkSoft,
+              fontFamily: fontFamily.ui,
+            }}
+          >
+            Cancel anytime in one tap — you keep access until the end of the period.
+          </Text>
         </View>
 
         <Btn kind="us" onPress={handleStart} sub="then $4.99/mo">

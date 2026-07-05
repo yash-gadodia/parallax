@@ -3,6 +3,8 @@ import {
   View,
   Text,
   ScrollView,
+  Linking,
+  Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -13,10 +15,12 @@ import { fontFamily } from '../src/design/typography';
 import { Kick, Serif } from '../src/components/Text';
 import TopBar from '../src/components/TopBar';
 import Btn from '../src/components/Btn';
+import Press from '../src/components/Press';
 import Card from '../src/components/Card';
 import { Mark } from '../src/components/Mark';
 import { DawnBlobs } from '../src/components/DawnBlobs';
 import Toast from '../src/components/Toast';
+import { Icon, ICONS } from '../src/components/Icon';
 import { usePurchases, presentCustomerCenter } from '../src/features/purchases/usePurchases';
 import { purchasesAvailable, ENTITLEMENT_ID } from '../src/features/purchases/client';
 
@@ -156,6 +160,18 @@ export default function ManageSubScreen() {
     presentCustomerCenter();
   };
 
+  const handleCancelSubscription = async () => {
+    try {
+      const url = Platform.OS === 'ios'
+        ? 'https://apps.apple.com/account/subscriptions'
+        : 'https://play.google.com/store/account/subscriptions?package=com.yashgadodia.parallax';
+      await Linking.openURL(url);
+    } catch (e) {
+      setToastMsg('Could not open subscription settings');
+      setTimeout(() => setToastMsg(null), 2000);
+    }
+  };
+
   const handleRemoveDemoPro = () => {
     setDemoPro(false);
     setToastMsg('Demo unlock removed');
@@ -249,11 +265,49 @@ export default function ManageSubScreen() {
               }
             />
             {entitlement && <PlanDetailsCard entitlement={entitlement} />}
-            <View style={{ marginTop: 18 }}>
-              <Btn kind="soft" onPress={handleManagePlan}>
-                Manage subscription
-              </Btn>
-            </View>
+
+            {/* Cancel subscription row */}
+            <Card style={{ overflow: 'hidden', marginTop: 18, borderRadius: 20 }}>
+              <Press onPress={handleCancelSubscription}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    paddingVertical: 14,
+                    paddingHorizontal: 16,
+                  }}
+                >
+                  <Text
+                    allowFontScaling={false}
+                    style={{
+                      fontSize: 14.5,
+                      fontWeight: '600',
+                      color: colors.p2,
+                      fontFamily: fontFamily.ui,
+                    }}
+                  >
+                    Cancel subscription
+                  </Text>
+                  <Icon d={ICONS.chevR} size={16} color={colors.inkMute} />
+                </View>
+              </Press>
+            </Card>
+
+            {/* Single billing surface note */}
+            <Text
+              allowFontScaling={false}
+              style={{
+                fontSize: 12,
+                lineHeight: 17,
+                color: colors.inkSoft,
+                fontFamily: fontFamily.ui,
+                marginTop: 14,
+                paddingHorizontal: 4,
+              }}
+            >
+              You're billed once, through the App Store — never doubled across platforms.
+            </Text>
           </>
         )}
       </ScrollView>
