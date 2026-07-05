@@ -199,7 +199,7 @@ export default function StreakScreen() {
           </View>
 
           {/* "day shared streak" */}
-          <Kick style={{ marginTop: 6 }}>day shared streak</Kick>
+          <Kick style={{ marginTop: 6 }}>day of showing up together</Kick>
 
           {/* Both faces */}
           <View style={{
@@ -277,7 +277,7 @@ export default function StreakScreen() {
                     color: colors.ink,
                   }}
                 >
-                  Repair your streak
+                  Bring your streak back
                 </Text>
                 <Text
                   style={{
@@ -288,7 +288,7 @@ export default function StreakScreen() {
                     marginTop: 2,
                   }}
                 >
-                  {`Your ${lapsedStreak}-day streak lapsed. Repair it within 7 days and it comes back — for both of you.`}
+                  {`You had a ${lapsedStreak}-day streak. Bring it back within 7 days — it's rest, not a reset.`}
                 </Text>
               </View>
             </View>
@@ -427,7 +427,7 @@ export default function StreakScreen() {
             marginBottom: 24,
           }}
         >
-          play today to keep it alive
+          show up to light it up
         </Text>
 
         {/* Milestones */}
@@ -587,7 +587,7 @@ export default function StreakScreen() {
                 marginTop: 2,
               }}
             >
-              Auto-used if you miss a day. Life happens — a freeze saves the streak for both of you. Every full week earns one back (max 2).
+              Auto-used when life gets busy. Gives you both grace — no judgment, no reset. Earn one back every 7 days (max 2).
             </Text>
           </View>
         </View>

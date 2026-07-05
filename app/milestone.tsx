@@ -39,9 +39,9 @@ export default function MilestoneScreen() {
     days >= 365
       ? 'A year of choosing\neach other.'
       : days >= 100
-        ? 'Triple digits.\nThe real deal.'
+        ? 'A hundred days of\nshowing up.'
         : days >= 50
-          ? 'Fifty days of\nstaying in focus.'
+          ? 'Fifty days of\nshowing up together.'
           : days >= 30
             ? "You're officially\na streak couple."
             : days >= 14
@@ -54,7 +54,7 @@ export default function MilestoneScreen() {
     days >= 365
       ? '365 tiny moments of showing up. That\'s a love story.'
       : days >= 100
-        ? 'A hundred days in a row. Most couples never get close.'
+        ? 'A hundred days of showing up. Rarer than it sounds.'
         : days >= 50
           ? 'Fifty days straight. You\'ve made this a habit, together.'
           : days >= 30

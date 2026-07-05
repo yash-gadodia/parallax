@@ -66,8 +66,8 @@ describe('MilestoneScreen', () => {
     ['7', 'One week strong.', 'Seven days in a row. This is how rituals are born.'],
     ['14', 'Two weeks,\nzero blinks.', 'Fourteen days without missing once. You two mean it.'],
     ['30', "You're officially\na streak couple.", "A whole month of showing up for each other. That's rarer than you think."],
-    ['50', 'Fifty days of\nstaying in focus.', "Fifty days straight. You've made this a habit, together."],
-    ['100', 'Triple digits.\nThe real deal.', 'A hundred days in a row. Most couples never get close.'],
+    ['50', 'Fifty days of\nshowing up together.', "Fifty days straight. You've made this a habit, together."],
+    ['100', 'A hundred days of\nshowing up.', 'A hundred days of showing up. Rarer than it sounds.'],
   ];
 
   it.each(CASES)('renders honest copy and the day count for the %s-day milestone', async (days, line, sub) => {

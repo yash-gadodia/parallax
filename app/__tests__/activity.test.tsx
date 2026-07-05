@@ -128,7 +128,7 @@ describe('ActivityScreen', () => {
 
     // The milestone kind renders with its copy map entry
     expect(getByText('You hit a milestone')).toBeDefined();
-    expect(getByText('Keep the streak alive.')).toBeDefined();
+    expect(getByText('You\'re on a roll 🔥')).toBeDefined();
     expect(getByText('just now')).toBeDefined();
 
     // Real feed, not the demo samples

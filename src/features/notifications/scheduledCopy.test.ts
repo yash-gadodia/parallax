@@ -7,12 +7,12 @@ import {
 
 describe('streak saver copy', () => {
   it('names the partner in the title', () => {
-    expect(streakSaverTitle('Dani')).toBe('your streak with Dani ends at midnight ⏳');
+    expect(streakSaverTitle('Dani')).toBe('finish today\'s drop with Dani 💛');
   });
 
   it('says the partner already played, no guilt', () => {
     expect(streakSaverBody('Dani')).toBe(
-      'Dani already played — your answer keeps the streak alive 💛'
+      'Dani already played — your turn to light it up 💛'
     );
   });
 });

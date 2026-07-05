@@ -58,7 +58,7 @@ describe('activityFormatter', () => {
 
       expect(result.emoji).toBe('🔥');
       expect(result.title).toBe('You hit a milestone');
-      expect(result.body).toBe('Keep the streak alive.');
+      expect(result.body).toBe('You\'re on a roll 🔥');
       expect(result.cta).toBe('streak');
       expect(result.who).toBe('us');
     });

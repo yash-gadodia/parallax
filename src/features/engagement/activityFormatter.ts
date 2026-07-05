@@ -44,7 +44,7 @@ const ACTIVITY_KINDS: Record<string, {
   milestone: {
     emoji: '🔥',
     title: () => 'You hit a milestone',
-    body: () => 'Keep the streak alive.',
+    body: () => 'You\'re on a roll 🔥',
     cta: 'streak',
     who: 'us',
   },

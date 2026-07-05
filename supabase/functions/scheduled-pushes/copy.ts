@@ -5,11 +5,11 @@
 // src/features/notifications/scheduledCopy.test.ts.
 
 export function streakSaverTitle(partnerName: string): string {
-  return `your streak with ${partnerName} ends at midnight ⏳`;
+  return `finish today's drop with ${partnerName} 💛`;
 }
 
 export function streakSaverBody(partnerName: string): string {
-  return `${partnerName} already played — your answer keeps the streak alive 💛`;
+  return `${partnerName} already played — your turn to light it up 💛`;
 }
 
 export function driftTitle(): string {

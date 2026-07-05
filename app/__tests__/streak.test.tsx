@@ -115,7 +115,7 @@ describe('StreakScreen', () => {
     // Freezes shown honestly from freezes_remaining; the fake Arm flow is gone.
     expect(getByText('Streak freeze · 1 equipped')).toBeTruthy();
     expect(
-      getByText('Auto-used if you miss a day. Life happens — a freeze saves the streak for both of you. Every full week earns one back (max 2).')
+      getByText('Auto-used when life gets busy. Gives you both grace — no judgment, no reset. Earn one back every 7 days (max 2).')
     ).toBeTruthy();
     expect(queryByText('Arm')).toBeNull();
     expect(queryByText('Armed')).toBeNull();
@@ -133,7 +133,7 @@ describe('StreakScreen', () => {
 
     const { queryByText } = await render(<StreakScreen />);
 
-    expect(queryByText('Repair your streak')).toBeNull();
+    expect(queryByText('Bring your streak back')).toBeNull();
   });
 
   it('lapsed streak, non-Plus: shows the repair card and routes to the paywall, never repairs silently', async () => {
@@ -142,9 +142,9 @@ describe('StreakScreen', () => {
 
     const { getByText } = await render(<StreakScreen />);
 
-    expect(getByText('Repair your streak')).toBeTruthy();
+    expect(getByText('Bring your streak back')).toBeTruthy();
     expect(
-      getByText('Your 5-day streak lapsed. Repair it within 7 days and it comes back — for both of you.')
+      getByText('You had a 5-day streak. Bring it back within 7 days — it\'s rest, not a reset.')
     ).toBeTruthy();
 
     fireEvent.press(getByText('Repair with Plus'));
@@ -172,7 +172,7 @@ describe('StreakScreen', () => {
 
     expect(mockRpc).toHaveBeenCalledWith('repair_streak', { p_couple: 'couple-1' });
     expect(getByText('streak repaired — 5 days back')).toBeTruthy();
-    expect(queryByText('Repair your streak')).toBeNull();
+    expect(queryByText('Bring your streak back')).toBeNull();
     expect(mockPush).not.toHaveBeenCalled();
   });
 
@@ -192,7 +192,7 @@ describe('StreakScreen', () => {
     });
 
     expect(getByText("Couldn't repair the streak — try again.")).toBeTruthy();
-    expect(getByText('Repair your streak')).toBeTruthy();
+    expect(getByText('Bring your streak back')).toBeTruthy();
   });
 
   it('paired but RPC fails: falls back to couple row values with the synthetic week fill', async () => {
@@ -247,7 +247,7 @@ describe('StreakScreen', () => {
 
     // Static sections still render.
     expect(getByText('your streak')).toBeTruthy();
-    expect(getByText('day shared streak')).toBeTruthy();
+    expect(getByText('day of showing up together')).toBeTruthy();
     expect(getByText('this week')).toBeTruthy();
     expect(getByText('milestones · next at 7')).toBeTruthy();
     expect(getByText('longest streak together · 0 days')).toBeTruthy();
