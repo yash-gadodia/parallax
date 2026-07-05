@@ -70,11 +70,19 @@ _From the 2026-07-02 E2E pass — details in `docs/E2E_FINDINGS_2026-07-02.md`._
 - [ ] **(Yash)** Next TestFlight build picks up the native additions (react-native-view-shot for the 9:16 share image, widget risk state) — no EAS run from Claude without your go-ahead.
 
 ### (Dani) — from the E2E pass
-- [ ] **(Dani)** F5: today's drop is hardcoded ("DROP 27 · soft launch", fake archive) — decide the real daily-content rotation (ties into the existing prompt-packs item + IMPROVEMENT_PLAN Phase 1). The day label now shows the real weekday (fixed).
+- [x] **(Dani→Claude)** ~~F5: today's drop label hardcoded~~ — agent call 2026-07-05: label now reads the couple's real `drop_code` from the server (`d041ad8`, 0035); static code only serves the signed-out demo. The deeper daily-content rotation strategy stays with Dani (prompt-packs item).
+
+### (Dani) — tone review from the 2026-07-05 sprint (Claude shipped, Dani polishes)
+- [ ] **(Dani)** Review new copy: therapist-escalation card (`src/components/EscalationCard.tsx`), softened streak strings (`app/streak.tsx`, `app/milestone.tsx`, `supabase/functions/scheduled-pushes/copy.ts`), billing disclosures (`app/checkout.tsx`, `app/(sheets)/plus.tsx`, `app/manageSub.tsx`). All live behavior — wording is yours to adjust.
+
+### (Yash) — from the 2026-07-05 sprint
+- [ ] **(Yash)** Prod push for migrations 0034–0036 + `scheduled-pushes` edge fn redeploy (softened push copy) — bundled with your OTA go/no-go; Claude can execute on your word.
+- [ ] **(Yash)** Local Supabase CLI is 2.95.4 (2.109.0 available); `db reset` intermittently 502s on the container-restart tail under colima — harmless but noisy. Consider upgrading.
 
 ## In progress
 
-_(nothing right now)_
+- [ ] **(Claude)** D0 activation: funnel instrumentation + blurred-partner-slot invite motivator + solo reflect routing (agent running)
+- [ ] **(Claude)** Grants audit: stock Supabase default ACLs grant anon/authenticated ALL on post-0006 tables — least-privilege revoke sweep + pgTAP grant assertions, local + prod (pattern: 0036)
 
 ## Done
 - [x] **(Claude)** **2026-07-03 product-parity sprint (Paired et al.)** — `3d3fa64..329b2d1`: reveal reframed to lead with the round's story (wave% demoted) + science surface `/science` · Timeline/Memory Vault `/timeline` · flywheel v2 couple-scoped drops · Journeys engine + 7-stage BTO journey · Money Dates ritual · reinforcement drop kinds (gratitude/A.R.E./self-expansion, 1-in-5 cadence) · SG + LDR packs · Live Activity streak countdown (runtime verifies on next build) · adversarial review caught 2 CRITICAL virgin-order migration bugs pre-prod (0029 crash, 0030 clobber → 0032) + 6 fast-follows fixed (incl. isSample-from-auth). **Prod at migration 0033**, aligned with main. Gates: pgTAP 29 files/420 · jest 110 suites/862 · tsc 0 · export ✓. App-side features ship via OTA to build 1.0.0(11) — **awaiting Yash's explicit go**.

@@ -77,3 +77,17 @@ A running log of major **product / tech / design** decisions — the *why* behin
 ### `fireEvent.changeText` needs an `act()` wrapper here
 - **Decision:** In RN 0.85 + React 19 + RNTL 14, wrap field edits in `await act(async () => …)` or the controlled `value` won't flush before the next interaction.
 - **Why:** Lost ~an hour to this; documented so the next person doesn't.
+
+### 2026-07-05 sprint: product calls made by the agent (Dani can veto)
+- **Wrapped ships** (it already runs on real data; cutting it saves nothing).
+- **Therapist escalation: yes, gentle** — after 3 completed Refocuses in 30 days, a dismissible card (count-keyed re-eligibility) linking CPH online counselling + Family Service Centres. Copy pending Dani's tone review.
+- **Streak stays visible, copy softened** — celebration-not-fear per the 2026-06-30 Paired research; mechanics (freezes/catch-up/repair) untouched.
+- **F5 honesty** — Today's drop label now comes from the server (`get_today_state.drop_code`, 0035); the static code only serves signed-out demo.
+
+### Never trust Supabase default ACLs (grant AND revoke explicitly)
+- **Decision:** Every table migration states its own grants and revokes; environment defaults are not a contract (0036 restored `refocus_sessions` to SELECT-only).
+- **Why:** Newer stacks default-grant anon/authenticated ALL on new tables — the 0006-era "defaults give no DML" lesson inverted silently. pgTAP grant assertions caught it; RLS held throughout.
+
+### One DB verifier at a time
+- **Decision:** Only the session lead runs `supabase db reset` / `supabase test db`; parallel agents author SQL and hand it over.
+- **Why:** Two concurrent resets produce 502s and mass phantom "Bad plan" failures that look like real regressions.
