@@ -196,6 +196,45 @@ describe('Today Screen', () => {
     expect(getByText("Play today's three")).toBeTruthy();
   });
 
+  it('shows the blurred first-reveal motivator once the pending user has answered ahead', async () => {
+    mockUseSession.mockReturnValue({ session: { user: { id: 'u1' } }, loading: false });
+    mockUseCouple.mockReturnValue({
+      couple: { id: 'c1', status: 'pending', invite_code: 'ABCD-1234', streak: 0 },
+      status: 'pending',
+      loading: false,
+    });
+    mockUseTodayState.mockReturnValue({
+      today: {
+        exists: true,
+        date: '2026-07-02',
+        couple_drop_id: 'cd1',
+        state: 'one_done',
+        wave_pct: null,
+        i_answered: true,
+        partner_answered: false,
+        held: true,
+      },
+      content: null,
+      loading: false,
+      refresh: jest.fn(),
+    });
+
+    const { getByText } = await render(<TodayScreen now={() => MORNING} />);
+
+    expect(getByText('your first reveal')).toBeTruthy();
+    expect(getByText("This is where Jordan's answers land.")).toBeTruthy();
+    expect(getByText('Invite them to unlock your first reveal.')).toBeTruthy();
+  });
+
+  it('hides the blurred first-reveal motivator once the couple is paired', async () => {
+    mockLive({});
+
+    const { queryByText } = await render(<TodayScreen now={() => MORNING} />);
+
+    expect(queryByText('your first reveal')).toBeNull();
+    expect(queryByText('Invite them to unlock your first reveal.')).toBeNull();
+  });
+
   it('shows the streak-rule one-liner exactly at streak 1', async () => {
     mockLive({ streak: 1, freezes: 2, createdDaysAgo: 1 });
 

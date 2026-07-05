@@ -41,6 +41,9 @@ export async function joinCouple(input: string): Promise<Couple> {
     throw error;
   }
 
+  // D0 funnel: partner joining the couple
+  track(EVENTS.PARTNER_JOINED);
+
   // @ts-expect-error supabase-js typed RPC data resolves to never; the couple row has id
   notifyPaired(data.id);
 

@@ -6,6 +6,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { safeBack } from "../src/lib/nav";
@@ -129,6 +130,18 @@ export default function PlayScreen() {
               }
             );
             track(EVENTS.DROP_SUBMITTED);
+            // D0 funnel: first answer submitted (not a catch-up)
+            if (!isCatchUp) {
+              const firstAnswerKey = `first-answer-tracked-${couple.id}`;
+              AsyncStorage.getItem(firstAnswerKey)
+                .then((seen) => {
+                  if (seen !== '1') {
+                    track(EVENTS.FIRST_ANSWER_SUBMITTED);
+                    AsyncStorage.setItem(firstAnswerKey, '1').catch(() => {});
+                  }
+                })
+                .catch(() => {});
+            }
             usePlayStore.setState({ done: true, coupleDropId: result.coupleDropId });
             // Second submitter: the reveal is ready — skip the waiting room.
             const dest = result.state === 'revealed' ? '/reveal' : '/waiting';

@@ -11,6 +11,12 @@ export const EVENTS = {
   DROP_SUBMITTED: 'drop_submitted',
   REVEAL_VIEWED: 'reveal_viewed',
   FIRST_MUTUAL_REVEAL: 'first_mutual_reveal',
+  // D0 activation funnel events
+  INVITE_SHARED: 'invite_shared',
+  INVITE_LINK_OPENED: 'invite_link_opened',
+  PARTNER_JOINED: 'partner_joined',
+  FIRST_ANSWER_SUBMITTED: 'first_answer_submitted',
+  D0_MUTUAL_REVEAL: 'd0_mutual_reveal',
   // 0027 north star: post-reveal "did this bring you closer?" micro-signal.
   CLOSENESS_FEEDBACK: 'closeness_feedback',
   REFOCUS_COMPLETED: 'refocus_completed',

@@ -164,4 +164,12 @@ describe('EVENTS constant', () => {
     expect(EVENTS.PURCHASE_COMPLETED).toBe('purchase_completed');
     expect(EVENTS.ACCOUNT_DELETED).toBe('account_deleted');
   });
+
+  it('exports the D0 activation funnel event names', () => {
+    expect(EVENTS.INVITE_SHARED).toBe('invite_shared');
+    expect(EVENTS.INVITE_LINK_OPENED).toBe('invite_link_opened');
+    expect(EVENTS.PARTNER_JOINED).toBe('partner_joined');
+    expect(EVENTS.FIRST_ANSWER_SUBMITTED).toBe('first_answer_submitted');
+    expect(EVENTS.D0_MUTUAL_REVEAL).toBe('d0_mutual_reveal');
+  });
 });

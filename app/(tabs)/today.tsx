@@ -18,6 +18,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import * as Clipboard from 'expo-clipboard';
 import { SafeAreaView, useSafeAreaInsets  } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -148,6 +149,11 @@ export default function TodayScreen({
       .then((seen) => {
         if (seen === '1') return;
         track(EVENTS.FIRST_MUTUAL_REVEAL);
+        // D0 funnel: first mutual reveal on same day couple was created
+        const ageDays = coupleAgeDays(couple?.created_at ?? null, new Date());
+        if (ageDays === 0) {
+          track(EVENTS.D0_MUTUAL_REVEAL);
+        }
         return AsyncStorage.setItem(KEY, '1');
       })
       .catch(() => {});
@@ -254,6 +260,7 @@ export default function TodayScreen({
     const code = couple?.invite_code;
     if (!code) return;
     try {
+      track(EVENTS.INVITE_SHARED);
       await Share.share({
         message: `Join me on Parallax! Here's your invite code: ${code}`,
       });
@@ -687,6 +694,69 @@ export default function TodayScreen({
                   >
                     🔒 We'll score your wavelength the moment your partner joins.
                   </Text>
+                  {/* Blurred partner reveal preview for D0 motivator */}
+                  <View
+                    style={{
+                      marginTop: 14,
+                      marginBottom: 16,
+                      paddingHorizontal: 16,
+                      paddingVertical: 14,
+                      borderRadius: 16,
+                      backgroundColor: colors.sunken,
+                      borderWidth: 1.5,
+                      borderColor: 'rgba(157,149,245,0.24)',
+                    }}
+                  >
+                    <Kick c={colors.p2Deep} style={{ marginBottom: 10 }}>
+                      your first reveal
+                    </Kick>
+                    <Text
+                      style={{
+                        fontSize: 14.5,
+                        lineHeight: 21,
+                        color: colors.ink,
+                        fontFamily: fontFamily.ui,
+                        marginBottom: 10,
+                      }}
+                    >
+                      This is where {partner.name}'s answers land.
+                    </Text>
+                    <View
+                      style={{
+                        height: 72,
+                        borderRadius: 12,
+                        backgroundColor: 'rgba(255,255,255,0.4)',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        marginBottom: 10,
+                        overflow: 'hidden',
+                      }}
+                    >
+                      <BlurView intensity={80} style={{ flex: 1, width: '100%', justifyContent: 'center', alignItems: 'center' }}>
+                        <Text
+                          style={{
+                            fontSize: 14,
+                            fontWeight: '600',
+                            color: colors.inkMute,
+                            fontFamily: fontFamily.ui,
+                            textAlign: 'center',
+                          }}
+                        >
+                          🔒 Locked
+                        </Text>
+                      </BlurView>
+                    </View>
+                    <Text
+                      style={{
+                        fontSize: 13,
+                        lineHeight: 18,
+                        color: colors.inkSoft,
+                        fontFamily: fontFamily.ui,
+                      }}
+                    >
+                      Invite them to unlock your first reveal.
+                    </Text>
+                  </View>
                   {couple?.invite_code ? (
                     <Press
                       onPress={handleCopyCode}

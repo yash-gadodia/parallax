@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { extractInviteCodeFromLink } from '../src/domain/inviteCode';
 import { useOnboardingStore } from '../src/store/onboarding';
+import { track, EVENTS } from '../src/lib/analytics';
 
 // Handles parallax://join?code=XXXX-1234 deep links.
 // Stashes the code in the onboarding store so Step3PairUp can prefill the
@@ -25,6 +26,8 @@ export default function JoinScreen() {
       const fullUrl = `parallax://join?code=${encodeURIComponent(code)}`;
       const extracted = extractInviteCodeFromLink(fullUrl);
       setPendingInviteCode(extracted);
+      // D0 funnel: invite link was opened
+      track(EVENTS.INVITE_LINK_OPENED);
     } else {
       setPendingInviteCode(null);
     }
