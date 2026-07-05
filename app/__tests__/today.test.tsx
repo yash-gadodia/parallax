@@ -406,4 +406,54 @@ describe('Today Screen', () => {
     expect(queryByText('practice reading Jordan 🎯')).toBeNull();
     expect(getByText('send Jordan a nudge')).toBeTruthy();
   });
+
+  it('uses the real drop code from the server (0035) instead of hardcoded demo in the header', async () => {
+    mockLive({});
+    mockUseTodayState.mockReturnValue({
+      today: {
+        exists: true,
+        date: '2026-07-02',
+        couple_drop_id: 'cd1',
+        state: 'open',
+        wave_pct: null,
+        i_answered: false,
+        partner_answered: false,
+        drop_code: 'DROP 42',
+        drop_title: 'feeling safe',
+      },
+      content: null,
+      loading: false,
+      refresh: jest.fn(),
+    });
+
+    const { queryByText } = await render(<TodayScreen now={() => MORNING} />);
+
+    // Real drop code is displayed in the header
+    expect(queryByText(/DROP 42/)).toBeTruthy();
+  });
+
+  it('falls back to demo code when drop_code is null (e.g., transient offline)', async () => {
+    mockLive({});
+    mockUseTodayState.mockReturnValue({
+      today: {
+        exists: true,
+        date: '2026-07-02',
+        couple_drop_id: 'cd1',
+        state: 'open',
+        wave_pct: null,
+        i_answered: false,
+        partner_answered: false,
+        drop_code: null,
+        drop_title: null,
+      },
+      content: null,
+      loading: false,
+      refresh: jest.fn(),
+    });
+
+    const { queryByText } = await render(<TodayScreen now={() => MORNING} />);
+
+    // Falls back to the static demo code 'TODAY'
+    expect(queryByText(/TODAY/)).toBeTruthy();
+  });
 });

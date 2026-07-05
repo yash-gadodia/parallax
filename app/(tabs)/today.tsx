@@ -110,6 +110,9 @@ export default function TodayScreen({
   const isLive = !!(session && couple);
   const revealed = isLive ? today?.state === 'revealed' : playState.done;
   const iAnswered = isLive ? !!today?.i_answered : playState.done;
+  // 0035: use the real drop code from the server for honest rotation display;
+  // demo falls back to the static code.
+  const displayDropCode = isLive && today?.drop_code ? today.drop_code : activeDrop.code;
   // Truthful partner-presence: comes from get_today_state (SECURITY DEFINER),
   // never assumed. Only shown while it's still my turn.
   const partnerPlayed = isLive && !!today?.partner_answered && !iAnswered;
@@ -588,7 +591,7 @@ export default function TodayScreen({
                     color: 'rgba(255,255,255,0.9)',
                   }}
                 >
-                  {activeDrop.code} · {new Date().toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase()}
+                  {displayDropCode} · {new Date().toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase()}
                 </Text>
               </View>
 

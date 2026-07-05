@@ -69,6 +69,9 @@ export interface TodayState {
   i_answered?: boolean;
   partner_answered?: boolean;
   held?: boolean;
+  // 0035: real drop code (e.g. 'DROP 28') and title for honest display
+  drop_code?: string | null;
+  drop_title?: string | null;
   // 0021: yesterday's drop is still answerable today (scored at 80%).
   catch_up_available?: boolean;
   yesterday_state?: 'open' | 'one_done' | 'revealed' | null;
