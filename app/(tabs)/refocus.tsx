@@ -27,6 +27,7 @@ import { Kick, Serif } from '../../src/components/Text';
 import TopBar from '../../src/components/TopBar';
 import Toast from '../../src/components/Toast';
 import { Float } from '../../src/components/Float';
+import EscalationCard from '../../src/components/EscalationCard';
 import {
   colors,
   gradients,
@@ -55,6 +56,7 @@ import { learningOrigin } from '../../src/domain/learningOrigin';
 import { track, EVENTS } from '../../src/lib/analytics';
 import { useIdentity } from '../../src/features/profile/useIdentity';
 import { useRefocusSession } from '../../src/features/refocus/useRefocusSession';
+import { useRefocusHistory } from '../../src/features/refocus/useRefocusHistory';
 import {
   startRefocus,
   addRefocusSide,
@@ -62,6 +64,7 @@ import {
   parseAiResult,
   REFOCUS_ALREADY_OPEN,
 } from '../../src/features/refocus/refocusActions';
+import { checkShouldShowEscalationCard } from '../../src/features/refocus/checkEscalation';
 import type { RefocusSession } from '../../src/types/db';
 
 // Identity definitions
@@ -1660,6 +1663,11 @@ function TogetherResultStep({
   const [msg, setMsg] = useState(myBridge);
   const [copied, setCopied] = useState(false);
   const { couple } = useCouple();
+  const { sessions: refocusHistory } = useRefocusHistory(couple?.id ?? null);
+
+  const showEscalationCard =
+    refocusHistory.length > 0 &&
+    checkShouldShowEscalationCard(refocusHistory);
 
   const PAR = { name: partner.name, initial: partner.initial };
 
@@ -1897,6 +1905,11 @@ function TogetherResultStep({
             Open your Love Map
           </Btn>
         </Card>
+
+        {/* Escalation card: consider extra support (3+ in 30 days) */}
+        {showEscalationCard && (
+          <EscalationCard sessionCount={refocusHistory.length} />
+        )}
 
         {/* Disclosure + disclaimer (+ the honest fail-open note) */}
         {mediation.screening_unavailable && (

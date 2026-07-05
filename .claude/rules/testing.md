@@ -7,6 +7,7 @@ Stack: **jest** (^29) + **jest-expo** (^56) preset + **@testing-library/react-na
 - **Tests must actually exercise the thing.** A `render()` + a real query/`fireEvent` (or `toJSON()` for a smoke test). NEVER `expect(<Component/>).toBeTruthy()` — a JSX literal is always truthy and tests nothing. This bug shipped repeatedly here; reject it in review.
 - `render()` from RNTL v14 is **async** — `const { ... } = await render(<X/>)`. The matchers entrypoint is `@testing-library/react-native/matchers` (NOT `/extend-expect`).
 - A `fireEvent.press` that must **re-render** (toggling component state) needs `await act(async () => { fireEvent.press(...) })` — presses that only assert a mock was called pass without it, which hides the gap.
+- **Never nest `waitFor` inside `act()`** — RNTL's `waitFor` flips the act-environment flag off while polling, so any state update landing in that window logs "The current testing environment is not configured to support act(...)". Press inside `act`, then `waitFor` *outside* it.
 - **Pure logic first** — `src/domain/*` (reveal scoring, mood, invite codes) is RN-free; unit-test it with exact values. Highest-ROI tests.
 - **Descriptive names**, independent, deterministic (seed randomness). Behavior, not implementation.
 - **No hollow/weak tests to make CI pass.** Don't `.skip`, don't revert a real render to a truthy stub, don't weaken an assertion.
