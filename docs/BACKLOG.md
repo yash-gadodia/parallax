@@ -60,7 +60,7 @@ _From the 2026-07-02 E2E pass — details in `docs/E2E_FINDINGS_2026-07-02.md`._
 - [x] **(Claude)** F4: day boundary is couple-local (`couples.tz`, default Asia/Singapore) across ensure_today_drop / streak / reset (`d96c5df`)
 - [x] **(Claude)** F6: transition lock in play.tsx — taps during the 360ms phase advance are ignored
 - [x] **(Claude)** F7: act() warnings eliminated (signup: direct onChangeText inside one act; wrapped: fake timers) — full suite 0 warnings
-- [ ] **(Claude)** Android fidelity pass once iOS is solid: `eas build -p android` works from the same codebase; needs shadows→elevation, blur + font/lineHeight checks per screen (first preview APK built 2026-07-02).
+- [x] **(Claude)** Android fidelity pass (code-level, 2026-07-05): BlurView `dimezisBlurView` on all 8 usages, `includeFontPadding:false` + adjusted leading on display text, shadows already elevation-backed in tokens. Verified: tsc 0, suites green, iOS + Android `expo export` both bundle. Visual QA on a real device rides the next EAS build.
 - [~] **(Claude)** F1: reanimated 4.3.1→4.5.0 + worklets 0.10.1 committed AND shipped — EAS production build `a64c5ec5` (2026-07-02) submitted to TestFlight with the fix + push wiring. REMAINING (Yash): crash-soak the TestFlight build on the waiting screen to confirm the SIGSEGV is gone.
 
 ### (Yash) — from the 2026-07-02 build-all sprint (code done, needs your keys/actions)

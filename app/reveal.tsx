@@ -1099,7 +1099,7 @@ export default function RevealScreen() {
           accessibilityLabel="Close reveal"
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <BlurView intensity={40} style={{ borderRadius: radius.pill }}>
+          <BlurView experimentalBlurMethod="dimezisBlurView" intensity={40} style={{ borderRadius: radius.pill }}>
             <View
               style={{
                 width: 36,

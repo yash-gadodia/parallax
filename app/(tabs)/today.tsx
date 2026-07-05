@@ -732,7 +732,7 @@ export default function TodayScreen({
                         overflow: 'hidden',
                       }}
                     >
-                      <BlurView intensity={80} style={{ flex: 1, width: '100%', justifyContent: 'center', alignItems: 'center' }}>
+                      <BlurView experimentalBlurMethod="dimezisBlurView" intensity={80} style={{ flex: 1, width: '100%', justifyContent: 'center', alignItems: 'center' }}>
                         <Text
                           style={{
                             fontSize: 14,

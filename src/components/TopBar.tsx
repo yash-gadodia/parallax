@@ -65,6 +65,7 @@ export default function TopBar({ title, onBack, right }: TopBarProps) {
   return (
     <View style={containerStyle}>
       <BlurView
+        experimentalBlurMethod="dimezisBlurView"
         intensity={32}
         tint="light"
         style={StyleSheet.absoluteFill}

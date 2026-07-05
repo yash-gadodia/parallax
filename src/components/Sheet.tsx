@@ -43,7 +43,7 @@ export default function Sheet({ title, onClose, children }: SheetProps) {
           backgroundColor: 'rgba(40,28,50,0.4)',
         }}
       >
-        <BlurView intensity={2} style={{ flex: 1 }} />
+        <BlurView experimentalBlurMethod="dimezisBlurView" intensity={2} style={{ flex: 1 }} />
       </Pressable>
 
       <AnimatedView style={[{ position: 'relative' }, animatedStyle]}>

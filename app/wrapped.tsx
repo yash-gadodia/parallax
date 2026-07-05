@@ -751,6 +751,7 @@ export default function WrappedScreen() {
 
               {/* Share preview card - frosted glass, spoiler-free */}
               <BlurView
+                experimentalBlurMethod="dimezisBlurView"
                 intensity={14}
                 tint="light"
                 style={{

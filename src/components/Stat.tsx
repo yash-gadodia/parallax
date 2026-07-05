@@ -25,7 +25,8 @@ export default function Stat({ big, label, grad = false }: StatProps) {
             fontSize: 30,
             fontFamily: fontFamily.disp,
             fontWeight: '400',
-            lineHeight: 30,
+            lineHeight: 37.5,
+            includeFontPadding: false,
             textAlign: 'center',
           }}
         >
@@ -39,7 +40,8 @@ export default function Stat({ big, label, grad = false }: StatProps) {
             fontFamily: fontFamily.disp,
             fontWeight: '400',
             color: colors.ink,
-            lineHeight: 30,
+            lineHeight: 37.5,
+            includeFontPadding: false,
             textAlign: 'center',
           }}
         >

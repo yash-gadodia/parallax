@@ -398,6 +398,7 @@ export default function PackDetailScreen() {
                 {/* Blur effect for locked questions (beyond first) */}
                 {locked && i > 0 && (
                   <BlurView
+                    experimentalBlurMethod="dimezisBlurView"
                     intensity={14}
                     tint="light"
                     pointerEvents="none"

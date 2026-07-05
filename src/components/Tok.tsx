@@ -57,7 +57,8 @@ export default function Tok({
           fontFamily: fontFamily.disp,
           color: '#fff',
           fontWeight: '400',
-          lineHeight: size * 0.5,
+          lineHeight: size * 0.625,
+          includeFontPadding: false,
           textAlign: 'center',
         }}
       >

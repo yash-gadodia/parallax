@@ -191,7 +191,7 @@ export default function ShareSheet() {
                 </View>
 
                 <View>
-                  <Serif s={56} c="#fff" style={{ marginBottom: 2, lineHeight: 56 * 0.96 }}>
+                  <Serif s={56} c="#fff" style={{ marginBottom: 2, lineHeight: 56 * 1.3 }}>
                     {`${wave ?? '—'}%`}
                   </Serif>
                   <Text

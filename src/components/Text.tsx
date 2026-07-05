@@ -30,7 +30,8 @@ export function Kick({
         {
           fontFamily: fontFamily.mono,
           fontSize: 10,
-          lineHeight: 10,
+          lineHeight: 12,
+          includeFontPadding: false,
           letterSpacing: 1.8,
           textTransform: 'uppercase',
           color: c,
@@ -59,7 +60,8 @@ export function Serif({
         {
           fontFamily: fontFamily.disp,
           fontSize: s,
-          lineHeight: s * 1.09,
+          lineHeight: s * 1.3,
+          includeFontPadding: false,
           fontStyle: italic ? 'italic' : 'normal',
           color: c,
           letterSpacing: 0.005,

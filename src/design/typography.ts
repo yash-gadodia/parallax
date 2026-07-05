@@ -10,7 +10,8 @@ export const fontFamily = {
 export const kickStyle: TextStyle = {
   fontFamily: fontFamily.mono,
   fontSize: 10,
-  lineHeight: 10,
+  lineHeight: 12,
+  includeFontPadding: false,
   letterSpacing: 1.8,
   textTransform: 'uppercase',
   color: colors.inkMute,

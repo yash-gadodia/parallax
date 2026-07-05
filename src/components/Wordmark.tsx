@@ -88,7 +88,8 @@ export function Wordmark({
           fontSize: size,
           color: light ? '#fff' : c,
           letterSpacing: size * 0.01,
-          lineHeight: size,
+          lineHeight: size * 1.3,
+          includeFontPadding: false,
         }}
       >
         para
@@ -100,7 +101,8 @@ export function Wordmark({
           fontSize: size,
           color: light ? '#fff' : c,
           letterSpacing: size * 0.01,
-          lineHeight: size,
+          lineHeight: size * 1.3,
+          includeFontPadding: false,
         }}
       >
         ax

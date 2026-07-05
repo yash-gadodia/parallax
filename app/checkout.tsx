@@ -445,6 +445,7 @@ export default function CheckoutScreen() {
         {/* Confirming Overlay */}
         {confirming && (
           <BlurView
+            experimentalBlurMethod="dimezisBlurView"
             intensity={18}
             tint="dark"
             style={{
