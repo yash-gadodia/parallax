@@ -64,6 +64,7 @@ describe('usePurchases', () => {
     it('with SDK: successful purchase sets isPro true when entitlement exists', async () => {
       const mockPurchases = {
         configure: jest.fn(),
+        setLogHandler: jest.fn(),
         addCustomerInfoUpdateListener: jest.fn(),
         getCustomerInfo: jest.fn(),
         getOfferings: jest.fn(),
@@ -93,6 +94,7 @@ describe('usePurchases', () => {
     it('with SDK: purchase without entitlement sets isPro false and returns false', async () => {
       const mockPurchases = {
         configure: jest.fn(),
+        setLogHandler: jest.fn(),
         addCustomerInfoUpdateListener: jest.fn(),
         getCustomerInfo: jest.fn(),
         getOfferings: jest.fn(),
@@ -121,6 +123,7 @@ describe('usePurchases', () => {
     it('user cancellation returns false without throwing', async () => {
       const mockPurchases = {
         configure: jest.fn(),
+        setLogHandler: jest.fn(),
         addCustomerInfoUpdateListener: jest.fn(),
         getCustomerInfo: jest.fn(),
         getOfferings: jest.fn(),
@@ -146,6 +149,7 @@ describe('usePurchases', () => {
     it('other errors are thrown', async () => {
       const mockPurchases = {
         configure: jest.fn(),
+        setLogHandler: jest.fn(),
         addCustomerInfoUpdateListener: jest.fn(),
         getCustomerInfo: jest.fn(),
         getOfferings: jest.fn(),
@@ -181,6 +185,7 @@ describe('usePurchases', () => {
     it('with SDK: calls configure and fetches customer info and offerings', async () => {
       const mockPurchases = {
         configure: jest.fn(),
+        setLogHandler: jest.fn(),
         addCustomerInfoUpdateListener: jest.fn(),
         getCustomerInfo: jest.fn(),
         getOfferings: jest.fn(),
@@ -214,6 +219,7 @@ describe('usePurchases', () => {
     it('with SDK: handles null offering gracefully', async () => {
       const mockPurchases = {
         configure: jest.fn(),
+        setLogHandler: jest.fn(),
         addCustomerInfoUpdateListener: jest.fn(),
         getCustomerInfo: jest.fn(),
         getOfferings: jest.fn(),
@@ -243,6 +249,7 @@ describe('usePurchases', () => {
     it('sets ready=true even when SDK init throws', async () => {
       const mockPurchases = {
         configure: jest.fn(),
+        setLogHandler: jest.fn(),
         addCustomerInfoUpdateListener: jest.fn(),
         getCustomerInfo: jest.fn(),
         getOfferings: jest.fn(),
@@ -263,6 +270,7 @@ describe('usePurchases', () => {
     it('does not reconfigure if already ready', async () => {
       const mockPurchases = {
         configure: jest.fn(),
+        setLogHandler: jest.fn(),
         addCustomerInfoUpdateListener: jest.fn(),
         getCustomerInfo: jest.fn(),
         getOfferings: jest.fn(),
@@ -282,6 +290,7 @@ describe('usePurchases', () => {
     it('addCustomerInfoUpdateListener updates state when called', async () => {
       const mockPurchases = {
         configure: jest.fn(),
+        setLogHandler: jest.fn(),
         addCustomerInfoUpdateListener: jest.fn(),
         getCustomerInfo: jest.fn(),
         getOfferings: jest.fn(),
@@ -322,6 +331,7 @@ describe('usePurchases', () => {
     it('with SDK: restores purchases and updates isPro', async () => {
       const mockPurchases = {
         configure: jest.fn(),
+        setLogHandler: jest.fn(),
         addCustomerInfoUpdateListener: jest.fn(),
         getCustomerInfo: jest.fn(),
         getOfferings: jest.fn(),
@@ -347,6 +357,7 @@ describe('usePurchases', () => {
     it('with SDK: restore error returns false', async () => {
       const mockPurchases = {
         configure: jest.fn(),
+        setLogHandler: jest.fn(),
         addCustomerInfoUpdateListener: jest.fn(),
         getCustomerInfo: jest.fn(),
         getOfferings: jest.fn(),

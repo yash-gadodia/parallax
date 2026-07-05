@@ -48,6 +48,13 @@ export const usePurchases = create<PurchasesState>((set, get) => ({
       return;
     }
     try {
+      // RevenueCat routes its own diagnostics through console.error at ERROR level,
+      // which RN LogBox surfaces as a fatal red screen. In dev the Test Store key has
+      // no products registered (payments are gated), so that diagnostic is expected
+      // noise — keep it visible in the JS console, but never as a red-box "error".
+      Purchases.setLogHandler((level, message) => {
+        console.log(`[RevenueCat] ${level}: ${message}`);
+      });
       Purchases.configure({ apiKey });
       Purchases.addCustomerInfoUpdateListener((info: CustomerInfo) => {
         set({ customerInfo: info, isPro: hasPro(info) });
