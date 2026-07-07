@@ -26,6 +26,7 @@ import { useProfile } from '../../src/features/profile/useProfile';
 import { useMoneyDate } from '../../src/features/moneyDates/useMoneyDate';
 import { describeLastMoneyDate } from '../../src/features/moneyDates/cards';
 import { useRefetchOnRefocus } from '../../src/lib/useRefetchOnRefocus';
+import { GrowthCounter } from '../../src/features/growth/GrowthCounter';
 
 export default function UsScreen() {
   const router = useRouter();
@@ -168,6 +169,15 @@ export default function UsScreen() {
               </Kick>
             </Press>
           </View>
+
+          {/* V2 F5: growth counter — the one hero stat, above Wrapped (§10).
+              Behind f5_growth_counter; sample data never counts. */}
+          {!learningsSample && (
+            <GrowthCounter
+              count={learningItems.length}
+              privateCount={learningItems.filter((l) => l.is_private).length}
+            />
+          )}
 
           {/* Wrapped hero card */}
           {history.length > 0 && (

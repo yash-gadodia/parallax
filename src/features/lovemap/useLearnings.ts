@@ -37,6 +37,8 @@ export function useLearnings(): UseLearningsReturn {
             mastery: l.mastery,
             became_prompt_id: l.becameQ ? 'prompt-' + l.id : null,
             became_question: l.becameQ,
+            author_id: null,
+            is_private: false,
             created_at: new Date().toISOString(),
           }));
           setItems(sampleLearnings);

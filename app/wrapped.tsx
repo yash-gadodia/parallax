@@ -15,6 +15,11 @@ import Btn from '../src/components/Btn';
 import { useIdentity } from '../src/features/profile/useIdentity';
 import { useCouple } from '../src/features/pairing/useCouple';
 import { useCoupleHistory } from '../src/features/lovemap/useCoupleHistory';
+import { useLearnings } from '../src/features/lovemap/useLearnings';
+import { useRefocusHistory } from '../src/features/refocus/useRefocusHistory';
+import { useRepairStats } from '../src/features/repair/useRepairStats';
+import { growthSlideVariant, inPeriod } from '../src/features/growth/growthLogic';
+import { FLAGS, useFlag } from '../src/lib/flags';
 import {
   monthStats,
   monthLabel,
@@ -67,6 +72,59 @@ export default function WrappedScreen() {
   const archetype = archetypeFor(yStats);
   const isYear = range === 'year';
   const streak = couple?.streak ?? 0;
+
+  // V2 F5: the conditional growth card (§4-F5, behind f5_growth_counter) —
+  // flywheel line only when the couple's own data celebrates them; the
+  // always-positive default otherwise. Never zeros. copy: Dani pass pending.
+  const growthFlag = useFlag(FLAGS.F5_GROWTH_COUNTER);
+  const { items: learningItems, isSample: learningsSample } = useLearnings();
+  const { sessions: refocusSessions } = useRefocusHistory(couple?.id ?? null);
+  const { repairs } = useRepairStats(couple?.id ?? null);
+  const growthSlideFor = (r: 'month' | 'year'): Slide[] => {
+    if (!growthFlag || learningsSample) return [];
+    const variant = growthSlideVariant({
+      learnings: learningItems.filter((l) => inPeriod(l.created_at, now, r)).length,
+      roughMoments: refocusSessions.filter(
+        (s) => s.state === 'revealed' && inPeriod(s.created_at, now, r)
+      ).length,
+      repairs: repairs.filter((x) => x.mutual_yes && inPeriod(x.revealed_at, now, r)).length,
+    });
+    const period = r === 'year' ? `in ${year}` : 'this month';
+    if (variant.kind === 'flywheel') {
+      return [
+        {
+          kind: 'stat',
+          bg: ['#54C2A0', '#7064E6'],
+          kicker: 'the rough moments taught you',
+          big: String(variant.learned),
+          unit: variant.learned === 1 ? 'thing learned' : 'things learned',
+          sub: `${variant.rough} rough moment${variant.rough === 1 ? '' : 's'} → ${variant.learned} thing${variant.learned === 1 ? '' : 's'} learned → ${variant.repairs} repair${variant.repairs === 1 ? '' : 's'} ${period}.`,
+        },
+      ];
+    }
+    if (variant.kind === 'learned') {
+      return [
+        {
+          kind: 'stat',
+          bg: ['#54C2A0', '#7064E6'],
+          kicker: 'you learned',
+          big: String(variant.learned),
+          unit: variant.learned === 1 ? 'new thing about each other' : 'new things about each other',
+          sub: `your love map grew ${period}.`,
+        },
+      ];
+    }
+    return [
+      {
+        kind: 'stat',
+        bg: ['#54C2A0', '#7064E6'],
+        kicker: 'your love map',
+        big: '🗺️',
+        unit: 'just getting started',
+        sub: 'tonight’s drop adds to it.',
+      },
+    ];
+  };
 
   const handleClose = () => {
     safeBack(router);
@@ -128,6 +186,8 @@ export default function WrappedScreen() {
           } as Slide,
         ]
       : []),
+    // V2 F5: the growth card in the year deck too
+    ...growthSlideFor('year'),
     ...(archetype
       ? [
           {
@@ -188,6 +248,8 @@ export default function WrappedScreen() {
           } as Slide,
         ]
       : []),
+    // V2 F5: the growth card, after the streak card (§10)
+    ...growthSlideFor('month'),
     { kind: 'share', bg: ['#9D95F5', '#FF8E7A'] },
   ];
 

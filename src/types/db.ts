@@ -142,6 +142,10 @@ export interface Learning {
   became_prompt_id: string | null;
   // The daily-drop question this learning turned into, when available (display only).
   became_question?: string | null;
+  // 0038: private insights are author-only (RLS); rows I can read with
+  // is_private=true are always mine.
+  author_id: string | null;
+  is_private: boolean;
   created_at: string;
 }
 
