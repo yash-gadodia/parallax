@@ -20,14 +20,12 @@
 //     (SOS 1767, IMH 6389 2222, AWARE 1800 777 5555) + findahelpline.com.
 //   - abuse-signal → mediation declines gently; a couples app is not a safety
 //     tool; same resources.
-//   - screening API failure → we PROCEED with mediation but flag
-//     screening_unavailable so the client appends the help-resources note.
-//     Tradeoff, documented: hard fail-closed (refusing all mediation whenever
-//     the screening call errors) would brick the whole feature on any
-//     transient API blip — and since the mediation call hits the same API, a
-//     real outage fails the request anyway. The fail-open window is therefore
-//     tiny (screening down, mediation up) and always carries the resources
-//     note. Revisit if screening moves to a separate provider.
+//   - screening API failure (unavailable):
+//     * TWO-SIDED → FAIL-CLOSED: return retryable 503 (screening_unavailable).
+//       Mediation requires both inputs; screening both is non-negotiable.
+//     * SOLO → FAIL-OPEN: reflection proceeds + screening_unavailable flag so
+//       client appends resources note. Rationale: blocking someone in crisis
+//       from ANY reflection is worse than a reflection unscreened once.
 //   Every AI result is rendered client-side with the persistent therapy
 //   disclaimer + explicit "written by AI" disclosure (src/content/refocus.ts).
 //
@@ -212,7 +210,7 @@ Flag abuse for any signal of physical danger, threats, fear of a partner, or coe
 
 When a signal is genuinely present, err on the side of flagging. Always answer by calling report_safety_verdict.`;
 
-async function screenForSafety(texts: string[]): Promise<SafetyVerdict> {
+async function screenForSafety(texts: string[], mode: 'solo' | 'mediation' = 'solo'): Promise<SafetyVerdict> {
   try {
     const userMsg = `Screen the following text from a couples conflict:\n"""\n${texts.join('\n"""\n\n"""\n')}\n"""`;
     const input = await anthropicToolCall({
@@ -224,12 +222,32 @@ async function screenForSafety(texts: string[]): Promise<SafetyVerdict> {
       maxTokens: 256,
     });
     if (!input || typeof input.crisis !== "boolean" || typeof input.abuse !== "boolean") {
+      console.log(JSON.stringify({
+        event: "refocus_screen",
+        mode,
+        verdict: "unavailable",
+        reason: "invalid_response",
+      }));
       return "unavailable";
     }
-    if (input.crisis) return "crisis";
-    if (input.abuse) return "abuse";
+    if (input.crisis) {
+      console.log(JSON.stringify({ event: "refocus_screen", mode, verdict: "crisis" }));
+      return "crisis";
+    }
+    if (input.abuse) {
+      console.log(JSON.stringify({ event: "refocus_screen", mode, verdict: "abuse" }));
+      return "abuse";
+    }
+    console.log(JSON.stringify({ event: "refocus_screen", mode, verdict: "ok" }));
     return "ok";
-  } catch {
+  } catch (e) {
+    console.log(JSON.stringify({
+      event: "refocus_screen",
+      mode,
+      verdict: "unavailable",
+      reason: "api_error",
+      error: String(e),
+    }));
     return "unavailable";
   }
 }
@@ -334,9 +352,15 @@ async function handleSolo(
   if (await overRateLimit(req)) return json({ error: "rate_limited" }, 429);
 
   // Safety screening before any reflection (see the safety-stack note above).
-  const verdict = await screenForSafety([userText]);
-  if (verdict === "crisis") return json({ safety: crisisResult() });
-  if (verdict === "abuse") return json({ safety: abuseResult() });
+  const verdict = await screenForSafety([userText], 'solo');
+  if (verdict === "crisis") {
+    console.log(JSON.stringify({ event: "refocus_escalation", mode: "solo", type: "crisis" }));
+    return json({ safety: crisisResult() });
+  }
+  if (verdict === "abuse") {
+    console.log(JSON.stringify({ event: "refocus_escalation", mode: "solo", type: "abuse" }));
+    return json({ safety: abuseResult() });
+  }
 
   const userMsg = `${youName} shared their side of a rough moment with their partner ${partnerName}:
 """
@@ -496,13 +520,24 @@ async function handleSession(req: Request, sessionId: string): Promise<Response>
     session.topic,
     session.initiator_side,
     session.partner_side,
-  ]);
+  ], 'mediation');
 
   let result: Record<string, unknown>;
   if (verdict === "crisis") {
+    console.log(JSON.stringify({ event: "refocus_escalation", mode: "mediation", type: "crisis" }));
     result = crisisResult();
   } else if (verdict === "abuse") {
+    console.log(JSON.stringify({ event: "refocus_escalation", mode: "mediation", type: "abuse" }));
     result = abuseResult();
+  } else if (verdict === "unavailable") {
+    // FAIL-CLOSED for two-sided: return retryable 503. Both inputs are
+    // required for safe mediation; we cannot proceed without screening both.
+    console.log(JSON.stringify({
+      event: "refocus_unavailable",
+      mode: "mediation",
+      session_id: sessionId,
+    }));
+    return json({ error: "screening_unavailable", retry: true }, 503);
   } else {
     const userMsg = `The topic, as ${initiatorName} labelled it: "${session.topic}"
 
@@ -544,7 +579,6 @@ These are the only two accounts you have. In the tool fields, "initiator" means 
       return json({ error: "no_mediation" }, 502);
     }
     result = { type: "mediation", ...input };
-    if (verdict === "unavailable") result.screening_unavailable = true;
   }
 
   // Guarded write: only flips ready -> revealed. If a concurrent call already
