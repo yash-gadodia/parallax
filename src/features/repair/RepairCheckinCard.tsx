@@ -14,6 +14,7 @@ import { REPAIR_COPY, REPAIR_VERDICTS } from '../../content/repair';
 import type { RepairVerdict } from '../../content/repair';
 import { FLAGS, useFlag } from '../../lib/flags';
 import { celebration, success } from '../../lib/haptics';
+import { track, EVENTS } from '../../lib/analytics';
 import { repairCardView } from './repairLogic';
 import { useRepairCheckin } from './useRepairCheckin';
 import { useRefocusHistory } from '../refocus/useRefocusHistory';
@@ -75,11 +76,13 @@ export function RepairCheckinCard({
     reflectionSaved: reflectionSaved && !noteSavedNow,
   });
 
-  // One warm haptic when the reveal first lands; celebration only for a repair.
+  // One warm haptic + the funnel event when the reveal first lands;
+  // celebration only for a repair.
   const hapticFired = useRef(false);
   useEffect(() => {
     if (view.kind !== 'reveal' || hapticFired.current) return;
     hapticFired.current = true;
+    track(EVENTS.REPAIR_REVEALED, { outcome: view.outcome });
     if (view.outcome === 'repair') celebration();
     else if (view.outcome === 'getting_there') success();
   }, [view]);

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../../lib/supabase';
 import { useUiStore } from '../../store/ui';
+import { track, EVENTS } from '../../lib/analytics';
 import type { Mood } from '../../content/mood';
 import { coupleLocalDateKey } from './moodLogic';
 
@@ -78,15 +79,32 @@ export function useMoodCheck(args: {
         setMood(previous);
         setPickedThisSession(false);
         useUiStore.getState().fireToast("that didn't save — try again");
+        return;
       }
+      track(EVENTS.MOOD_CHECK, { mood: next });
     },
     [coupleId, mood]
   );
 
-  const dismissOffer = useCallback(() => {
+  // Accepting the offer ("let's talk") also suppresses it for the day — but
+  // only an explicit "not now" counts toward the dismissal-rate tone canary.
+  const suppressOfferToday = useCallback(() => {
     setOfferDismissedToday(true);
     AsyncStorage.setItem(OFFER_DISMISSED_KEY, dateKey).catch(() => {});
   }, [dateKey]);
 
-  return { loading, mood, pickedThisSession, offerDismissedToday, pick, dismissOffer };
+  const dismissOffer = useCallback(() => {
+    suppressOfferToday();
+    track(EVENTS.MOOD_CHECK_DISMISSED);
+  }, [suppressOfferToday]);
+
+  return {
+    loading,
+    mood,
+    pickedThisSession,
+    offerDismissedToday,
+    pick,
+    dismissOffer,
+    suppressOfferToday,
+  };
 }

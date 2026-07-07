@@ -20,6 +20,16 @@ export const EVENTS = {
   // 0027 north star: post-reveal "did this bring you closer?" micro-signal.
   CLOSENESS_FEEDBACK: 'closeness_feedback',
   REFOCUS_COMPLETED: 'refocus_completed',
+  // V2 fight-flywheel funnel (V2_PLAN §7 / §11.8).
+  // mood_check_shown vs mood_check is the dismissal-rate tone canary
+  // (>70% skip = the greeting is noise).
+  MOOD_CHECK_SHOWN: 'mood_check_shown',
+  MOOD_CHECK: 'mood_check',
+  MOOD_CHECK_DISMISSED: 'mood_check_dismissed',
+  REFOCUS_STARTED: 'refocus_started',
+  REFOCUS_PERSISTED: 'refocus_persisted',
+  REPAIR_VERDICT: 'repair_verdict',
+  REPAIR_REVEALED: 'repair_revealed',
   PAYWALL_VIEWED: 'paywall_viewed',
   PURCHASE_COMPLETED: 'purchase_completed',
   ACCOUNT_DELETED: 'account_deleted',

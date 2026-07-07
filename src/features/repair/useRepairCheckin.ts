@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../../lib/supabase';
 import { useUiStore } from '../../store/ui';
+import { track, EVENTS } from '../../lib/analytics';
 import type { RepairVerdict } from '../../content/repair';
 import { parseRepairCheckin } from './repairLogic';
 import type { RepairCheckinState } from './repairLogic';
@@ -80,6 +81,7 @@ export function useRepairCheckin(coupleId: string | null) {
         useUiStore.getState().fireToast("that didn't save — try again");
         return;
       }
+      track(EVENTS.REPAIR_VERDICT, { verdict });
       await refresh();
     },
     [checkin?.id, refresh]

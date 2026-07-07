@@ -16,6 +16,12 @@ jest.mock('expo-router', () => ({
   useRouter: () => ({ push: mockPush }),
 }));
 
+const mockTrack = jest.fn();
+jest.mock('../../lib/analytics', () => ({
+  track: (...args: unknown[]) => mockTrack(...args),
+  EVENTS: jest.requireActual('../../lib/analytics').EVENTS,
+}));
+
 const mockRpc = jest.fn();
 const mockFlagRows = jest.fn();
 jest.mock('../../lib/supabase', () => ({
@@ -65,6 +71,7 @@ beforeEach(async () => {
   await AsyncStorage.clear();
   __resetFlagsForTest();
   mockPush.mockReset();
+  mockTrack.mockReset();
   mockRpc.mockReset();
   mockFlagRows
     .mockReset()
@@ -180,5 +187,29 @@ describe('RepairCheckinCard', () => {
     mockCheckin({ ...OPEN, state: 'reflection', reflection_mine: false });
     const { queryByTestId } = await render(<RepairCheckinCard {...LIVE} />);
     await waitFor(() => expect(queryByTestId('repair-checkin-card')).toBeNull());
+  });
+
+  describe('funnel instrumentation (§7)', () => {
+    it('tracks repair_verdict on submit', async () => {
+      mockCheckin(OPEN);
+      const { getByLabelText } = await render(<RepairCheckinCard {...LIVE} />);
+      await waitFor(() => expect(getByLabelText('yes')).toBeTruthy());
+      await act(async () => {
+        fireEvent.press(getByLabelText('yes'));
+      });
+      expect(mockTrack).toHaveBeenCalledWith('repair_verdict', { verdict: 'yes' });
+    });
+
+    it('tracks repair_revealed with the outcome when the reveal lands', async () => {
+      mockCheckin({
+        ...OPEN,
+        state: 'revealed',
+        my_verdict: 'yes',
+        their_verdict: 'yes',
+      });
+      const { getByText } = await render(<RepairCheckinCard {...LIVE} />);
+      await waitFor(() => expect(getByText(REPAIR_COPY.revealKick)).toBeTruthy());
+      expect(mockTrack).toHaveBeenCalledWith('repair_revealed', { outcome: 'repair' });
+    });
   });
 });

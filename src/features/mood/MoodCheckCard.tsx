@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import { track, EVENTS } from '../../lib/analytics';
 import Card from '../../components/Card';
 import Press from '../../components/Press';
 import { Kick } from '../../components/Text';
@@ -40,9 +41,8 @@ export function MoodCheckCard({
     offerDismissedToday,
     pick,
     dismissOffer,
+    suppressOfferToday,
   } = useMoodCheck({ coupleId, userId, tz, now });
-
-  if (loading) return null;
 
   const state = moodCardState({
     flagOn,
@@ -52,11 +52,22 @@ export function MoodCheckCard({
     pickedThisSession,
     offerDismissedToday,
   });
+
+  // Tone canary numerator base: the greeting was actually shown (once per
+  // mount — mood_check_shown vs mood_check gives the skip rate, §7).
+  const shownTracked = useRef(false);
+  useEffect(() => {
+    if (loading || state.kind !== 'greeting' || shownTracked.current) return;
+    shownTracked.current = true;
+    track(EVENTS.MOOD_CHECK_SHOWN);
+  }, [loading, state.kind]);
+
+  if (loading) return null;
   if (state.kind === 'hidden') return null;
 
   const handleTalk = () => {
-    // The offer served its purpose either way — never re-ask today.
-    dismissOffer();
+    // The offer served its purpose — never re-ask today (not a dismissal).
+    suppressOfferToday();
     router.push('/refocus');
   };
 

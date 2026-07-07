@@ -14,6 +14,12 @@ jest.mock('expo-router', () => ({
   useRouter: () => ({ push: mockPush }),
 }));
 
+const mockTrack = jest.fn();
+jest.mock('../../lib/analytics', () => ({
+  track: (...args: unknown[]) => mockTrack(...args),
+  EVENTS: jest.requireActual('../../lib/analytics').EVENTS,
+}));
+
 const mockRpc = jest.fn();
 const mockMaybeSingle = jest.fn();
 const mockFlagRows = jest.fn();
@@ -51,6 +57,7 @@ beforeEach(async () => {
   await AsyncStorage.clear();
   __resetFlagsForTest();
   mockPush.mockReset();
+  mockTrack.mockReset();
   mockRpc.mockReset().mockResolvedValue({ data: null, error: null });
   mockMaybeSingle.mockReset().mockResolvedValue({ data: null, error: null });
   mockFlagRows
@@ -161,5 +168,49 @@ describe('MoodCheckCard', () => {
     mockMaybeSingle.mockResolvedValue({ data: { mood: 'golden' }, error: null });
     const { queryByTestId } = await render(<MoodCheckCard {...LIVE} />);
     await waitFor(() => expect(queryByTestId('mood-check-card')).toBeNull());
+  });
+
+  describe('funnel instrumentation (§7)', () => {
+    it('tracks mood_check_shown once when the greeting renders', async () => {
+      const { getByText } = await render(<MoodCheckCard {...LIVE} />);
+      await waitFor(() => expect(getByText(MOOD_COPY.kick)).toBeTruthy());
+      expect(mockTrack).toHaveBeenCalledWith('mood_check_shown');
+      expect(
+        mockTrack.mock.calls.filter(([e]) => e === 'mood_check_shown')
+      ).toHaveLength(1);
+    });
+
+    it('tracks mood_check with the picked mood', async () => {
+      const { getByLabelText } = await render(<MoodCheckCard {...LIVE} />);
+      await waitFor(() => expect(getByLabelText('good')).toBeTruthy());
+      await act(async () => {
+        fireEvent.press(getByLabelText('good'));
+      });
+      expect(mockTrack).toHaveBeenCalledWith('mood_check', { mood: 'good' });
+    });
+
+    it('tracks the dismissal canary on "not now" but NOT on "let\'s talk"', async () => {
+      const { getByLabelText, getByText } = await render(<MoodCheckCard {...LIVE} />);
+      await waitFor(() => expect(getByLabelText('heavy')).toBeTruthy());
+      await act(async () => {
+        fireEvent.press(getByLabelText('heavy'));
+      });
+      await act(async () => {
+        fireEvent.press(getByText(MOOD_COPY.offerTalk));
+      });
+      expect(mockTrack).not.toHaveBeenCalledWith('mood_check_dismissed');
+    });
+
+    it('tracks mood_check_dismissed on "not now"', async () => {
+      const { getByLabelText, getByText } = await render(<MoodCheckCard {...LIVE} />);
+      await waitFor(() => expect(getByLabelText('off')).toBeTruthy());
+      await act(async () => {
+        fireEvent.press(getByLabelText('off'));
+      });
+      await act(async () => {
+        fireEvent.press(getByText(MOOD_COPY.offerDismiss));
+      });
+      expect(mockTrack).toHaveBeenCalledWith('mood_check_dismissed');
+    });
   });
 });

@@ -252,7 +252,10 @@ export default function RefocusScreen() {
           mode={mode}
           text={text}
           setText={setText}
-          onSubmit={() => setStep('waiting')}
+          onSubmit={() => {
+            track(EVENTS.REFOCUS_STARTED, { mode: 'solo' });
+            setStep('waiting');
+          }}
           onBack={() => setStep('mode')}
         />
       )}
@@ -271,8 +274,12 @@ export default function RefocusScreen() {
             setSoloSessionId(null);
             if (couple && authSession) {
               persistSoloRefocus(couple.id, text, res).then((id) => {
-                if (id) setSoloSessionId(id);
-                else showToast("couldn't save this one — it stays here for now");
+                if (id) {
+                  setSoloSessionId(id);
+                  track(EVENTS.REFOCUS_PERSISTED, { mode: 'solo' });
+                } else {
+                  showToast("couldn't save this one — it stays here for now");
+                }
               });
             }
           }}
@@ -312,6 +319,7 @@ export default function RefocusScreen() {
           onSubmit={async (topic, side) => {
             try {
               await startRefocus(couple.id, topic, side);
+              track(EVENTS.REFOCUS_STARTED, { mode: 'together' });
               setPendingTopic(topic);
               setStep('togetherWaiting');
               await refreshSession();
