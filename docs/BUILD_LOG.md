@@ -98,3 +98,13 @@ _This log is meant to be appended to. When a session produces a reusable lesson,
 - Deep-linked `parallax://reveal` (no play-flow context) shows the honest error state by
   design — the celebration is only reachable through Today → "See the reveal".
 - Full gallery + ASC IAP screenshots now live in `docs/screens/` (see SCREENS.md).
+
+## 2026-07-07 · V2 S1 surfaces (Mac Mini build session)
+- **0039's solo API had a blocking bug found while wiring the client:** `start_refocus(p_is_solo=true)`
+  inserted the solo row with default state `waiting_partner`, occupying the one-open-per-couple
+  partial unique index — one solo session made every two-sided open raise
+  `refocus_session_race_unresolved` (the recovery SELECT filters `not is_solo`). It also logged
+  to the couple-shared activity feed, leaking the solo session's existence to the partner.
+  Fix (0043): solo sessions are created atomically by `save_solo_refocus`, born `revealed`, no
+  activity log. Lesson: when a migration documents an invariant ("solo rows are never in the open
+  state"), pgTAP-prove the invariant itself, not just the happy path around it.
