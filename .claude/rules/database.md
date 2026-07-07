@@ -18,6 +18,7 @@ Backend is Supabase (Postgres + Auth + Realtime). Migrations `supabase/migration
 ## Migrations & local dev
 - New schema → a new `00NN_*.sql` migration, **idempotent** (`if not exists`, `on conflict do nothing`); apply non-destructively with `supabase migration up` to preserve local dev data. Use `supabase db reset` only for a clean verify (it wipes data + re-seeds — the user must re-sign-up).
 - After agent psql verification, the local DB is dirty → `supabase db reset` before trusting `supabase test db`.
+- **Every `supabase db reset` MUST be followed by `./scripts/seed-test-user.sh`** — reset wipes the `test@parallax.app` login (it lives outside seed.sql) and the user hits a dead login screen. Treat reset+reseed as one step (Yash, 2026-07-08).
 
 ## supabase-js typing
 - Typed `.rpc()` / `.update()` sometimes infers args as `never` (a known supabase-js limitation with the generated `Database` generic). Use a single documented `// @ts-expect-error supabase-js typed ... resolves to never` — this is the established codebase pattern. **Never `as any`.**
