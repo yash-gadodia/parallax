@@ -12,6 +12,10 @@ The shared task list. Plain-English, owner-tagged, and the Claude agent reads & 
 
 ## To do
 
+### (Claude) — V2 follow-ups (discovered during the S1 build, 2026-07-07)
+- [ ] **(Claude)** F2 §10 sliver: at the 72h `still_open` auto-resolve, the session's Love Map entry should gain a "still open" note — needs a small extension to `expire_stale_repair_checkins()` that annotates the learning whose origin is `refocus-session-<id>` (if one was saved). Deferred from the F2 unit to keep the expire fn's blast radius small.
+- [ ] **(Dani)** V2 copy pass: mood pill day-words (`src/content/mood.ts`), repair check-in + reveal + reflection copy (`src/content/repair.ts`), async partner-notify phrasing (`supabase/functions/notify-partner/index.ts`) — all marked `copy: Dani pass pending`, validate with 2–3 real couples before flag-on.
+
 ### (Yash) — go-live credentials & infra  _(for later; full steps in docs/HANDOFF.md)_
 - [ ] **(Yash)** Real iOS `bundleIdentifier` in `app.json` (replace `com.anonymous.parallax`)
 - [ ] **(Yash)** Expo: run `npx eas init`, add `EXPO_TOKEN` repo secret (unlocks CI builds + OTA)
