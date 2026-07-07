@@ -23,6 +23,7 @@ export interface Couple {
   last_played_on: string | null;
   wavelength_avg: number | null;
   plus: boolean;
+  tz: string | null;
   created_at: string;
 }
 
@@ -275,6 +276,18 @@ export interface JourneyState {
   stages?: { position: number; entered_at: string; completed_at: string | null }[];
 }
 
+// mood_checks (0041): daily temperature greeting, one row per partner per
+// couple-local day.
+export interface MoodCheck {
+  id: string;
+  couple_id: string;
+  user_id: string;
+  couple_local_date: string;
+  mood: 'golden' | 'good' | 'off' | 'heavy';
+  refocus_offered: boolean;
+  created_at: string;
+}
+
 // feature_flags (0042): OTA kill switches, read-only to clients.
 export interface FeatureFlag {
   key: string;
@@ -378,6 +391,11 @@ export interface Database {
         Insert: Omit<FeatureFlag, 'updated_at'>;
         Update: Partial<Omit<FeatureFlag, 'key'>>;
       };
+      mood_checks: {
+        Row: MoodCheck;
+        Insert: Omit<MoodCheck, 'id' | 'created_at'>;
+        Update: Partial<Omit<MoodCheck, 'id' | 'created_at'>>;
+      };
     };
     Functions: {
       create_couple: {
@@ -460,8 +478,23 @@ export interface Database {
           p_couple: string;
           p_topic: string;
           p_side: string;
+          p_is_solo?: boolean;
         };
         Returns: string;
+      };
+      submit_mood_check: {
+        Args: {
+          p_couple: string;
+          p_mood: string;
+        };
+        Returns: Json;
+      };
+      save_solo_refocus: {
+        Args: {
+          p_session: string;
+          p_ai_result: Json;
+        };
+        Returns: void;
       };
       add_refocus_side: {
         Args: {

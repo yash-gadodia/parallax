@@ -65,6 +65,7 @@ import {
 } from '../../src/features/notifications';
 import { track, EVENTS } from '../../src/lib/analytics';
 import { useRefetchOnRefocus } from '../../src/lib/useRefetchOnRefocus';
+import { MoodCheckCard } from '../../src/features/mood/MoodCheckCard';
 
 // One-per-day dedupe keys (device-local day, see localDayKey).
 const STREAK_PULSE_SEEN_KEY = 'parallax:streak_pulse_seen_on';
@@ -449,6 +450,17 @@ export default function TodayScreen({
               </Press>
             </View>
           </View>
+
+          {/* V2 F1: the daily temperature greeting — an inline card you scroll
+              past, between the hero and the drop card (§10). Behind
+              f1_mood_check; skipped on any day the couple already played. */}
+          <MoodCheckCard
+            coupleId={isLive ? couple!.id : null}
+            userId={session?.user?.id ?? null}
+            tz={couple?.tz}
+            playedToday={done}
+            now={now}
+          />
 
           {/* Day 7 of the first week: celebrate, then show the real recap */}
           {beat === 'week' && (

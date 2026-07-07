@@ -14,6 +14,7 @@ const couple: Couple = {
   last_played_on: '2026-07-01',
   wavelength_avg: 74,
   plus: false,
+  tz: 'Asia/Singapore',
   created_at: '2024-02-14T00:00:00Z',
 };
 
