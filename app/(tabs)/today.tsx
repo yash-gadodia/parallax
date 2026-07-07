@@ -66,6 +66,7 @@ import {
 import { track, EVENTS } from '../../src/lib/analytics';
 import { useRefetchOnRefocus } from '../../src/lib/useRefetchOnRefocus';
 import { MoodCheckCard } from '../../src/features/mood/MoodCheckCard';
+import { RepairCheckinCard } from '../../src/features/repair/RepairCheckinCard';
 
 // One-per-day dedupe keys (device-local day, see localDayKey).
 const STREAK_PULSE_SEEN_KEY = 'parallax:streak_pulse_seen_on';
@@ -460,6 +461,18 @@ export default function TodayScreen({
             tz={couple?.tz}
             playedToday={done}
             now={now}
+          />
+
+          {/* V2 F2: the repair check-in — first-class daily object at drop-card
+              weight (§10). Question → gated mutual reveal → 48h reflection.
+              Behind f2_repair_checkin. */}
+          <RepairCheckinCard
+            coupleId={isLive ? couple!.id : null}
+            userId={session?.user?.id ?? null}
+            partnerName={partner.name}
+            partnerInitial={partner.initial}
+            myName={me.name}
+            myInitial={me.initial}
           />
 
           {/* Day 7 of the first week: celebrate, then show the real recap */}

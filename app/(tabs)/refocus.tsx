@@ -63,6 +63,7 @@ import {
   mediateSession,
   parseAiResult,
   persistSoloRefocus,
+  markBridgeSent,
   REFOCUS_ALREADY_OPEN,
 } from '../../src/features/refocus/refocusActions';
 import { checkShouldShowEscalationCard } from '../../src/features/refocus/checkEscalation';
@@ -101,6 +102,9 @@ export default function RefocusScreen() {
   const [mediation, setMediation] = useState<RefocusMediation | null>(null);
   const [pendingTopic, setPendingTopic] = useState('');
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+  // V2 F1/F2: the persisted solo session's id — lets "copy to share" mark the
+  // bridge as sent so the repair check-in becomes due 24h later.
+  const [soloSessionId, setSoloSessionId] = useState<string | null>(null);
 
   const { session: authSession } = useSession();
   const { couple } = useCouple();
@@ -264,9 +268,11 @@ export default function RefocusScreen() {
             // V2 F1: the reflection survives exit — one atomic DEFINER call,
             // author-only under RLS (0043). The on-screen result stands
             // either way; a failure gets one quiet, honest toast.
+            setSoloSessionId(null);
             if (couple && authSession) {
               persistSoloRefocus(couple.id, text, res).then((id) => {
-                if (!id) showToast("couldn't save this one — it stays here for now");
+                if (id) setSoloSessionId(id);
+                else showToast("couldn't save this one — it stays here for now");
               });
             }
           }}
@@ -289,6 +295,7 @@ export default function RefocusScreen() {
         <ResultStep
           insets={insets}
           result={result}
+          soloSessionId={soloSessionId}
           onBack={handleBack}
           onShowToast={showToast}
           onOpenLoveMap={handleNavigateToLoveMap}
@@ -1959,6 +1966,7 @@ function TogetherResultStep({
 interface ResultStepProps {
   insets: ReturnType<typeof useSafeAreaInsets>;
   result: RefocusResult;
+  soloSessionId: string | null;
   onBack: () => void;
   onShowToast: (msg: string) => void;
   onOpenLoveMap: () => void;
@@ -1967,6 +1975,7 @@ interface ResultStepProps {
 function ResultStep({
   insets,
   result,
+  soloSessionId,
   onBack,
   onShowToast,
   onOpenLoveMap,
@@ -2179,6 +2188,9 @@ function ResultStep({
                 await Clipboard.setStringAsync(msg);
                 setCopied(true);
                 onShowToast('Copied, share it when you’re ready 🤍');
+                // V2 F2: the bridge is on its way — the repair check-in
+                // becomes due 24h from now (fire-and-forget, idempotent).
+                if (soloSessionId) markBridgeSent(soloSessionId);
               }}
               sub="paste it anywhere you two talk"
             >

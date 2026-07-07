@@ -291,6 +291,21 @@ export interface MoodCheck {
   created_at: string;
 }
 
+// repair_checkins (0040/0044): the day-after repair check-in. Clients render
+// from the get_repair_checkin DEFINER projection, never raw rows.
+export interface RepairCheckin {
+  id: string;
+  couple_id: string;
+  session_id: string | null;
+  couple_local_date: string;
+  initiator_verdict: 'yes' | 'getting_there' | 'still_tender' | null;
+  partner_verdict: 'yes' | 'getting_there' | 'still_tender' | null;
+  state: 'open' | 'revealed' | 'reflection' | 'still_open';
+  created_at: string;
+  revealed_at: string | null;
+  most_recent_submit: string | null;
+}
+
 // feature_flags (0042): OTA kill switches, read-only to clients.
 export interface FeatureFlag {
   key: string;
@@ -399,6 +414,11 @@ export interface Database {
         Insert: Omit<MoodCheck, 'id' | 'created_at'>;
         Update: Partial<Omit<MoodCheck, 'id' | 'created_at'>>;
       };
+      repair_checkins: {
+        Row: RepairCheckin;
+        Insert: Omit<RepairCheckin, 'id' | 'created_at'>;
+        Update: Partial<Omit<RepairCheckin, 'id' | 'created_at'>>;
+      };
     };
     Functions: {
       create_couple: {
@@ -497,6 +517,32 @@ export interface Database {
           p_topic: string;
           p_side: string;
           p_ai_result: Json;
+        };
+        Returns: string;
+      };
+      mark_bridge_sent: {
+        Args: { p_session: string };
+        Returns: void;
+      };
+      ensure_repair_checkin: {
+        Args: { p_couple: string };
+        Returns: string | null;
+      };
+      get_repair_checkin: {
+        Args: { p_couple: string };
+        Returns: Json;
+      };
+      submit_repair_verdict: {
+        Args: {
+          p_checkin: string;
+          p_verdict: string;
+        };
+        Returns: void;
+      };
+      add_private_learning: {
+        Args: {
+          p_couple: string;
+          p_learning_detail: string;
         };
         Returns: string;
       };

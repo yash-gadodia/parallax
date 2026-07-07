@@ -91,6 +91,20 @@ export async function persistSoloRefocus(
   }
 }
 
+/**
+ * The solo author tapped "copy to share" on the bridge — mark the session so
+ * the repair check-in becomes due 24h later (V2 F2, 0044). Idempotent and
+ * fire-and-forget: a failure just means no check-in, never a broken share.
+ */
+export async function markBridgeSent(sessionId: string): Promise<void> {
+  try {
+    // @ts-expect-error supabase-js typed rpc args resolve to never for this fn
+    await supabase.rpc('mark_bridge_sent', { p_session: sessionId });
+  } catch {
+    // no-op
+  }
+}
+
 function isMediation(v: unknown): v is RefocusMediation {
   const m = v as RefocusMediation | null;
   return (
