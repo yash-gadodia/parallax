@@ -89,6 +89,10 @@ export function useRefocusSession(coupleId: string | null): RefocusSessionState 
             (payload) => {
               const next = payload.new as RefocusSession | null;
               if (!next?.id) return;
+              // Solo rows (author-only, born 'revealed') must never become
+              // the tab's "open session" — that would route the author into
+              // the two-sided flow against a solo session.
+              if (next.is_solo) return;
               setState((prev) => {
                 // A brand-new session, or an update to the one we hold.
                 if (!prev.session || prev.session.id === next.id) {

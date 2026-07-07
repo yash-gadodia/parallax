@@ -3,6 +3,8 @@ import {
   addRefocusSide,
   mediateSession,
   parseAiResult,
+  persistSoloRefocus,
+  soloTopic,
 } from './refocusActions';
 import { notifyRefocus } from '../notifications';
 import { supabase } from '../../lib/supabase';
@@ -161,5 +163,57 @@ describe('parseAiResult', () => {
     expect(parseAiResult(null)).toBeNull();
     expect(parseAiResult('mediation')).toBeNull();
     expect(parseAiResult({ type: 'verdict', winner: 'me' })).toBeNull();
+  });
+});
+
+describe('soloTopic', () => {
+  it('uses the first line with whitespace collapsed', () => {
+    expect(soloTopic('the   dishes thing\nand more detail')).toBe('the dishes thing');
+  });
+
+  it('caps at 64 chars with an ellipsis', () => {
+    const long =
+      'this is a very long first line that keeps going well past the sixty-four character cap';
+    const topic = soloTopic(long);
+    expect(topic).toBe('this is a very long first line that keeps going well past the s…');
+    expect(topic.length).toBeLessThanOrEqual(64);
+  });
+
+  it('falls back to a warm default for empty input', () => {
+    expect(soloTopic('   \n  ')).toBe('a moment to untangle');
+  });
+});
+
+describe('persistSoloRefocus', () => {
+  const RESULT = { underneath: 'I need to feel seen', bridge: 'hey 🤍' };
+
+  it('calls save_solo_refocus with the couple, derived topic, trimmed side and result', async () => {
+    mockRpc.mockResolvedValueOnce({ data: 'solo-1', error: null });
+
+    const id = await persistSoloRefocus('couple-1', '  I felt unheard\nmore  ', RESULT);
+
+    expect(id).toBe('solo-1');
+    expect(mockRpc).toHaveBeenCalledWith('save_solo_refocus', {
+      p_couple: 'couple-1',
+      p_topic: 'I felt unheard',
+      p_side: 'I felt unheard\nmore',
+      p_ai_result: RESULT,
+    });
+  });
+
+  it('returns null on an RPC error (caller stays honest, no throw)', async () => {
+    mockRpc.mockResolvedValueOnce({ data: null, error: { message: 'nope' } });
+    expect(await persistSoloRefocus('couple-1', 'my side', RESULT)).toBeNull();
+  });
+
+  it('returns null when the RPC throws (offline)', async () => {
+    mockRpc.mockRejectedValueOnce(new Error('network'));
+    expect(await persistSoloRefocus('couple-1', 'my side', RESULT)).toBeNull();
+  });
+
+  it('never fires the partner push for a solo save', async () => {
+    mockRpc.mockResolvedValueOnce({ data: 'solo-1', error: null });
+    await persistSoloRefocus('couple-1', 'my side', RESULT);
+    expect(mockNotify).not.toHaveBeenCalled();
   });
 });

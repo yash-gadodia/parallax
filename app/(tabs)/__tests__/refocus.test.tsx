@@ -120,6 +120,8 @@ const SESSION: RefocusSession = {
   created_at: '2026-07-01T10:00:00Z',
   partner_joined_at: null,
   revealed_at: null,
+  is_solo: false,
+  solo_saved_at: null,
 };
 
 type Screen = Awaited<ReturnType<typeof render>>;

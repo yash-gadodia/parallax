@@ -25,6 +25,8 @@ describe('checkShouldShowEscalationCard', () => {
         created_at: date.toISOString(),
         partner_joined_at: null,
         revealed_at: date.toISOString(),
+        is_solo: false,
+        solo_saved_at: null,
       };
     });
   };

@@ -160,6 +160,9 @@ export interface RefocusSession {
   created_at: string;
   partner_joined_at: string | null;
   revealed_at: string | null;
+  // 0039/0043: solo sessions are author-only (RLS) and born 'revealed'.
+  is_solo: boolean;
+  solo_saved_at: string | null;
 }
 
 // 0029: a Money Date — the guided money conversation, done together on one
@@ -478,7 +481,6 @@ export interface Database {
           p_couple: string;
           p_topic: string;
           p_side: string;
-          p_is_solo?: boolean;
         };
         Returns: string;
       };
@@ -491,10 +493,12 @@ export interface Database {
       };
       save_solo_refocus: {
         Args: {
-          p_session: string;
+          p_couple: string;
+          p_topic: string;
+          p_side: string;
           p_ai_result: Json;
         };
-        Returns: void;
+        Returns: string;
       };
       add_refocus_side: {
         Args: {

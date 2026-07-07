@@ -51,6 +51,44 @@ export async function addRefocusSide(
   if (error) throw error;
 }
 
+/**
+ * A revisitable title for a solo session, derived from the user's words:
+ * first line, whitespace collapsed, capped at 64 chars. Only the author ever
+ * sees it (solo rows are author-only under RLS).
+ */
+export function soloTopic(sideText: string): string {
+  const line = sideText.trim().split('\n')[0].replace(/\s+/g, ' ').trim();
+  if (line.length <= 64) return line || 'a moment to untangle';
+  return `${line.slice(0, 63).trimEnd()}…`;
+}
+
+/**
+ * Persist a completed solo reflection (V2 F1, migration 0043): one atomic
+ * DEFINER call creates the session already-revealed with the ai_result, so a
+ * solo row can never occupy the couple's open-session slot. Returns the
+ * session id, or null on failure — the caller keeps the on-screen result
+ * either way and stays honest about what saved.
+ */
+export async function persistSoloRefocus(
+  coupleId: string,
+  sideText: string,
+  aiResult: unknown
+): Promise<string | null> {
+  try {
+    // @ts-expect-error supabase-js typed rpc args resolve to never for this fn
+    const { data, error } = await supabase.rpc('save_solo_refocus', {
+      p_couple: coupleId,
+      p_topic: soloTopic(sideText),
+      p_side: sideText.trim(),
+      p_ai_result: aiResult,
+    });
+    if (error) return null;
+    return (data as string) ?? null;
+  } catch {
+    return null;
+  }
+}
+
 function isMediation(v: unknown): v is RefocusMediation {
   const m = v as RefocusMediation | null;
   return (

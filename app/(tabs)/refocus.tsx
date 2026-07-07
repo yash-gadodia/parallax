@@ -62,6 +62,7 @@ import {
   addRefocusSide,
   mediateSession,
   parseAiResult,
+  persistSoloRefocus,
   REFOCUS_ALREADY_OPEN,
 } from '../../src/features/refocus/refocusActions';
 import { checkShouldShowEscalationCard } from '../../src/features/refocus/checkEscalation';
@@ -260,6 +261,14 @@ export default function RefocusScreen() {
             track(EVENTS.REFOCUS_COMPLETED);
             setResult(res);
             setStep('result');
+            // V2 F1: the reflection survives exit — one atomic DEFINER call,
+            // author-only under RLS (0043). The on-screen result stands
+            // either way; a failure gets one quiet, honest toast.
+            if (couple && authSession) {
+              persistSoloRefocus(couple.id, text, res).then((id) => {
+                if (!id) showToast("couldn't save this one — it stays here for now");
+              });
+            }
           }}
           onSafety={(s) => {
             setSafety(s);
