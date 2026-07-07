@@ -35,7 +35,7 @@ begin;
   values ('f5000004-0000-0000-0000-000000000001'::uuid,
           'f5000002-0000-0000-0000-000000000001'::uuid,
           'f5000003-0000-0000-0000-000000000001'::uuid,
-          current_date, 'open')
+          (now() at time zone 'Asia/Singapore')::date, 'open')
   on conflict do nothing;
 
   insert into public.drop_prompts (id, drop_id, position, options)
