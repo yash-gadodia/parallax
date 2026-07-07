@@ -91,3 +91,4 @@ A running log of major **product / tech / design** decisions — the *why* behin
 ### One DB verifier at a time
 - **Decision:** Only the session lead runs `supabase db reset` / `supabase test db`; parallel agents author SQL and hand it over.
 - **Why:** Two concurrent resets produce 502s and mass phantom "Bad plan" failures that look like real regressions.
+- **2026-07-07 · V2 fight-flywheel plan approved** — `docs/V2_PLAN.md` (autoplan: CEO+design+eng, 26 logged decisions). Taste calls: quiet provenance row on woven reveals · growth-counter hero on Us · F3 weave stays S3 behind the quality gate (competitive watch trigger) · refocus-text encryption deferred to Phase 2. S0 safety audit blocks F1; S1 doubles as the instrumented TestFlight beta.
