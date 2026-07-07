@@ -275,6 +275,14 @@ export interface JourneyState {
   stages?: { position: number; entered_at: string; completed_at: string | null }[];
 }
 
+// feature_flags (0042): OTA kill switches, read-only to clients.
+export interface FeatureFlag {
+  key: string;
+  enabled: boolean;
+  note: string | null;
+  updated_at: string;
+}
+
 export type Json = unknown;
 
 export interface Database {
@@ -364,6 +372,11 @@ export interface Database {
         Row: MoneyDateSession;
         Insert: Omit<MoneyDateSession, 'id' | 'created_at'>;
         Update: Partial<Omit<MoneyDateSession, 'id' | 'created_at'>>;
+      };
+      feature_flags: {
+        Row: FeatureFlag;
+        Insert: Omit<FeatureFlag, 'updated_at'>;
+        Update: Partial<Omit<FeatureFlag, 'key'>>;
       };
     };
     Functions: {
