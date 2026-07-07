@@ -93,14 +93,19 @@ Deno.serve(async (req: Request) => {
     return json({ error: "not_configured" }, 503);
   }
 
-  let body: { couple_drop_id?: string; couple_id?: string; event?: string };
+  let body: {
+    couple_drop_id?: string;
+    couple_id?: string;
+    event?: string;
+    refocus_session_id?: string;
+  };
   try {
     body = await req.json();
   } catch {
     return json({ error: "invalid_json" }, 400);
   }
 
-  const { couple_drop_id, couple_id: couple_id_in, event } = body;
+  const { couple_drop_id, couple_id: couple_id_in, event, refocus_session_id } = body;
   const validEvent =
     event === "played" ||
     event === "revealed" ||
@@ -220,19 +225,71 @@ Deno.serve(async (req: Request) => {
         sound: "default",
       });
     } else if (event === "refocus") {
-      // A refocus session just started — gently ping the initiator's partner
-      // to add their side (IMPROVEMENT_PLAN.md 4.6).
+      // A refocus session just started — ping the initiator's partner to add
+      // their side (IMPROVEMENT_PLAN.md 4.6). Behind f1_partner_notify
+      // (V2_PLAN §4-F1) the phrasing goes async — "for whenever you're
+      // ready", never an interrupt — and may include the session topic, read
+      // server-side (never from the request body).
       const partnerId = memberIds.find((id) => id !== actor);
       if (!partnerId) return json({ sent: 0 });
       const partner = profileMap.get(partnerId);
       if (!partner?.push_token) return json({ sent: 0 });
       const initiatorName = nameOf(actor);
-      messages.push({
-        to: partner.push_token,
-        title: `${initiatorName} wants to refocus something 💛`,
-        body: "add your side when you're ready",
-        sound: "default",
-      });
+
+      let asyncCopy = false;
+      try {
+        const flags: Array<{ enabled: boolean }> = await dbGet(
+          "feature_flags?key=eq.f1_partner_notify&select=enabled"
+        );
+        asyncCopy = flags.length > 0 && flags[0].enabled === true;
+      } catch {
+        // flag lookup failure -> legacy copy (fail-safe, never fail-open)
+      }
+
+      if (asyncCopy) {
+        // copy: Dani pass pending (V2 F1 placeholder)
+        let topic: string | null = null;
+        if (refocus_session_id) {
+          try {
+            const sessions: Array<{
+              couple_id: string;
+              initiator: string;
+              is_solo: boolean;
+              topic: string;
+            }> = await dbGet(
+              `refocus_sessions?id=eq.${refocus_session_id}&select=couple_id,initiator,is_solo,topic`
+            );
+            const s = sessions[0];
+            // Only trust a topic that belongs to this couple, was started by
+            // the verified actor, and is a two-sided session.
+            if (
+              s &&
+              s.couple_id === couple_id &&
+              s.initiator === actor &&
+              !s.is_solo
+            ) {
+              topic = s.topic;
+            }
+          } catch {
+            // no topic -> generic async copy
+          }
+        }
+        messages.push({
+          to: partner.push_token,
+          title: `${initiatorName} left you something 💛`,
+          body: topic
+            ? `about ${topic} — for whenever you're ready. no rush.`
+            : "a rough moment they want to untangle together — for whenever you're ready. no rush.",
+          sound: "default",
+        });
+      } else {
+        messages.push({
+          to: partner.push_token,
+          title: `${initiatorName} wants to refocus something 💛`,
+          body: "add your side when you're ready",
+          sound: "default",
+        });
+      }
     } else {
       // event === 'played': the submitter is the verified JWT caller; push the
       // OTHER member (the one still waiting to answer).

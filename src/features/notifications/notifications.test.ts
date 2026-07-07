@@ -262,6 +262,18 @@ describe('notifyRefocus', () => {
     });
   });
 
+  it('passes the session id so the edge fn can add the topic to the async copy', async () => {
+    mockGetSession.mockResolvedValueOnce({ data: { session: { user: { id: 'u-1' } } } });
+    await notifyRefocus('couple-11', 'session-7');
+    expect(mockInvoke).toHaveBeenCalledWith('notify-partner', {
+      body: {
+        couple_id: 'couple-11',
+        event: 'refocus',
+        refocus_session_id: 'session-7',
+      },
+    });
+  });
+
   it('is a no-op without a session (demo/solo mode)', async () => {
     mockGetSession.mockResolvedValueOnce({ data: { session: null } });
     await notifyRefocus('couple-11');

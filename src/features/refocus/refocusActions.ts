@@ -30,7 +30,9 @@ export async function startRefocus(
   });
   if (error) throw error;
 
-  notifyRefocus(coupleId); // fire-and-forget; no-op without a session
+  // fire-and-forget; no-op without a session. The session id lets the edge fn
+  // add the topic to the async "for whenever you're ready" copy (V2 F1).
+  notifyRefocus(coupleId, data as string);
 
   return data as string;
 }

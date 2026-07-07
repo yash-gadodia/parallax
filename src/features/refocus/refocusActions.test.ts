@@ -64,7 +64,7 @@ describe('startRefocus', () => {
     await startRefocus('couple-1', 'topic', 'side');
 
     expect(mockNotify).toHaveBeenCalledTimes(1);
-    expect(mockNotify).toHaveBeenCalledWith('couple-1');
+    expect(mockNotify).toHaveBeenCalledWith('couple-1', 'session-1');
   });
 
   it('throws the RPC error and does NOT push when start_refocus fails', async () => {

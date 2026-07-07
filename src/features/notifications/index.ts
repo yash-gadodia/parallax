@@ -164,12 +164,21 @@ export async function notifyNudge(coupleId: string): Promise<void> {
 // The edge function identifies the initiator from the JWT `sub` and targets the
 // OTHER member. No-op without a session (demo/solo mode). Fire-and-forget.
 // GATE: delivers only once push tokens + the deployed edge fn are live.
-export async function notifyRefocus(coupleId: string): Promise<void> {
+export async function notifyRefocus(
+  coupleId: string,
+  sessionId?: string
+): Promise<void> {
   try {
     const { data } = await supabase.auth.getSession();
     if (!data.session) return;
     await supabase.functions.invoke('notify-partner', {
-      body: { couple_id: coupleId, event: 'refocus' },
+      body: {
+        couple_id: coupleId,
+        event: 'refocus',
+        // V2 F1: lets the edge fn include the topic in the async phrasing —
+        // it re-reads and validates the session server-side, never the body.
+        ...(sessionId ? { refocus_session_id: sessionId } : {}),
+      },
     });
   } catch {
     // No-op: push failure must never interrupt the refocus flow.
