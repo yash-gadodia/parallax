@@ -108,3 +108,7 @@ _This log is meant to be appended to. When a session produces a reusable lesson,
   Fix (0043): solo sessions are created atomically by `save_solo_refocus`, born `revealed`, no
   activity log. Lesson: when a migration documents an invariant ("solo rows are never in the open
   state"), pgTAP-prove the invariant itself, not just the happy path around it.
+- **Mac Mini has no iOS simulator runtimes installed** (`xcrun simctl list runtimes` is empty) —
+  the screenshot half of the UI verification loop can't run here. V2 S1 surfaces verified via
+  typecheck + jest (973) + `expo export` + pgTAP (543); first visual pass must happen on the
+  MacBook (or after runtimes are installed) with the flags flipped ON against local supabase.
