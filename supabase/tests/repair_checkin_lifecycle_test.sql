@@ -16,7 +16,7 @@
 -- ============================================================================
 begin;
   create extension if not exists pgtap;
-  select plan(20);
+  select plan(24);
 
   -- ---- SETUP (as superuser): 6 users, 3 couples -----------------------------
   insert into auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at)
@@ -109,9 +109,11 @@ begin;
     'initiator sees the open check-in'
   );
 
+  -- 0046: open rows are raw-invisible to everyone — the app (and this test)
+  -- addresses the check-in via the DEFINER projection's id
   select lives_ok(
     $q$select public.submit_repair_verdict(
-      (select id from public.repair_checkins where couple_id = 'dcdcdcdc-0000-0000-0000-000000000001'::uuid),
+      ((public.get_repair_checkin('dcdcdcdc-0000-0000-0000-000000000001'::uuid))->>'id')::uuid,
       'yes')$q$,
     'initiator submits their verdict'
   );
@@ -241,6 +243,60 @@ begin;
     'refocus_session_not_found',
     'the non-author cannot even address the solo row (RLS hides it)'
   );
+  reset role;
+
+  -- ---- 8. RAW-ROW REVEAL GATE (0046): non-revealed rows are invisible --------
+  -- Couple 2's check-in is 'open' with one verdict in; couple 3's is 'open'
+  -- with none. Neither partner may raw-read either row — verdicts only cross
+  -- the wire via get_repair_checkin until state='revealed'.
+  set local role authenticated;
+  select set_config('request.jwt.claims', json_build_object('sub','d4d4d4d4-0000-0000-0000-000000000004','role','authenticated')::text, true);
+
+  select is(
+    (select count(*)::int from public.repair_checkins
+     where couple_id = 'dcdcdcdc-0000-0000-0000-000000000002'::uuid),
+    0,
+    'RAW GATE: the partner reads 0 open rows (one verdict already in)'
+  );
+
+  reset role;
+
+  -- 48h transform: force the reflection state; the one-sided verdict inside
+  -- must stay invisible to raw reads from BOTH partners.
+  update public.repair_checkins
+  set state = 'reflection'
+  where id = 'cccccccc-0000-0000-0000-000000000002'::uuid;
+
+  set local role authenticated;
+  select set_config('request.jwt.claims', json_build_object('sub','d4d4d4d4-0000-0000-0000-000000000004','role','authenticated')::text, true);
+
+  select is(
+    (select count(*)::int from public.repair_checkins
+     where couple_id = 'dcdcdcdc-0000-0000-0000-000000000002'::uuid),
+    0,
+    'RAW GATE: the non-answering partner reads 0 reflection rows (0046 fix)'
+  );
+
+  -- ...while the DEFINER projection still serves the answerer their reflection
+  select set_config('request.jwt.claims', json_build_object('sub','d4d4d4d4-0000-0000-0000-000000000003','role','authenticated')::text, true);
+
+  select is(
+    (public.get_repair_checkin('dcdcdcdc-0000-0000-0000-000000000002'::uuid))->>'reflection_mine',
+    'true',
+    'the answerer still gets their reflection via the projection'
+  );
+
+  -- and the mutually-revealed check-in (couple 1) stays raw-readable
+  select set_config('request.jwt.claims', json_build_object('sub','d4d4d4d4-0000-0000-0000-000000000002','role','authenticated')::text, true);
+
+  select is(
+    (select count(*)::int from public.repair_checkins
+     where couple_id = 'dcdcdcdc-0000-0000-0000-000000000001'::uuid
+       and state = 'revealed'),
+    1,
+    'revealed rows stay readable for the growth stats'
+  );
+
   reset role;
 
   select * from finish();

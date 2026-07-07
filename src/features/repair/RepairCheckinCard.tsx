@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { useReducedMotion } from 'react-native-reanimated';
 import Card from '../../components/Card';
 import EscalationCard from '../../components/EscalationCard';
+import { SparkleBurst } from '../../components/SparkleBurst';
 import Press from '../../components/Press';
 import Tok from '../../components/Tok';
 import { Kick, Serif } from '../../components/Text';
@@ -195,6 +196,9 @@ export function RepairCheckinCard({
           <Kick c={colors.matchDeep}>{REPAIR_COPY.revealKick}</Kick>
           <View style={{ alignItems: 'center', marginTop: 12 }}>
             <Ring pct={OUTCOME_RING[view.outcome]} size={96} animate={!reducedMotion} />
+            {/* mutual "yes": the milestone-warm sparkle (§10) — the shared
+                atom already skips itself under reduced motion */}
+            {view.outcome === 'repair' && <SparkleBurst radius={72} delay={900} />}
           </View>
 
           {/* both answers, side by side */}

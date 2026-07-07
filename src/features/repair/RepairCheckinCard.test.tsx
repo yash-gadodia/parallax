@@ -30,6 +30,16 @@ jest.mock('../../lib/supabase', () => ({
       if (table === 'feature_flags') {
         return { select: () => mockFlagRows() };
       }
+      if (table === 'refocus_sessions') {
+        // useRefocusHistory (escalation-card gate) — empty history keeps
+        // the console pristine and the escalation card off.
+        const q = {
+          select: () => q,
+          eq: () => q,
+          order: () => Promise.resolve({ data: [], error: null }),
+        };
+        return q;
+      }
       throw new Error(`unexpected table ${table}`);
     },
     rpc: (...args: unknown[]) => mockRpc(...args),

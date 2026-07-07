@@ -51,15 +51,15 @@ begin;
           (now() at time zone 'Asia/Singapore')::date,
           'open');
 
-  -- ---- Initiator (01) can see their own open check-in ----
+  -- ---- 0046: open rows are raw-invisible to EVERYONE (projection-only) ----
   set local role authenticated;
   select set_config('request.jwt.claims', json_build_object('sub','d9d9d9d9-0000-0000-0000-000000000001','role','authenticated')::text, true);
 
   select is(
     (select count(*)::int from public.repair_checkins
      where couple_id = 'dcdc0000-0000-0000-0000-000000000001'::uuid),
-    1,
-    'initiator (01) can read their open check-in'
+    0,
+    'initiator (01) raw-reads 0 open rows — the projection is the read path (0046)'
   );
 
   reset role;
