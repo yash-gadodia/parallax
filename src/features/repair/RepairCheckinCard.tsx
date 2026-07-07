@@ -3,6 +3,7 @@ import { Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useReducedMotion } from 'react-native-reanimated';
 import Card from '../../components/Card';
+import EscalationCard from '../../components/EscalationCard';
 import Press from '../../components/Press';
 import Tok from '../../components/Tok';
 import { Kick, Serif } from '../../components/Text';
@@ -15,6 +16,8 @@ import { FLAGS, useFlag } from '../../lib/flags';
 import { celebration, success } from '../../lib/haptics';
 import { repairCardView } from './repairLogic';
 import { useRepairCheckin } from './useRepairCheckin';
+import { useRefocusHistory } from '../refocus/useRefocusHistory';
+import { checkShouldShowEscalationCard } from '../refocus/checkEscalation';
 
 // Decorative ring sweep per outcome — choreography, never a score (no % shown).
 const OUTCOME_RING = { repair: 100, getting_there: 62, tender: 33 } as const;
@@ -58,6 +61,12 @@ export function RepairCheckinCard({
   const [note, setNote] = useState('');
   const [noteSavedNow, setNoteSavedNow] = useState(false);
 
+  // §10: the escalation card renders after a tender reveal when the existing
+  // 3-in-30-days counter qualifies (component + trigger unchanged).
+  const { sessions: refocusHistory } = useRefocusHistory(
+    flagOn && coupleId && userId ? coupleId : null
+  );
+
   const view = repairCardView({
     flagOn,
     isLive: !!(coupleId && userId),
@@ -80,7 +89,14 @@ export function RepairCheckinCard({
   const verdictLabel = (v: RepairVerdict) =>
     REPAIR_VERDICTS.find((x) => x.key === v)?.label ?? v;
 
+  const showEscalation =
+    view.kind === 'reveal' &&
+    view.outcome === 'tender' &&
+    refocusHistory.length > 0 &&
+    checkShouldShowEscalationCard(refocusHistory);
+
   return (
+    <>
     <Card
       style={{
         borderRadius: radius.cardLg,
@@ -375,5 +391,7 @@ export function RepairCheckinCard({
         </Text>
       )}
     </Card>
+    {showEscalation && <EscalationCard sessionCount={refocusHistory.length} />}
+    </>
   );
 }
