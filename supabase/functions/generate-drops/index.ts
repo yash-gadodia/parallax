@@ -428,6 +428,26 @@ Author exactly ${count} brand-new drops in the house voice. Call provide_drops.`
           .map((n) => learningIds[n - 1]),
       )]
       : [];
+
+    // Validate that all mapped UUIDs are in the couple's actual learning set.
+    // Drop any that aren't (model attribution mismatch). Log a warning if any
+    // were dropped to monitor for model hallucinations in attribution.
+    const coupleLearningSeen = new Set(learningIds);
+    const validatedIds: string[] = [];
+    let droppedCount = 0;
+    for (const id of sourceIds) {
+      if (coupleLearningSeen.has(id)) {
+        validatedIds.push(id);
+      } else {
+        droppedCount++;
+      }
+    }
+    if (droppedCount > 0) {
+      console.warn(
+        `[generate-drops] dropped ${droppedCount} invalid source_learning UUIDs for couple ${coupleId}`,
+      );
+    }
+
     const ok = await dbInsert("drop_candidates", {
       couple_id: coupleId,
       title: (d.title as string).trim(),
@@ -436,7 +456,7 @@ Author exactly ${count} brand-new drops in the house voice. Call provide_drops.`
       prompts: d.prompts,
       source: "llm",
       status: "pending",
-      source_learning_ids: sourceIds.length > 0 ? sourceIds : null,
+      source_learning_ids: validatedIds.length > 0 ? validatedIds : null,
     });
     if (ok) inserted++;
     else rejected++;
