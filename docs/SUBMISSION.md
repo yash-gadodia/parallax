@@ -43,3 +43,12 @@ The reviewer must be able to see the *paired* experience, not just the "invite y
 4. Submit → TestFlight first (beta), then App Store review.
 
 > Keep this in sync with `docs/GO_LIVE.md`. The two un-fakeable blockers for a first-pass approval are the **app icon** and a **hosted privacy policy** — line those up early.
+
+## F. Review rejection 2026-07-08 (v1.0 build 11) — resolution log
+Submission `cf39f2d8-64e4-44d3-9515-799a9b58a29f`. Two guidelines:
+
+- **2.1(b) — IAP products not submitted for review.** The 3 IAP products (annual/monthly/lifetime) sit at MISSING_METADATA and were never attached to the version. **Dashboard-only, Yash:** in App Store Connect → the app version → **In-App Purchases**, add all three products, upload the required **App Review screenshot** per product (needs a Mac sim / TestFlight build — the §A blocker), then submit them *with* the next binary. IAPs must be in the same submission as the build.
+- **3.1.2(c) — subscription info.** Two halves:
+  - **In-app (DONE in code, this commit):** the purchase-flow screens (`app/checkout.tsx`, `app/(sheets)/plus.tsx`) already showed title/length/price; they were missing **functional Terms of Use (EULA) + Privacy Policy links**. Added `src/components/LegalLinks.tsx` (URLs in `src/lib/links.ts`) to both. Links point to the live GitHub Pages docs (verified 200). **Rebuild + resubmit binary** for this to count.
+  - **Metadata (Yash):** privacy-policy URL is already set. Add the **EULA** — since we ship a *custom* Terms (not Apple's standard), paste it into App Store Connect's **EULA** field (App Information → License Agreement), or link `…/legal/terms.html` in the **App Description**.
+  - Reply to Apple with a **screen recording** showing the two links working in the paywall, and note it in App Review Information → Notes.

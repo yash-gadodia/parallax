@@ -8,6 +8,7 @@ import Btn from '../../src/components/Btn';
 import { presentPaywall } from '../../src/features/purchases/usePurchases';
 import { purchasesAvailable } from '../../src/features/purchases/client';
 import Press from '../../src/components/Press';
+import LegalLinks from '../../src/components/LegalLinks';
 import { Serif } from '../../src/components/Text';
 import { colors, space, radius, gradients } from '../../src/design/tokens';
 import { fontFamily } from '../../src/design/typography';
@@ -188,6 +189,9 @@ export default function PlusSheet() {
             </Text>
           </View>
         </Press>
+
+        {/* Terms of Use (EULA) + Privacy Policy — App Store requirement */}
+        <LegalLinks style={{ marginTop: 4, marginBottom: 4 }} />
       </ScrollView>
     </Sheet>
   );

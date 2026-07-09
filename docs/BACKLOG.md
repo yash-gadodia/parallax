@@ -13,6 +13,7 @@ The shared task list. Plain-English, owner-tagged, and the Claude agent reads & 
 ## To do
 
 ### (Claude) — V2 follow-ups (discovered during the S1 build, 2026-07-07)
+- [ ] **(Claude)** Flaky test isolation: `app/__tests__/reveal.test.tsx` intermittently fails in the *full* `npx jest` run (passes when run alone, both on clean HEAD and with unrelated changes) — a leaked timer / date fixture / test-ordering dependency. Reproduce with a seeded run order, then fix the leak (don't `.skip`).
 - [ ] **(Claude)** F2 §10 sliver: at the 72h `still_open` auto-resolve, the session's Love Map entry should gain a "still open" note — needs a small extension to `expire_stale_repair_checkins()` that annotates the learning whose origin is `refocus-session-<id>` (if one was saved). Deferred from the F2 unit to keep the expire fn's blast radius small.
 - [ ] **(Dani)** F4 repair-theme prompts: author ~8-12 repair-flavored drops (fight styles, cool-down needs, what "I'm fine" means, how each of you apologizes, argument safety) — same playful voice + option-pill format, tagged `theme='repair'` in the catalog. The rotation mechanism shipped inert in 0045 and starts serving them the moment they exist.
 - [ ] **(Dani)** V2 copy pass: mood pill day-words (`src/content/mood.ts`), repair check-in + reveal + reflection copy (`src/content/repair.ts`), async partner-notify phrasing (`supabase/functions/notify-partner/index.ts`) — all marked `copy: Dani pass pending`, validate with 2–3 real couples before flag-on.

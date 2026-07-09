@@ -18,6 +18,7 @@ import Btn from '../src/components/Btn';
 import Press from '../src/components/Press';
 import TopBar from '../src/components/TopBar';
 import { Mark } from '../src/components/Mark';
+import LegalLinks from '../src/components/LegalLinks';
 import { PLANS, PERKS } from '../src/content/pay';
 import { usePurchases } from '../src/features/purchases/usePurchases';
 import Toast from '../src/components/Toast';
@@ -308,6 +309,9 @@ export default function CheckoutScreen() {
               {restoring ? 'Restoring…' : 'Restore purchases'}
             </Text>
           </Press>
+
+          {/* Terms of Use (EULA) + Privacy Policy — App Store requirement */}
+          <LegalLinks style={{ marginTop: 14 }} />
 
           {/* Honest billing disclosure */}
           {plan !== 'life' && (
