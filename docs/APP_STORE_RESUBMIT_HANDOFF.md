@@ -1,9 +1,15 @@
 # App Store Resubmit — Session Handoff (v1.0, rejection cf39f2d8)
 
-> Handoff for a fresh Claude Code session to finish resubmitting Parallax v1.0 after
-> Apple's rejection. **~90% is done and verified via the ASC API.** One blocker remains,
-> and it is **dashboard-only** (a human or the in-Chrome sidebar Claude must click it —
-> see "Hard constraint" below).
+> ✅ **RESOLVED 2026-07-11 — v1.0 (build 13) + Lifetime + Annual + Monthly all WAITING_FOR_REVIEW** (verified via ASC API).
+> Root causes of the MISSING_METADATA blocker: (1) Annual was missing a price for ONE territory (SWZ/Eswatini) — found by
+> diffing `availableTerritories` vs `prices?include=territory`; (2) ASC only re-evaluates subscription completeness when the
+> subscription resource itself is written — a harmless `PATCH /v1/subscriptions/<id>` (reviewNote) flipped both subs to
+> Ready to Submit instantly. Subs were then attached via the version page's "In-App Purchases and Subscriptions" selector,
+> the stray empty draft was deleted, and "Update Review" → "Resubmit to App Review" resubmitted submission cf39f2d8.
+> NOTE: the "Hard constraint" below is WRONG — `claude-in-chrome` DID drive the authenticated ASC session this time.
+> Remaining (user): optional reply to Apple with paywall screen recording; age-rating social-media questions by Sept 7 2026.
+
+> Original handoff below, kept for context.
 
 ## The rejection (submission `cf39f2d8-64e4-44d3-9515-799a9b58a29f`, July 8)
 - **2.1(b)** — the annual & monthly IAP products were never *submitted for review* (only Lifetime was in the build-11 submission; the two subs weren't attached).
