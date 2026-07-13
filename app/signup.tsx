@@ -16,6 +16,7 @@ import { Kick, Serif } from '../src/components/Text';
 import Btn from '../src/components/Btn';
 import Press from '../src/components/Press';
 import { Wordmark } from '../src/components/Wordmark';
+import { Icon, ICONS } from '../src/components/Icon';
 import { Peek } from '../src/components/Peek';
 import { Float } from '../src/components/Float';
 import TopBar from '../src/components/TopBar';
@@ -334,11 +335,14 @@ export default function SignupScreen() {
                       minHeight: 54,
                       borderRadius: radius.pill,
                       backgroundColor: colors.ink,
+                      flexDirection: 'row',
                       alignItems: 'center',
                       justifyContent: 'center',
+                      gap: 9,
                       ...shadows.shadowSoft,
                     }}
                   >
+                    <Icon d={ICONS.apple} size={18} color="#fff" fill="#fff" sw={0} />
                     <Text
                       allowFontScaling={false}
                       style={{ fontSize: 15.5, fontWeight: '700', color: '#fff', fontFamily: fontFamily.ui }}
