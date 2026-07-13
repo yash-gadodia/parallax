@@ -1,6 +1,6 @@
 # App Store Resubmit — Session Handoff (v1.0, rejection cf39f2d8)
 
-> 🔁 **REJECTION #2 (2026-07-13, reviewed on iPad Air 11" M3, v1.0 build 13) — fixed same day, build 14 resubmission in flight.**
+> ✅ **REJECTION #2 RESOLVED 2026-07-13 — v1.0 (build 14) resubmitted, WAITING_FOR_REVIEW (API-verified). Reply posted in the thread before resubmitting.**
 > 1. **Guideline 4 (Design/SIWA):** "Sign in with Apple is not displayed as an equivalent option… buttons should have a similar
 >    design as the buttons for other login options." Root cause: our Apple button was a text-only black pill while Google's had
 >    its "G" mark. Fix: added `ICONS.apple` to the SIWA button on `app/login.tsx` + `app/signup.tsx` (commit `fe0e1b5`).
