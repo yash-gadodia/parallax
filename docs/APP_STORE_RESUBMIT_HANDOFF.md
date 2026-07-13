@@ -1,5 +1,18 @@
 # App Store Resubmit — Session Handoff (v1.0, rejection cf39f2d8)
 
+> 🔁 **REJECTION #2 (2026-07-13, reviewed on iPad Air 11" M3, v1.0 build 13) — fixed same day, build 14 resubmission in flight.**
+> 1. **Guideline 4 (Design/SIWA):** "Sign in with Apple is not displayed as an equivalent option… buttons should have a similar
+>    design as the buttons for other login options." Root cause: our Apple button was a text-only black pill while Google's had
+>    its "G" mark. Fix: added `ICONS.apple` to the SIWA button on `app/login.tsx` + `app/signup.tsx` (commit `fe0e1b5`).
+> 2. **Guideline 2.1(b) (App Completeness/IAP):** "the free trial period offered in the subscriptions was not included in the
+>    sandbox mode." Root cause: checkout/plus promise "7 days free" but neither sub had an ASC **introductory offer**. Fix:
+>    created Free/1-Week/no-end-date intro offers on Annual (6786613926) + Monthly (6786613900) via the ASC dashboard
+>    (all 175 territories; API-verified `FREE_TRIAL`/`ONE_WEEK` from 2026-07-13). NOTE: the ASC intro-offer duration `<select>`
+>    ignores extension form fills — set `select.value` + dispatch `input`/`change` via page JS.
+> 3. Build 14: `eas build -p ios --profile production --auto-submit` (auto-increments buildNumber). Reply to Apple **before**
+>    clicking Resubmit — the thread locks after. Expo Go on a fresh sim crashes this SDK 56 app at the gesture-handler import
+>    (env mismatch, pre-existing) — visual checks need `npx expo run:ios`.
+
 > ✅ **RESOLVED 2026-07-11 — v1.0 (build 13) + Lifetime + Annual + Monthly all WAITING_FOR_REVIEW** (verified via ASC API).
 > Root causes of the MISSING_METADATA blocker: (1) Annual was missing a price for ONE territory (SWZ/Eswatini) — found by
 > diffing `availableTerritories` vs `prices?include=territory`; (2) ASC only re-evaluates subscription completeness when the
