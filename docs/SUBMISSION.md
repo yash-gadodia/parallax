@@ -1,5 +1,7 @@
 # App Store Submission Playbook — pass review the first time
 
+> ✅ **OUTCOME: v1.0 + all 3 IAPs APPROVED 14-07-2026** after 2 rejections (§F, §G) and one post-approval trap (§H). This doc is the distilled playbook so the next submission (1.0.1, Android, or the next app) one-shots it. Cross-app version lives in `~/.claude/skills/building-ios-apps`.
+
 The code side is built (see GO_LIVE). This is the checklist + the App-Store-Connect-side work that gets Parallax through review on the **first** try. Reviewers reject for predictable reasons — each is pre-addressed below.
 
 ## A. Hard requirements that must exist before you submit
@@ -34,6 +36,10 @@ The reviewer must be able to see the *paired* experience, not just the "invite y
 - **3.1.1 IAP** → Parallax Plus must use Apple IAP (RevenueCat handles this) — don't link to external payment.
 - **AI content (Refocus)** → ToS disclaims it's not therapy/crisis support (`docs/TERMS.md` §3). Keep that.
 - **Sign in with Apple parity (4.8)** → if you offer Google sign-in, you MUST also offer Sign in with Apple. `expo-apple-authentication` is already a plugin — wire both, or ship email-only first.
+- **Sign in with Apple DESIGN parity (Guideline 4)** → presence isn't enough (that's 4.8): if the Google button carries its "G" mark, the Apple button needs the  logo at equal prominence. A text-only black pill next to a logo'd Google button = rejection #2 here. (`fe0e1b5`)
+- **"7 days free" promised anywhere → ASC introductory offer must exist (2.1(b))** → reviewers test purchases in **sandbox**, where the trial comes only from a configured intro offer. Each subscription needs: Subscription Prices ➕ → Create Introductory Offer → all territories → start today, no end date → Free → 1 week. Verify `GET /v1/subscriptions/<id>/introductoryOffers` shows FREE_TRIAL/ONE_WEEK per territory.
+- **IAPs ride the same submission as the binary (2.1(b))** → attach all products to the version before submitting; the FIRST auto-renewable subs can ONLY ship with an app version. "Add for Review" is dashboard-only and only appears at Ready to Submit.
+- **The paywall the reviewer sees is the fallback** → with no RevenueCat hosted paywall configured, `presentPaywall()` falls back to `app/checkout.tsx` — so THAT screen carries the 3.1.2(c) Terms + Privacy links (`src/components/LegalLinks.tsx`).
 - **Crashes / broken links** → app passes `tsc`/`jest`/`expo export`; verify the build runs before submitting.
 
 ## E. The submission sequence (once Apple is active)
@@ -57,3 +63,14 @@ Submission `cf39f2d8-64e4-44d3-9515-799a9b58a29f`. Two guidelines:
 1. **New binary (build 13)** — the LegalLinks code ships only in a fresh build; builds 11 & 12 predate it. Needs `eas build -p ios --profile production` → **requires EAS login** (interactive; `eas whoami` = not logged in). Only the account owner can start it.
 2. **Subscriptions `parallax_plus_annual` + `parallax_plus_monthly` = MISSING_METADATA.** Confirmed present via API: name, `ONE_YEAR`/`ONE_MONTH` duration, USD base price, en-US localization, 175-territory availability, review screenshot. The public API doesn't expose the offending field — open each in ASC → the inline "Missing Metadata" badge names it (likely the localized display-name/description or a price-schedule gap). Lifetime IAP is already WAITING_FOR_REVIEW.
 3. Then: attach build 13 + all 3 IAPs to the version → **submit for review** → reply to Apple with the screen recording.
+   *(Resolved 11-07 — root causes: Annual was unpriced in ONE territory (Eswatini), found by diffing `availableTerritories` vs `prices?include=territory`; and ASC only re-evaluates completeness when the subscription resource is WRITTEN — a harmless `PATCH /v1/subscriptions/<id>` flipped both to Ready to Submit. Full log: `APP_STORE_RESUBMIT_HANDOFF.md`.)*
+
+## G. Review rejection #2 2026-07-12 (v1.0 build 13) — resolution log
+- **Guideline 4 (Design)** — SIWA button not "displayed as an equivalent option": text-only Apple pill vs Google's logo'd button. Fix: `ICONS.apple` on the SIWA button in `app/login.tsx` + `app/signup.tsx` (`fe0e1b5`). Lesson now in §D.
+- **2.1(b)** — "free trial period … not included in the sandbox mode": checkout copy promised "7 days free" but neither sub had an ASC introductory offer. Fix: Free/1-week/no-end intro offers on Annual + Monthly, all 175 territories (13-07, API-verified). Lesson now in §D.
+- Gotchas: ASC's Ember UI ignores extension form-fills on `<select>`s (set `select.value` + dispatch `input`/`change` via page JS); reply to Apple **before** clicking Resubmit — the thread locks after.
+- Build 14 `eas build -p ios --profile production --auto-submit` → resubmitted 13-07 → **APPROVED 14-07-2026, 8:24 PM SGT** ("Ready for Distribution"), all 3 IAPs Approved with it.
+
+## H. ⚠️ Post-approval trap: "Removed from App Store" ≠ removed
+Approval and distribution are **independent gates**. After approval the Apps page showed **"Removed from App Store"** — which reads like an Apple takedown but only meant **App Availability was never configured** (zero territories). No rejection/removal email + version still "Ready for Distribution" = it's this, not enforcement.
+**Fix (15-07-2026):** Pricing and Availability → App Availability → **Set Up Availability** → All Countries or Regions (175) → Confirm. Status flips back to "Ready for Distribution"; territories go "Processing to Available"; App Store propagation up to 24h. **Do this the moment the app record exists** so launch isn't gated on a hidden toggle.

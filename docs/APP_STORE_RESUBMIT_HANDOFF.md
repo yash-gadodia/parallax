@@ -1,5 +1,7 @@
 # App Store Resubmit — Session Handoff (v1.0, rejection cf39f2d8)
 
+> 🎉 **CLOSED: v1.0 (build 14) + all 3 IAPs APPROVED 14-07-2026** ("Ready for Distribution", 8:24 PM SGT). One last trap on 15-07: the Apps page said **"Removed from App Store"** — not a takedown, just App Availability never configured (approval and distribution are independent gates). Fixed via Pricing and Availability → Set Up Availability → All 175 countries; now "Processing to Available" worldwide. Distilled playbook: `docs/SUBMISSION.md` §D–§H.
+
 > ✅ **REJECTION #2 RESOLVED 2026-07-13 — v1.0 (build 14) resubmitted, WAITING_FOR_REVIEW (API-verified). Reply posted in the thread before resubmitting.**
 > 1. **Guideline 4 (Design/SIWA):** "Sign in with Apple is not displayed as an equivalent option… buttons should have a similar
 >    design as the buttons for other login options." Root cause: our Apple button was a text-only black pill while Google's had

@@ -112,3 +112,8 @@ _This log is meant to be appended to. When a session produces a reusable lesson,
   the screenshot half of the UI verification loop can't run here. V2 S1 surfaces verified via
   typecheck + jest (973) + `expo export` + pgTAP (543); first visual pass must happen on the
   MacBook (or after runtimes are installed) with the flags flipped ON against local supabase.
+
+## 2026-07-15 · v1.0 APPROVED — and the "Removed from App Store" scare
+- **v1.0 passed App Review** (email "Ready for Distribution", 14 Jul 8:24 PM SGT) — rejection #2 fixes held.
+- **ASC gotcha:** the Apps page then showed "Removed from App Store", which looks like Apple pulled the app. Real cause: review approval and distribution availability are independent gates — App Availability had never been set up (zero territories), and ASC labels that state "Removed from App Store" instead of "not yet available". No rejection/removal email = check Pricing and Availability first.
+- Fix: Pricing and Availability → Set Up Availability → All Countries or Regions (175). Status flipped back to "iOS 1.0 Ready for Distribution"; territories show "Processing to Available" (App Store propagation up to 24h).
