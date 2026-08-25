@@ -55,12 +55,19 @@ patterns). One purchase covers both partners.
 - [x] `refocus` edge function deployed with the memory context
 - [x] Reviewer demo login verified against prod
 - [x] Paywall copy repivoted (no references to deleted features)
-- [ ] **(Dani)** New screenshots — the current set shows the daily-drop game
-      that no longer exists. Blocks the *review* submission, not TestFlight.
-- [ ] **(Dani)** Listing subtitle/description/keywords repivoted to conflict
-      repair
-- [ ] Age rating / UGC questionnaire re-answered (unchanged in substance: text
-      shown to one known person)
+- [x] Screenshots replaced — the 8 v1 images (today-drop, play,
+      reveal-wavelength, streak-milestone, packs…) were deleted and 4 real v2
+      screens captured at 1290x2796 from a 6.9" simulator: the privacy
+      promises, the heat check, the cool-down, Home.
+- [x] Listing repivoted — subtitle "both sides. one middle ground.",
+      new description, keywords now fight/argument/conflict/mediation/repair
+- [x] Review notes + seeded demo couple attached (demoAccountRequired)
+- [x] Build 15 attached to version 2.0.0
+- [x] **SUBMITTED 25-08-2026 — state WAITING_FOR_REVIEW**
+- [x] releaseType AFTER_APPROVAL (auto-publishes on approval)
+- [x] App availability confirmed (availableInNewTerritories true, territories
+      live since 14-07-2026) — this is the v1.0 trap where approval landed but
+      the app showed "Removed from App Store" because availability was never set
 
 ## Not blocking, but worth doing before wide release
 
