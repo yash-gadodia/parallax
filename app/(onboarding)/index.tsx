@@ -23,6 +23,7 @@ import { DawnBlobs } from '../../src/components/DawnBlobs';
 import { Float } from '../../src/components/Float';
 import { Icon, ICONS } from '../../src/components/Icon';
 import { INTENTS, MOMENTS } from '../../src/features/onboarding/constants';
+import { nextOnboardingChannelTopic } from '../../src/features/onboarding/channelTopic';
 import { useUiStore } from '../../src/store/ui';
 import { useOnboardingStore } from '../../src/store/onboarding';
 import { useSession } from '../../src/features/auth/useSession';
@@ -35,8 +36,6 @@ import { requestPermissions, scheduleDailyNudge, registerPushToken } from '../..
 import { track, EVENTS } from '../../src/lib/analytics';
 
 const TAGLINE = 'mind the parallax error';
-
-let onboardingChannelSeq = 0;
 
 // Raw Postgres exceptions from the pairing RPCs are not user-facing copy.
 function humanPairingError(err: unknown): string {
@@ -471,12 +470,8 @@ function Step3PairUp({
       onNextRef.current();
     };
 
-    // Unique topic per subscribe: supabase.channel() dedupes by topic and
-    // removeChannel() unsubscribes asynchronously, so a remount for the same
-    // couple would otherwise get the still-joined channel back and .on() throws
-    // (the useCouple.ts lesson).
     const channel = supabase
-      .channel(`onboarding-couple-${createdCoupleId}-${++onboardingChannelSeq}`)
+      .channel(nextOnboardingChannelTopic(createdCoupleId))
       .on(
         'postgres_changes',
         {
