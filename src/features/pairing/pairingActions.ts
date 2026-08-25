@@ -35,12 +35,14 @@ export async function ensureInviteCouple(): Promise<Couple> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw err;
 
+    // Only a PENDING couple is reusable as an invite. An active one means the
+    // caller is already paired — surfacing its code as a fresh invite would be
+    // wrong, so let the original error stand.
     const { data } = await supabase
       .from('couples')
       .select('*')
       .or(`member_a.eq.${user.id},member_b.eq.${user.id}`)
-      .neq('status', 'dissolved')
-      .order('status', { ascending: true })
+      .eq('status', 'pending')
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle();

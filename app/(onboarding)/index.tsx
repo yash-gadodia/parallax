@@ -36,6 +36,8 @@ import { track, EVENTS } from '../../src/lib/analytics';
 
 const TAGLINE = 'mind the parallax error';
 
+let onboardingChannelSeq = 0;
+
 // Raw Postgres exceptions from the pairing RPCs are not user-facing copy.
 function humanPairingError(err: unknown): string {
   const msg = (err instanceof Error ? err.message : '').toLowerCase();
@@ -469,8 +471,12 @@ function Step3PairUp({
       onNextRef.current();
     };
 
+    // Unique topic per subscribe: supabase.channel() dedupes by topic and
+    // removeChannel() unsubscribes asynchronously, so a remount for the same
+    // couple would otherwise get the still-joined channel back and .on() throws
+    // (the useCouple.ts lesson).
     const channel = supabase
-      .channel(`onboarding-couple-${createdCoupleId}`)
+      .channel(`onboarding-couple-${createdCoupleId}-${++onboardingChannelSeq}`)
       .on(
         'postgres_changes',
         {

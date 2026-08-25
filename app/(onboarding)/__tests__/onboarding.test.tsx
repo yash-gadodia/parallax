@@ -119,6 +119,7 @@ jest.mock('../../../src/components/Tok', () => {
 });
 
 const coupleChannelHandlers: ((payload: unknown) => void)[] = [];
+const coupleChannelTopics: string[] = [];
 jest.mock('../../../src/lib/supabase', () => ({
   supabase: {
     auth: {
@@ -140,7 +141,8 @@ jest.mock('../../../src/lib/supabase', () => ({
         })),
       })),
     })),
-    channel: jest.fn(() => {
+    channel: jest.fn((topic: string) => {
+      coupleChannelTopics.push(topic);
       const ch: Record<string, unknown> = {
         on: jest.fn((_evt: string, _cfg: unknown, cb: (p: unknown) => void) => {
           coupleChannelHandlers.push(cb);
@@ -242,6 +244,7 @@ describe('Onboarding', () => {
     mockBack.mockClear();
     mockSearchParams = {};
     coupleChannelHandlers.length = 0;
+    coupleChannelTopics.length = 0;
   });
 
   // Constants tests
@@ -574,6 +577,24 @@ describe('Onboarding', () => {
     await waitFor(() => {
       expect(queryByText(/YASH-4827/)).toBeNull();
     });
+  });
+
+  // supabase.channel() dedupes by topic and removeChannel() unsubscribes
+  // asynchronously, so remounting for the same couple with a fixed topic hands
+  // back the still-joined channel and .on() throws.
+  it('pair-up uses a per-subscribe channel topic, not a fixed one', async () => {
+    mockSessionValue = { session: { user: { id: 'u1' } }, loading: false };
+    const { getByText } = await render(<OnboardingScreen />);
+
+    await waitFor(() => {
+      expect(getByText(/YASH-4827/)).toBeTruthy();
+    });
+
+    const pairTopics = coupleChannelTopics.filter((t) => t.startsWith('onboarding-couple-'));
+    expect(pairTopics).toHaveLength(1);
+    // couple id + a monotonic suffix; a bare `onboarding-couple-couple-1` would
+    // be handed back still-joined on remount and .on() would throw.
+    expect(pairTopics[0]).toMatch(/^onboarding-couple-couple-1-\d+$/);
   });
 
   it('pair-up stays put while the couple is still pending', async () => {
