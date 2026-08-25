@@ -47,23 +47,23 @@ export interface Perk {
 
 export const PERKS: Perk[] = [
   {
-    emoji: '🎁',
-    title: 'Every themed pack',
-    desc: 'After dark, Chaos hour, Rewind & more',
+    emoji: '🧠',
+    title: 'A mediator that knows you',
+    desc: 'It reads what you two have already worked out before it answers',
   },
   {
-    emoji: '♾️',
-    title: 'Unlimited drops',
-    desc: 'Send each other questions any time',
+    emoji: '🪢',
+    title: 'Your patterns, surfaced',
+    desc: 'What keeps coming up, and what actually settles it',
   },
   {
-    emoji: '📈',
-    title: 'Full wavelength history',
-    desc: 'Every reveal & couple type, kept forever',
+    emoji: '📖',
+    title: 'Your whole record',
+    desc: 'Every repair you came through, kept for both of you',
   },
   {
-    emoji: '🧊',
-    title: 'Streak freezes',
-    desc: 'Forgiveness when life happens, for both of you',
+    emoji: '🤍',
+    title: 'One purchase, both of you',
+    desc: 'Never paywalled mid-repair. The hard moment is always free',
   },
 ];

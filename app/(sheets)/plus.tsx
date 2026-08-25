@@ -17,19 +17,19 @@ import { getTrialEndDateString } from '../../src/domain/billing';
 
 const perks = [
   {
-    emoji: '🎁',
-    title: 'Every themed pack',
-    desc: 'Deep end, After dark, Chaos hour & more',
+    emoji: '🧠',
+    title: 'A mediator that knows you',
+    desc: 'It reads what you two have already worked out',
   },
   {
-    emoji: '♾️',
-    title: 'Unlimited drops',
-    desc: 'Send each other questions any time',
+    emoji: '🪢',
+    title: 'Your patterns, surfaced',
+    desc: 'What keeps coming up, and what settles it',
   },
   {
-    emoji: '📈',
-    title: 'Full wavelength history',
-    desc: 'Every reveal, kept forever',
+    emoji: '📖',
+    title: 'Your whole record',
+    desc: 'Every repair you came through, kept',
   },
 ];
 
