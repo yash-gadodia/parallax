@@ -136,7 +136,7 @@ export interface Learning {
   emoji: string | null;
   need: string | null;
   detail: string | null;
-  source: 'drop' | 'refocus';
+  source: 'drop' | 'refocus' | 'repair' | 'pulse';
   origin: string | null;
   mastery: number;
   became_prompt_id: string | null;
@@ -167,6 +167,11 @@ export interface RefocusSession {
   // 0039/0043: solo sessions are author-only (RLS) and born 'revealed'.
   is_solo: boolean;
   solo_saved_at: string | null;
+  bridge_sent_at?: string | null;
+  // 0048: the durable memory unit. Raw sides never leave the row; this is what
+  // the mediator reads next time and what the Memory tab shows.
+  summary?: string | null;
+  themes?: string[] | null;
 }
 
 // 0029: a Money Date — the guided money conversation, done together on one

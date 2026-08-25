@@ -1,288 +1,115 @@
-import React from 'react';
-import { render, fireEvent } from '@testing-library/react-native';
-import UsScreen from '../us';
-import { useCoupleHistory } from '../../../src/features/lovemap/useCoupleHistory';
+import { render } from '@testing-library/react-native';
+import MemoryScreen from '../us';
 
 const mockPush = jest.fn();
 jest.mock('expo-router', () => ({
   __esModule: true,
-  useRouter: () => ({ push: mockPush, back: jest.fn(), replace: jest.fn(), navigate: jest.fn() }),
+  useRouter: () => ({
+    push: mockPush,
+    replace: jest.fn(),
+    back: jest.fn(),
+    navigate: jest.fn(),
+  }),
+  useLocalSearchParams: () => ({}),
   useFocusEffect: () => {},
 }));
 
+jest.mock('../../../src/features/pairing/useCouple', () => ({
+  useCouple: jest.fn(),
+}));
 jest.mock('../../../src/features/lovemap/useLearnings', () => ({
-  useLearnings: jest.fn(() => ({
-    items: [],
-    isSample: true,
-  })),
+  useLearnings: jest.fn(),
+}));
+jest.mock('../../../src/features/refocus/useRefocusRecord', () => ({
+  useRefocusRecord: jest.fn(),
 }));
 
-jest.mock('../../../src/features/lovemap/useCoupleHistory', () => ({
-  useCoupleHistory: jest.fn(),
-}));
+import { useCouple } from '../../../src/features/pairing/useCouple';
+import { useLearnings } from '../../../src/features/lovemap/useLearnings';
+import { useRefocusRecord } from '../../../src/features/refocus/useRefocusRecord';
 
-jest.mock('../../../src/features/history/useDropEmojis', () => ({
-  useDropEmojis: jest.fn(() => ({})),
-}));
+const mockUseCouple = useCouple as jest.Mock;
+const mockUseLearnings = useLearnings as jest.Mock;
+const mockUseRecord = useRefocusRecord as jest.Mock;
 
-jest.mock('../../../src/features/moneyDates/useMoneyDate', () => ({
-  useMoneyDate: jest.fn(() => ({
-    state: null,
-    coupleId: null,
-    loading: false,
-    isSample: true,
-    error: null,
-    refetch: jest.fn(),
-  })),
-}));
+const RESOLVED = {
+  id: 's1',
+  topic: 'the dishes thing',
+  state: 'revealed',
+  summary: 'They needed a walk before talking numbers.',
+  themes: ['chores', 'timing'],
+  created_at: '2026-08-01T10:00:00Z',
+};
 
-jest.mock('../../../src/features/profile/useProfile', () => ({
-  useProfile: jest.fn(() => ({
-    name: 'Alex',
-    partnerName: 'Jordan',
-    spiceLevel: 'Spicy',
-    notifyTime: null,
-    togetherSince: 'March 2023',
-    streak: 7,
-    loading: false,
-    updateProfile: jest.fn(),
-  })),
-}));
+beforeEach(() => {
+  mockPush.mockClear();
+  mockUseCouple.mockReturnValue({ couple: { id: 'c1' }, status: 'active' });
+  mockUseLearnings.mockReturnValue({ items: [], isSample: false });
+  mockUseRecord.mockReturnValue({ sessions: [], loading: false });
+});
 
-const mockUseCoupleHistory = useCoupleHistory as jest.Mock;
-const { useDropEmojis } = require('../../../src/features/history/useDropEmojis');
-const mockUseDropEmojis = useDropEmojis as jest.Mock;
-const { useMoneyDate } = require('../../../src/features/moneyDates/useMoneyDate');
-const mockUseMoneyDate = useMoneyDate as jest.Mock;
+describe('Memory (v2)', () => {
+  it('offers a warm empty state rather than a blank screen', async () => {
+    const { getByText } = await render(<MemoryScreen />);
 
-// Real history so the wavelength chart + stat trio render (empty history
-// shows the first-run state instead). history[0] is the latest drop.
-const THREE_DROPS = [
-  { date: '2026-06-30', code: 'TODAY', title: 'soft launch', wavelength: 82, twins_count: 2 },
-  { date: '2026-06-29', code: 'DROP 26', title: 'the ick list', wavelength: 74, twins_count: 1 },
-  { date: '2026-06-28', code: 'DROP 25', title: 'future tense', wavelength: 88, twins_count: 3 },
-];
+    expect(getByText(/Your first repair\s+starts the record/)).toBeTruthy();
+  });
 
-describe('UsScreen', () => {
-  beforeEach(() => {
-    mockUseCoupleHistory.mockReturnValue({
-      history: THREE_DROPS,
-      isSample: false,
+  it('shows a resolved session by its summary and themes', async () => {
+    mockUseRecord.mockReturnValue({ sessions: [RESOLVED], loading: false });
+
+    const { getByText, queryByText } = await render(<MemoryScreen />);
+
+    expect(getByText('the dishes thing')).toBeTruthy();
+    expect(getByText('They needed a walk before talking numbers.')).toBeTruthy();
+    expect(getByText('chores')).toBeTruthy();
+    expect(queryByText(/Your first repair/)).toBeNull();
+  });
+
+  it('never renders an expired session as part of the record', async () => {
+    mockUseRecord.mockReturnValue({
+      sessions: [{ ...RESOLVED, id: 's2', state: 'expired', topic: 'never finished' }],
       loading: false,
-      error: null,
-      refetch: jest.fn(),
     });
-    mockUseDropEmojis.mockReturnValue({});
-    mockUseMoneyDate.mockReturnValue({
-      state: null,
-      coupleId: null,
+
+    const { queryByText } = await render(<MemoryScreen />);
+
+    expect(queryByText('never finished')).toBeNull();
+  });
+
+  it('falls back gracefully when a session has no summary yet', async () => {
+    mockUseRecord.mockReturnValue({
+      sessions: [{ ...RESOLVED, summary: null, themes: null }],
       loading: false,
+    });
+
+    const { getByText } = await render(<MemoryScreen />);
+
+    expect(getByText('You found the middle ground on this one.')).toBeTruthy();
+  });
+
+  it('lists what the couple now knows', async () => {
+    mockUseLearnings.mockReturnValue({
+      items: [{ id: 'l1', emoji: '🚶', need: 'space before money talks' }],
+      isSample: false,
+    });
+
+    const { getByText } = await render(<MemoryScreen />);
+
+    expect(getByText('space before money talks')).toBeTruthy();
+  });
+
+  // Presenting the demo seed as this couple's own history is the exact failure
+  // documented in REVAMP_CLARITY_PASS.md.
+  it('never presents sample learnings as the couple’s own', async () => {
+    mockUseLearnings.mockReturnValue({
+      items: [{ id: 'l1', emoji: '🚶', need: 'sample seed row' }],
       isSample: true,
-      error: null,
-      refetch: jest.fn(),
-    });
-  });
-
-  it('shows the history skeleton (chart, stat trio, rows) while history loads', async () => {
-    mockUseCoupleHistory.mockReturnValue({
-      history: [],
-      isSample: false,
-      loading: true,
-      error: null,
-      refetch: jest.fn(),
-    });
-    const { getByTestId, getAllByTestId, queryByText } = await render(<UsScreen />);
-
-    expect(getByTestId('us-skeleton-chart')).toBeTruthy();
-    expect(getAllByTestId('us-skeleton-stat')).toHaveLength(3);
-    expect(getByTestId('us-skeleton-row-1')).toBeTruthy();
-    expect(getByTestId('us-skeleton-row-2')).toBeTruthy();
-    // Neither the empty state nor the chart pops in while loading.
-    expect(queryByText('YOUR STORY STARTS HERE')).toBeNull();
-    expect(queryByText('LAST 7 DROPS')).toBeNull();
-    expect(queryByText('your drop history')).toBeNull();
-  });
-
-  it('shows the warm retryable error state when the history fetch fails', async () => {
-    const refetch = jest.fn();
-    mockUseCoupleHistory.mockReturnValue({
-      history: [],
-      isSample: false,
-      loading: false,
-      error: new Error('network down'),
-      refetch,
-    });
-    const { getByText, queryByText } = await render(<UsScreen />);
-
-    expect(getByText("hmm, that didn't load")).toBeTruthy();
-    expect(
-      getByText("your story with Jordan is safe — we just couldn't reach it.")
-    ).toBeTruthy();
-    expect(queryByText('YOUR STORY STARTS HERE')).toBeNull();
-
-    fireEvent.press(getByText('try again'));
-    expect(refetch).toHaveBeenCalledTimes(1);
-  });
-
-  it('hides the drop-history label when a real couple has no history yet', async () => {
-    mockUseCoupleHistory.mockReturnValue({
-      history: [],
-      isSample: false,
-      loading: false,
-      error: null,
-      refetch: jest.fn(),
-    });
-    const { getByText, queryByText } = await render(<UsScreen />);
-
-    expect(getByText('Your wavelength with Jordan shows up after your first reveal.')).toBeTruthy();
-    expect(queryByText('your drop history')).toBeNull();
-  });
-
-  it('renders real couple name from useProfile', async () => {
-    const { getByText } = await render(<UsScreen />);
-    expect(getByText('Alex & Jordan')).toBeTruthy();
-  });
-
-  it('renders real streak count from useProfile', async () => {
-    const { getByText } = await render(<UsScreen />);
-    expect(getByText('together since march · 7 day streak 🔥')).toBeTruthy();
-  });
-
-  it('renders the love map card title', async () => {
-    const { getByText } = await render(<UsScreen />);
-    expect(getByText('Your Love Map')).toBeTruthy();
-  });
-
-  it('renders the Money Date row with the first-time invitation line', async () => {
-    const { getByText } = await render(<UsScreen />);
-    expect(getByText('Money Date')).toBeTruthy();
-    expect(getByText('a tiny money talk — no numbers needed')).toBeTruthy();
-  });
-
-  it('shows the last money date when the couple has completed one', async () => {
-    mockUseMoneyDate.mockReturnValue({
-      state: {
-        open: null,
-        last_completed_at: '2026-06-12T09:30:00.000Z',
-        last_agreed_action: 'coffee from home',
-        sessions_completed: 1,
-      },
-      coupleId: 'couple-1',
-      loading: false,
-      isSample: false,
-      error: null,
-      refetch: jest.fn(),
-    });
-    const { getByText, queryByText } = await render(<UsScreen />);
-    expect(getByText('last one · 12 jun')).toBeTruthy();
-    expect(queryByText('a tiny money talk — no numbers needed')).toBeNull();
-  });
-
-  it('opens the money date session from the row', async () => {
-    const { getByText } = await render(<UsScreen />);
-    fireEvent.press(getByText('Money Date'));
-    expect(mockPush).toHaveBeenCalledWith('/moneyDate');
-  });
-
-  it('renders the wavelength section', async () => {
-    const { getByText } = await render(<UsScreen />);
-    expect(getByText('LAST 7 DROPS')).toBeTruthy();
-  });
-
-  it('renders a stat card', async () => {
-    const { getByText } = await render(<UsScreen />);
-    expect(getByText('answered')).toBeTruthy();
-  });
-
-  it('renders the drop history label', async () => {
-    const { getByText } = await render(<UsScreen />);
-    expect(getByText('your drop history')).toBeTruthy();
-  });
-
-  it('links to the full timeline from the drop-history header', async () => {
-    const { getByText } = await render(<UsScreen />);
-    fireEvent.press(getByText('see your whole story →'));
-    expect(mockPush).toHaveBeenCalledWith('/timeline');
-  });
-
-  it('computes the trend delta from the two latest drops (82 vs 74 → ▲ 8%)', async () => {
-    const { getByText } = await render(<UsScreen />);
-    expect(getByText('▲ 8%')).toBeTruthy();
-  });
-
-  it('shows a downward trend when the latest drop scored lower (70 vs 76 → ▼ 6%)', async () => {
-    mockUseCoupleHistory.mockReturnValue({
-      history: [
-        { date: '2026-06-30', code: 'TODAY', title: 'soft launch', wavelength: 70, twins_count: 1 },
-        { date: '2026-06-29', code: 'DROP 26', title: 'the ick list', wavelength: 76, twins_count: 2 },
-      ],
-      isSample: false,
-    });
-    const { getByText } = await render(<UsScreen />);
-    expect(getByText('▼ 6%')).toBeTruthy();
-  });
-
-  it('hides the trend delta with a single drop of history', async () => {
-    mockUseCoupleHistory.mockReturnValue({
-      history: [
-        { date: '2026-06-30', code: 'TODAY', title: 'soft launch', wavelength: 82, twins_count: 2 },
-      ],
-      isSample: false,
-    });
-    const { getByText, queryByText } = await render(<UsScreen />);
-    expect(getByText('LAST 7 DROPS')).toBeTruthy();
-    expect(queryByText(/^[▲▼]/)).toBeNull();
-  });
-
-  it('renders the real drop emoji, title, code and wave for a real history row', async () => {
-    mockUseCoupleHistory.mockReturnValue({
-      history: [
-        { date: '2026-07-01', code: 'W12', title: 'the hot seat', wavelength: 64, twins_count: 1 },
-      ],
-      isSample: false,
-    });
-    mockUseDropEmojis.mockReturnValue({ W12: '🧨' });
-
-    const { getByText, getAllByText } = await render(<UsScreen />);
-
-    expect(getByText('🧨')).toBeTruthy();
-    expect(getByText('the hot seat')).toBeTruthy();
-    expect(getByText('W12 · 2026-07-01')).toBeTruthy();
-    // Wavelength headline + history row, each doubled by GradientText's
-    // masked + invisible-sizer copies.
-    expect(getAllByText('64%')).toHaveLength(4);
-  });
-
-  it('falls back to 💬 for a real drop with no known emoji (never the demo ARCHIVE art)', async () => {
-    mockUseCoupleHistory.mockReturnValue({
-      history: [
-        { date: '2026-07-01', code: 'W99', title: 'unknown drop', wavelength: 50, twins_count: 0 },
-      ],
-      isSample: false,
     });
 
-    const { getByText, queryByText } = await render(<UsScreen />);
+    const { queryByText, getByText } = await render(<MemoryScreen />);
 
-    expect(getByText('💬')).toBeTruthy();
-    expect(queryByText('😬')).toBeNull();
-  });
-
-  it('still shows the demo ARCHIVE emoji for the sample history', async () => {
-    const { getByText } = await render(<UsScreen />);
-
-    // 'DROP 26' (the ick list) carries 😬 in the static ARCHIVE.
-    expect(getByText('😬')).toBeTruthy();
-  });
-
-  it('hides the trend delta when the two latest drops tie', async () => {
-    mockUseCoupleHistory.mockReturnValue({
-      history: [
-        { date: '2026-06-30', code: 'TODAY', title: 'soft launch', wavelength: 80, twins_count: 2 },
-        { date: '2026-06-29', code: 'DROP 26', title: 'the ick list', wavelength: 80, twins_count: 1 },
-      ],
-      isSample: false,
-    });
-    const { queryByText } = await render(<UsScreen />);
-    expect(queryByText(/^[▲▼]/)).toBeNull();
+    expect(queryByText('sample seed row')).toBeNull();
+    expect(getByText(/Your first repair\s+starts the record/)).toBeTruthy();
   });
 });
