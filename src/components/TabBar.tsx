@@ -14,9 +14,9 @@ interface TabBarProps {
 }
 
 const tabs: Array<[TabName, string, string]> = [
-  ['home', 'Today', 'home'],
+  ['home', 'Home', 'home'],
   ['refocus', 'Refocus', 'heart'],
-  ['us', 'Us', 'us'],
+  ['us', 'Memory', 'us'],
 ];
 
 export default function TabBar({ active, go }: TabBarProps) {

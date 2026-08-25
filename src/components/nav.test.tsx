@@ -43,9 +43,9 @@ describe('TabBar', () => {
     const { getByText } = await render(
       <TabBar active="home" go={() => {}} />
     );
-    expect(getByText('Today')).toBeTruthy();
+    expect(getByText('Home')).toBeTruthy();
     expect(getByText('Refocus')).toBeTruthy();
-    expect(getByText('Us')).toBeTruthy();
+    expect(getByText('Memory')).toBeTruthy();
   });
 
   it('calls go with the correct tab name when pressed', async () => {
@@ -53,7 +53,7 @@ describe('TabBar', () => {
     const { getByText } = await render(
       <TabBar active="home" go={mockGo} />
     );
-    const usTab = getByText('Us');
+    const usTab = getByText('Memory');
     if (usTab.parent) {
       fireEvent.press(usTab.parent);
     }

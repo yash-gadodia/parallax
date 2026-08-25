@@ -72,11 +72,11 @@ describe('tabs layout', () => {
     mockPathname = '/(tabs)/us';
     const { getByLabelText } = await render(<TabsLayout />);
 
-    expect(getByLabelText('Us').props.accessibilityState).toEqual({
+    expect(getByLabelText('Memory').props.accessibilityState).toEqual({
       disabled: false,
       selected: true,
     });
-    expect(getByLabelText('Today').props.accessibilityState).toEqual({
+    expect(getByLabelText('Home').props.accessibilityState).toEqual({
       disabled: false,
       selected: false,
     });
@@ -89,7 +89,7 @@ describe('tabs layout', () => {
   it('fires a selection haptic and navigates on tab press', async () => {
     const { getByLabelText } = await render(<TabsLayout />);
 
-    fireEvent.press(getByLabelText('Us'));
+    fireEvent.press(getByLabelText('Memory'));
 
     expect(Haptics.selectionAsync).toHaveBeenCalledTimes(1);
     expect(mockNavigate).toHaveBeenCalledWith('/(tabs)/us');
@@ -99,7 +99,7 @@ describe('tabs layout', () => {
     mockPathname = '/(tabs)/refocus';
     const { queryByLabelText } = await render(<TabsLayout />);
 
-    expect(queryByLabelText('Today')).toBeNull();
-    expect(queryByLabelText('Us')).toBeNull();
+    expect(queryByLabelText('Home')).toBeNull();
+    expect(queryByLabelText('Memory')).toBeNull();
   });
 });

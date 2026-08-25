@@ -115,13 +115,13 @@ describe('TabBar', () => {
     const tabs = getAllByRole('tab');
     expect(tabs).toHaveLength(3);
 
-    const todayTab = getByLabelText('Today');
+    const todayTab = getByLabelText('Home');
     expect(todayTab.props.accessibilityState).toMatchObject({ selected: true });
 
     const refocusTab = getByLabelText('Refocus');
     expect(refocusTab.props.accessibilityState).toMatchObject({ selected: false });
 
-    const usTab = getByLabelText('Us');
+    const usTab = getByLabelText('Memory');
     expect(usTab.props.accessibilityState).toMatchObject({ selected: false });
   });
 
@@ -130,7 +130,7 @@ describe('TabBar', () => {
     const { getByLabelText } = await render(
       <TabBar active="home" go={go} />
     );
-    fireEvent.press(getByLabelText('Us'));
+    fireEvent.press(getByLabelText('Memory'));
     expect(go).toHaveBeenCalledWith('us');
   });
 });
