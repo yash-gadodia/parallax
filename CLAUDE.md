@@ -1,6 +1,8 @@
 # Parallax
 
-A Gen Z **couples app** (React Native + Expo): a daily "drop" of 3 prompts where each partner answers for themselves and places a *hunch* on the other; a server-gated reveal scores their "wavelength." Refocus (AI conflict mediation) + a shared Love Map feed the same loop. Design source of truth: `design_handoff_parallax/`.
+A Gen Z **couples app** (React Native + Expo): **the AI mediator that hears both sides.** After a fight each partner privately writes their own side; neither ever sees the other's raw words; the app returns one shared synthesis (common ground, what's underneath for each, one kind bridge each) and remembers what worked for next time. A 30-second no-typing daily **pulse** keeps that memory warm; a 24h **repair check-in** closes the loop. Three surfaces: Home, Refocus (the flow), Memory (the couple's record). Design source of truth: `design_handoff_parallax/`.
+
+**v2.0 (Aug 2026) replaced v1's daily drop/hunch/wavelength game** — that loop, plus packs, journeys, streaks, wrapped and the money dates, was removed wholesale. Don't reintroduce them; see `docs/SUBMISSION_V2.md` and the plan in `.claude/`. Product laws that survived: never paywall the repair moment, one purchase covers both partners, partner-triggered notifications only, no scores on the relationship, never present demo data as the couple's own.
 
 Read ARCHITECTURE.md before planning or structural changes. Claude auto-follows clarify → plan → implement → test → self-review, scaled to task size (you don't need to type `/plan` or `/test`).
 
@@ -12,7 +14,7 @@ Read ARCHITECTURE.md before planning or structural changes. Claude auto-follows 
 
 ## Stack
 - **App**: Expo SDK 56, React Native 0.85, React 19, TypeScript, **Expo Router** (file-based, `app/`)
-- **Backend**: **Supabase** (Postgres + Auth + Realtime); RLS is the privacy backbone + reveal gate
+- **Backend**: **Supabase** (Postgres + Auth + Realtime); RLS is the privacy backbone. Raw vents never leave the server: `get_couple_context` (0048) feeds the mediator summaries only, and excludes private learnings
 - **State**: Zustand (UI/local) + @tanstack/react-query + supabase-js; **Reanimated 4**, react-native-svg, expo-blur, MaskedView
 - **Tests**: jest + jest-expo + @testing-library/react-native; pgTAP for SQL/RLS
 
@@ -23,7 +25,8 @@ Read ARCHITECTURE.md before planning or structural changes. Claude auto-follows 
 - Tokens from `src/design/tokens` + `typography`. Gradient text → `GradientText`; blur → expo-blur; icons → `Icon`.
 
 ## Supabase (see `.claude/rules/database.md`)
-- All cross-partner writes go through SECURITY DEFINER Postgres functions; never trust the client. Reveal gate enforced in RLS (pgTAP-proven).
+- All cross-partner writes go through SECURITY DEFINER Postgres functions; never trust the client. The gated mutual reveal (repair check-in) is enforced in RLS (pgTAP-proven).
+- **Realtime needs the table in the `supabase_realtime` publication** or `postgres_changes` silently never fires (this broke pairing + the core loop for months; fixed in 0047). Adding a subscription means adding the table in the same migration.
 - supabase-js typed `.rpc()`/`.update()` sometimes infers `never` — use a documented `// @ts-expect-error` (the codebase pattern), never `as any`.
 
 ## Conventions
