@@ -27,6 +27,7 @@ export const EVENTS = {
   MOOD_CHECK: 'mood_check',
   MOOD_CHECK_DISMISSED: 'mood_check_dismissed',
   REFOCUS_STARTED: 'refocus_started',
+  REFOCUS_HEAT: 'refocus_heat',
   REFOCUS_PERSISTED: 'refocus_persisted',
   REPAIR_VERDICT: 'repair_verdict',
   REPAIR_REVEALED: 'repair_revealed',

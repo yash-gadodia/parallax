@@ -11,6 +11,7 @@ import {
   RefocusMediation,
   RefocusSafety,
   RefocusAiResult,
+  HeatLevel,
 } from '../../src/content/refocus';
 import { track, EVENTS } from '../../src/lib/analytics';
 import { useSession } from '../../src/features/auth/useSession';
@@ -38,6 +39,8 @@ import { TogetherMediatingStep } from '../../src/features/refocus/steps/Together
 import { TogetherExpiredStep } from '../../src/features/refocus/steps/TogetherExpiredStep';
 import { TogetherResultStep } from '../../src/features/refocus/steps/TogetherResultStep';
 import { ResultStep } from '../../src/features/refocus/steps/ResultStep';
+import { HeatCheckStep } from '../../src/features/refocus/steps/HeatCheckStep';
+import { CoolDownStep } from '../../src/features/refocus/steps/CoolDownStep';
 
 export default function RefocusScreen() {
   const router = useRouter();
@@ -53,6 +56,9 @@ export default function RefocusScreen() {
   // V2 F1/F2: the persisted solo session's id — lets "copy to share" mark the
   // bridge as sent so the repair check-in becomes due 24h later.
   const [soloSessionId, setSoloSessionId] = useState<string | null>(null);
+  const [pendingPath, setPendingPath] = useState<'solo' | 'together'>('solo');
+  const [heat, setHeat] = useState<HeatLevel | null>(null);
+  const [heatTopic, setHeatTopic] = useState<string | null>(null);
 
   const { session: authSession } = useSession();
   const { couple } = useCouple();
@@ -111,8 +117,12 @@ export default function RefocusScreen() {
   const handleBack = () => {
     if (step === 'intro') {
       exitToTabs();
-    } else if (step === 'mode') {
+    } else if (step === 'heatCheck') {
       setStep('intro');
+    } else if (step === 'coolDown') {
+      setStep('heatCheck');
+    } else if (step === 'mode') {
+      setStep('heatCheck');
     } else if (step === 'share') {
       setStep('mode');
     } else if (step === 'waiting') {
@@ -138,13 +148,30 @@ export default function RefocusScreen() {
     router.push('/lovemap');
   };
 
+  // Rejoining a session someone already opened skips the heat check — the
+  // capture moment already happened, on their phone.
   const handleStartTogether = () => {
     if (rfSession) {
       routedSessionRef.current = rfSession.id;
       routeToSession(rfSession);
     } else {
-      setStep('togetherTopic');
+      setPendingPath('together');
+      setStep('heatCheck');
     }
+  };
+
+  const continueAfterHeat = () => {
+    setStep(pendingPath === 'together' ? 'togetherTopic' : 'mode');
+  };
+
+  const handleHeat = (level: HeatLevel, topic: string | null) => {
+    setHeat(level);
+    track(EVENTS.REFOCUS_HEAT, { heat: level, topic: topic ?? 'none' });
+    setHeatTopic(topic);
+    // Mediating a fight that is still burning doesn't calm it, it gives it a
+    // transcript. Pause first; the path they chose is remembered.
+    if (level === 'boiling') setStep('coolDown');
+    else continueAfterHeat();
   };
 
   const handleMediationDone = (res: RefocusAiResult) => {
@@ -177,8 +204,28 @@ export default function RefocusScreen() {
           openSession={rfSession}
           myId={myId}
           onStartTogether={handleStartTogether}
-          onStartSolo={() => setStep('mode')}
+          onStartSolo={() => {
+            setPendingPath('solo');
+            setStep('heatCheck');
+          }}
           onBack={handleBack}
+        />
+      )}
+
+      {step === 'heatCheck' && (
+        <HeatCheckStep
+          insets={insets}
+          onSelect={handleHeat}
+          onBack={() => setStep('intro')}
+        />
+      )}
+
+      {step === 'coolDown' && (
+        <CoolDownStep
+          insets={insets}
+          onReady={continueAfterHeat}
+          onLater={exitToTabs}
+          onBack={() => setStep('heatCheck')}
         />
       )}
 
@@ -201,7 +248,7 @@ export default function RefocusScreen() {
           text={text}
           setText={setText}
           onSubmit={() => {
-            track(EVENTS.REFOCUS_STARTED, { mode: 'solo' });
+            track(EVENTS.REFOCUS_STARTED, { mode: 'solo', heat: heat ?? 'unknown' });
             setStep('waiting');
           }}
           onBack={() => setStep('mode')}
@@ -263,11 +310,12 @@ export default function RefocusScreen() {
 
       {step === 'togetherTopic' && couple && (
         <TogetherTopicStep
+          initialTopic={heatTopic ?? ''}
           onBack={() => setStep('intro')}
           onSubmit={async (topic, side) => {
             try {
               await startRefocus(couple.id, topic, side);
-              track(EVENTS.REFOCUS_STARTED, { mode: 'together' });
+              track(EVENTS.REFOCUS_STARTED, { mode: 'together', heat: heat ?? 'unknown' });
               setPendingTopic(topic);
               setStep('togetherWaiting');
               await refreshSession();

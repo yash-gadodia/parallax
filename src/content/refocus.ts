@@ -116,3 +116,54 @@ export const MODES: RefocusModeOption[] = [
     desc: 'Drop the actual conversation in',
   },
 ];
+
+export type HeatLevel = 'simmering' | 'heated' | 'boiling';
+
+export interface HeatOption {
+  id: HeatLevel;
+  emoji: string;
+  label: string;
+  desc: string;
+}
+
+// Asked before either partner writes a word. Mediating a fight that is still
+// burning does not calm it, it gives it a transcript — 'boiling' routes to a
+// real pause first.
+export const HEAT_LEVELS: HeatOption[] = [
+  {
+    id: 'simmering',
+    emoji: '🌤️',
+    label: 'Simmering',
+    desc: "It's bothering me, but I'm calm",
+  },
+  {
+    id: 'heated',
+    emoji: '🌡️',
+    label: 'Heated',
+    desc: 'We went a few rounds on this',
+  },
+  {
+    id: 'boiling',
+    emoji: '🔥',
+    label: 'Boiling',
+    desc: "I'm still shaking a bit",
+  },
+];
+
+// One tap, optional. Feeds the couple's memory so patterns can surface later.
+export const TOPIC_TAGS = [
+  'chores',
+  'money',
+  'family',
+  'tone',
+  'plans',
+  'time together',
+] as const;
+
+export const COOL_DOWN = {
+  title: 'Let it cool first.',
+  body: "You're still in it. Anything written right now comes out sharper than you mean, and the mediator would just be handing that to them in nicer words.",
+  ask: 'Give it twenty minutes. Walk, water, shower, anything that is not this. We will hold your place.',
+  primary: "I've cooled off",
+  secondary: 'Come back to this later',
+};

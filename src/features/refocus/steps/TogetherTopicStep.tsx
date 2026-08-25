@@ -11,12 +11,14 @@ import { useIdentity } from '../../profile/useIdentity';
 export function TogetherTopicStep({
   onBack,
   onSubmit,
+  initialTopic = '',
 }: {
   onBack: () => void;
   onSubmit: (topic: string, side: string) => Promise<void>;
+  initialTopic?: string;
 }) {
   const { partner } = useIdentity();
-  const [topic, setTopic] = useState('');
+  const [topic, setTopic] = useState(initialTopic);
   const [side, setSide] = useState('');
   const [busy, setBusy] = useState(false);
   const ready = topic.trim().length > 1 && side.trim().length > 3 && !busy;
