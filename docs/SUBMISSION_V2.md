@@ -49,7 +49,8 @@ patterns). One purchase covers both partners.
 
 ## Pre-submit checklist
 
-- [x] Version 2.0.0, build 15
+- [x] Version 2.0.0, build 15 — uploaded, processed VALID, live in TestFlight
+- [x] Internal group "Parallax testers": Dani (installed) + Yash (invited)
 - [x] Prod DB migrated (0034–0048) and verified
 - [x] `refocus` edge function deployed with the memory context
 - [x] Reviewer demo login verified against prod
