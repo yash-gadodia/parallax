@@ -8,11 +8,8 @@ import { queryClient } from '../src/lib/queryClient';
 import { usePurchases } from '../src/features/purchases/usePurchases';
 import { AppErrorBoundary } from '../src/components/AppErrorBoundary';
 import { BrandedLoading } from '../src/components/BrandedLoading';
-import { flushQueue } from '../src/lib/offlineQueue';
-import { submitMyAnswers } from '../src/features/drops/dropActions';
 import { supabase } from '../src/lib/supabase';
 import { registerPushToken } from '../src/features/notifications';
-import { attachLiveActivityLifecycle } from '../src/features/liveActivity';
 import { init as initAnalytics, identify, reset, track, EVENTS } from '../src/lib/analytics';
 
 export default function RootLayout() {
@@ -25,18 +22,12 @@ export default function RootLayout() {
     // Initialise RevenueCat once (real SDK in a dev build; no-op in Expo Go).
     usePurchases.getState().configure();
 
-    // Flush any pending offline submissions on app start (fire-and-forget).
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) {
         identify(data.session.user.id);
-        flushQueue(submitMyAnswers);
         registerPushToken();
       }
     });
-
-    // Re-evaluate the streak-countdown Live Activity whenever the app
-    // foregrounds (iOS only lets a foregrounded app start one).
-    const liveActivitySub = attachLiveActivityLifecycle();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
@@ -49,7 +40,6 @@ export default function RootLayout() {
 
     return () => {
       subscription.unsubscribe();
-      liveActivitySub.remove();
     };
   }, []);
 

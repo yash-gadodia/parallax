@@ -65,10 +65,6 @@ export default function PlusSuccessScreen() {
     transform: [{ scale: checkScale.value }],
   }));
 
-  const handleExplore = () => {
-    router.push('/packs');
-  };
-
   const handleBackToday = () => {
     router.push('/(tabs)/today');
   };
@@ -159,13 +155,13 @@ export default function PlusSuccessScreen() {
               fontFamily: fontFamily.ui,
             }}
           >
-            {`Every pack is unlocked, drops are unlimited, and your full history is saved, for you and ${partner.name}.`}
+            {`The mediator now remembers what works for you two, and your whole record is saved, for you and ${partner.name}.`}
           </Text>
 
           {/* Action buttons */}
           <View style={{ marginTop: 30, width: '100%', gap: space.gap }}>
-            <Btn kind="us" onPress={handleExplore} sub="all 4 packs unlocked">
-              Explore the packs
+            <Btn kind="us" onPress={handleBackToday} sub="your memory keeps building">
+              Back to you two
             </Btn>
 
             <Press

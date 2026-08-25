@@ -8,7 +8,7 @@ describe('PlusSuccessScreen', () => {
 
     expect(getByText('welcome to plus')).toBeTruthy();
     expect(getByText("You're both in 💞")).toBeTruthy();
-    expect(getByText('Explore the packs')).toBeTruthy();
+    expect(getByText('Back to you two')).toBeTruthy();
     expect(getByText('Back to today')).toBeTruthy();
   });
 });
