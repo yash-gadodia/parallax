@@ -77,11 +77,14 @@ export async function cancelDailyNudge(): Promise<void> {
 // Warm, never guilt; cancelled the moment the partner joins.
 const PENDING_REMINDER_IDS = ['pending-invite-24h', 'pending-invite-72h'] as const;
 
+// Background scheduling: never raises the OS dialog. These fire off a screen
+// mount, so prompting here would ambush the user mid-pairing; the notify-time
+// step owns the ask, and this simply no-ops until permission exists.
 export async function schedulePendingReminders(partnerHint?: string): Promise<void> {
   if (!isAvailable()) return;
   try {
-    const granted = await requestPermissions();
-    if (!granted) return;
+    const { status } = await Notifications.getPermissionsAsync();
+    if (status !== 'granted') return;
 
     await cancelPendingReminders();
 
@@ -200,10 +203,15 @@ export async function notifyPaired(coupleId: string): Promise<void> {
 
 // Get the Expo push token and persist it to profiles.push_token.
 // GATE: only works with a real EAS project + APNs/FCM credentials.
-export async function registerPushToken(): Promise<void> {
+// promptIfNeeded stays false for background callers (app launch, SIGNED_IN):
+// the OS dialog must appear at the notify-time step where it has context, not
+// cold in the middle of pairing. Callers that own that moment opt in.
+export async function registerPushToken(promptIfNeeded = false): Promise<void> {
   if (!isAvailable()) return;
   try {
-    const granted = await requestPermissions();
+    const granted = promptIfNeeded
+      ? await requestPermissions()
+      : (await Notifications.getPermissionsAsync()).status === 'granted';
     if (!granted) return;
 
     // Standalone (EAS) builds need the project ID to mint a push token, or this

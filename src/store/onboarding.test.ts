@@ -37,7 +37,10 @@ describe('useOnboardingStore', () => {
 
     const raw = await AsyncStorage.getItem(STORAGE_KEY);
     expect(raw).not.toBeNull();
-    expect(JSON.parse(raw as string).state).toEqual({ pendingIntents: ['know', 'talk'] });
+    expect(JSON.parse(raw as string).state).toEqual({
+      pendingIntents: ['know', 'talk'],
+      pendingInviteCode: null,
+    });
   });
 
   it('rehydrates pendingIntents from AsyncStorage (survives a cold relaunch)', async () => {
@@ -51,12 +54,29 @@ describe('useOnboardingStore', () => {
     expect(useOnboardingStore.getState().pendingIntents).toEqual(['rough', 'far']);
   });
 
-  it('does NOT persist pendingInviteCode (deep-link codes are transient)', async () => {
+  // An invitee taps the link, signs up, then quits to check their email. Without
+  // persistence the code is gone on the cold start back and they silently create
+  // their own couple instead of joining their partner's.
+  it('persists pendingInviteCode so it survives the quit-to-check-email gap', async () => {
     useOnboardingStore.getState().setPendingInviteCode('YASH-4827');
 
     await new Promise((resolve) => setTimeout(resolve, 0));
 
     const raw = await AsyncStorage.getItem(STORAGE_KEY);
-    expect(JSON.parse(raw as string).state).toEqual({ pendingIntents: [] });
+    expect(JSON.parse(raw as string).state).toEqual({
+      pendingIntents: [],
+      pendingInviteCode: 'YASH-4827',
+    });
+  });
+
+  it('rehydrates pendingInviteCode from AsyncStorage (survives a cold relaunch)', async () => {
+    await AsyncStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ state: { pendingIntents: [], pendingInviteCode: 'YASH-4827' }, version: 0 })
+    );
+
+    await useOnboardingStore.persist.rehydrate();
+
+    expect(useOnboardingStore.getState().pendingInviteCode).toBe('YASH-4827');
   });
 });

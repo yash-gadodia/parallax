@@ -25,6 +25,31 @@ export async function createCouple(): Promise<Couple> {
   return data;
 }
 
+// create_couple hard-errors if the caller already belongs to a pending/active
+// couple, which any remount of the pair-up step triggers (the first mount
+// already created one). Reuse that row instead of dead-ending on a retry loop.
+export async function ensureInviteCouple(): Promise<Couple> {
+  try {
+    return await createCouple();
+  } catch (err) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw err;
+
+    const { data } = await supabase
+      .from('couples')
+      .select('*')
+      .or(`member_a.eq.${user.id},member_b.eq.${user.id}`)
+      .neq('status', 'dissolved')
+      .order('status', { ascending: true })
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (!data) throw err;
+    return data as Couple;
+  }
+}
+
 export async function joinCouple(input: string): Promise<Couple> {
   const code = normalizeInviteCode(input);
 

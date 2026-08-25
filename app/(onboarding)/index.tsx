@@ -28,12 +28,31 @@ import { useOnboardingStore } from '../../src/store/onboarding';
 import { useSession } from '../../src/features/auth/useSession';
 import { useCouple } from '../../src/features/pairing/useCouple';
 import { useIdentity } from '../../src/features/profile/useIdentity';
-import { createCouple, joinCouple, unpairCouple } from '../../src/features/pairing/pairingActions';
-import { supabase } from '../../src/lib/supabase';
+import { ensureInviteCouple, joinCouple, unpairCouple } from '../../src/features/pairing/pairingActions';
+import { supabase, Couple } from '../../src/lib/supabase';
+import { PostgrestMaybeSingleResponse } from '@supabase/supabase-js';
 import { requestPermissions, scheduleDailyNudge, registerPushToken } from '../../src/features/notifications';
 import { track, EVENTS } from '../../src/lib/analytics';
 
 const TAGLINE = 'mind the parallax error';
+
+// Raw Postgres exceptions from the pairing RPCs are not user-facing copy.
+function humanPairingError(err: unknown): string {
+  const msg = (err instanceof Error ? err.message : '').toLowerCase();
+  if (msg.includes('already a member')) {
+    return "you're already paired up — pull down to refresh";
+  }
+  if (msg.includes('invalid invite code format') || msg.includes('not found')) {
+    return "that code doesn't look right — check the last four digits";
+  }
+  if (msg.includes('own couple') || msg.includes('cannot join')) {
+    return "that's your own code — send it to them instead";
+  }
+  if (msg.includes('network') || msg.includes('fetch')) {
+    return "couldn't reach us — check your connection and try again";
+  }
+  return "that code didn't work — double-check it with them";
+}
 
 // Progress dots component
 function ProgressDots({ current, total }: { current: number; total: number }) {
@@ -193,7 +212,7 @@ function Step1HowItWorks({ onNext }: { onNext: () => void }) {
                   </Text>
                 )}
               </View>
-              <View style={{ paddingTop: 4 }}>
+              <View style={{ paddingTop: 4, flex: 1 }}>
                 <Text
                   allowFontScaling={false}
                   style={{
@@ -411,7 +430,7 @@ function Step3PairUp({
   const createInvite = useCallback(async () => {
     setCreatingCouple(true);
     try {
-      const couple = await createCouple();
+      const couple = await ensureInviteCouple();
       setInviteCode(couple.invite_code ?? null);
       setCreatedCoupleId(couple.id ?? null);
     } catch {
@@ -431,6 +450,54 @@ function Step3PairUp({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [createInvite, showJoinInput]);
+
+  // The partner can join by any route (they read the code aloud, the link goes
+  // out through another app, they tap the deep link) — not just by this device
+  // completing the share sheet. Without this the inviter sits on the code
+  // forever while the couple is already active. Realtime flips it instantly;
+  // the poll covers a dropped socket.
+  const onNextRef = useRef(onNext);
+  onNextRef.current = onNext;
+
+  useEffect(() => {
+    if (!createdCoupleId) return;
+    let cancelled = false;
+
+    const advanceIfActive = (status?: string) => {
+      if (cancelled || status !== 'active') return;
+      cancelled = true;
+      onNextRef.current();
+    };
+
+    const channel = supabase
+      .channel(`onboarding-couple-${createdCoupleId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'couples',
+          filter: `id=eq.${createdCoupleId}`,
+        },
+        payload => advanceIfActive((payload.new as { status?: string })?.status)
+      );
+    channel.subscribe();
+
+    const poll = setInterval(async () => {
+      const { data }: PostgrestMaybeSingleResponse<Couple> = await supabase
+        .from('couples')
+        .select('*')
+        .eq('id', createdCoupleId)
+        .maybeSingle();
+      advanceIfActive(data?.status);
+    }, 4000);
+
+    return () => {
+      cancelled = true;
+      clearInterval(poll);
+      supabase.removeChannel(channel);
+    };
+  }, [createdCoupleId]);
 
   const handleShare = async () => {
     if (!inviteCode) return;
@@ -475,7 +542,7 @@ function Step3PairUp({
       track(EVENTS.COUPLE_PAIRED, { method: 'join' });
       onNext();
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Invalid code';
+      const msg = humanPairingError(err);
       fireToast(msg);
     } finally {
       setLoading(false);
@@ -778,7 +845,7 @@ function Step5NotifyTime({
           await supabase.from('profiles').update({ notify_time: time }).eq('id', uid);
         }
         // GATE: registerPushToken no-ops in Expo Go without EAS project ID.
-        await registerPushToken();
+        await registerPushToken(true);
       }
     } catch {
       // ignore - saved if/when signed in

@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, gradients, radius, shadows, space } from '../src/design/tokens';
 import { fontFamily } from '../src/design/typography';
 import { Kick, Serif } from '../src/components/Text';
@@ -32,6 +32,7 @@ import {
 
 export default function LoginScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { toast, fireToast } = useUiStore();
   // Dev convenience: pre-fill the seeded test account so login is one tap.
   // __DEV__ is false in any release build, so this never ships.
@@ -134,7 +135,7 @@ export default function LoginScreen() {
           showsVerticalScrollIndicator={false}
         >
           {/* Top spacing */}
-          <View style={{ height: 72 }} />
+          <View style={{ height: insets.top + 72 }} />
 
           {/* Logo */}
           <View style={{ alignItems: 'center', marginBottom: 36 }}>

@@ -10,8 +10,9 @@ interface OnboardingState {
   setPendingInviteCode: (code: string | null) => void;
 }
 
-// Persisted so intents picked before sign-up survive the quit-to-check-email
-// gap; cleared once flushPendingIntents lands them in the profile.
+// Persisted so intents picked before sign-up — and an invite code arriving by
+// deep link before the invitee has an account — survive the quit-to-check-email
+// gap; cleared once consumed (flushPendingIntents / the pair-up join step).
 export const useOnboardingStore = create<OnboardingState>()(
   persist(
     (set) => ({
@@ -24,7 +25,10 @@ export const useOnboardingStore = create<OnboardingState>()(
     {
       name: 'parallax-onboarding',
       storage: createJSONStorage(() => AsyncStorage),
-      partialize: (state) => ({ pendingIntents: state.pendingIntents }),
+      partialize: (state) => ({
+        pendingIntents: state.pendingIntents,
+        pendingInviteCode: state.pendingInviteCode,
+      }),
     }
   )
 );

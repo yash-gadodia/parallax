@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, gradients, radius, shadows, space } from '../src/design/tokens';
 import { fontFamily } from '../src/design/typography';
 import { Kick, Serif } from '../src/components/Text';
@@ -63,6 +63,7 @@ const inputStyle = {
 
 export default function SignupScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { toast, fireToast } = useUiStore();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -157,7 +158,7 @@ export default function SignupScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={{ height: 72 }} />
+          <View style={{ height: insets.top + 72 }} />
 
           {sent ? (
             <View style={{ alignItems: 'center', marginTop: 24 }}>

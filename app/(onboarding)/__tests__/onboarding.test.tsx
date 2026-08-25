@@ -118,6 +118,7 @@ jest.mock('../../../src/components/Tok', () => {
   return { __esModule: true, default: MockTok };
 });
 
+const coupleChannelHandlers: ((payload: unknown) => void)[] = [];
 jest.mock('../../../src/lib/supabase', () => ({
   supabase: {
     auth: {
@@ -133,7 +134,23 @@ jest.mock('../../../src/lib/supabase', () => ({
       update: jest.fn(() => ({
         eq: jest.fn(() => Promise.resolve({})),
       })),
+      select: jest.fn(() => ({
+        eq: jest.fn(() => ({
+          maybeSingle: jest.fn(() => Promise.resolve({ data: null, error: null })),
+        })),
+      })),
     })),
+    channel: jest.fn(() => {
+      const ch: Record<string, unknown> = {
+        on: jest.fn((_evt: string, _cfg: unknown, cb: (p: unknown) => void) => {
+          coupleChannelHandlers.push(cb);
+          return ch;
+        }),
+        subscribe: jest.fn(() => ch),
+      };
+      return ch;
+    }),
+    removeChannel: jest.fn(),
   },
 }));
 
@@ -166,7 +183,7 @@ jest.mock('../../../src/features/profile/useIdentity', () => ({
 }));
 
 jest.mock('../../../src/features/pairing/pairingActions', () => ({
-  createCouple: jest.fn(async () => ({
+  ensureInviteCouple: jest.fn(async () => ({
     id: 'couple-1',
     invite_code: 'YASH-4827',
     status: 'pending',
@@ -207,7 +224,7 @@ jest.mock('../../../src/store/onboarding', () => ({
 const { Share } = require('react-native');
 Share.share = jest.fn(async () => ({ action: Share.sharedAction }));
 
-import { createCouple, joinCouple } from '../../../src/features/pairing/pairingActions';
+import { ensureInviteCouple, joinCouple } from '../../../src/features/pairing/pairingActions';
 
 describe('Onboarding', () => {
   beforeEach(() => {
@@ -219,11 +236,12 @@ describe('Onboarding', () => {
     mockTrack.mockClear();
     (Share.share as jest.Mock).mockClear();
     (Share.share as jest.Mock).mockImplementation(async () => ({ action: Share.sharedAction }));
-    (createCouple as jest.Mock).mockClear();
+    (ensureInviteCouple as jest.Mock).mockClear();
     (joinCouple as jest.Mock).mockClear();
     mockPendingInviteCode = null;
     mockBack.mockClear();
     mockSearchParams = {};
+    coupleChannelHandlers.length = 0;
   });
 
   // Constants tests
@@ -510,7 +528,7 @@ describe('Onboarding', () => {
 
     // Welcome stays on screen — no skip-to-pairing, no couple created.
     expect(getByText(/mind the parallax error/i)).toBeTruthy();
-    expect(createCouple).not.toHaveBeenCalled();
+    expect(ensureInviteCouple).not.toHaveBeenCalled();
   });
 
   it('replay mode: the guide ends at intents and returns back — pairing is unreachable', async () => {
@@ -533,7 +551,44 @@ describe('Onboarding', () => {
       expect(mockBack).toHaveBeenCalled();
     });
     expect(mockPush).not.toHaveBeenCalledWith('/signup');
-    expect(createCouple).not.toHaveBeenCalled();
+    expect(ensureInviteCouple).not.toHaveBeenCalled();
+  });
+
+  // The partner can join by reading the code aloud or tapping a link forwarded
+  // elsewhere — not just by this device finishing its share sheet. Without the
+  // realtime advance the inviter sat on the invite code forever while the
+  // couple was already active.
+  it('pair-up advances off the invite code when the partner joins (realtime flip to active)', async () => {
+    mockSessionValue = { session: { user: { id: 'u1' } }, loading: false };
+    const { getByText, queryByText } = await render(<OnboardingScreen />);
+
+    await waitFor(() => {
+      expect(getByText(/YASH-4827/)).toBeTruthy();
+    });
+    expect(coupleChannelHandlers.length).toBeGreaterThan(0);
+
+    await act(async () => {
+      coupleChannelHandlers.forEach((cb) => cb({ new: { status: 'active' } }));
+    });
+
+    await waitFor(() => {
+      expect(queryByText(/YASH-4827/)).toBeNull();
+    });
+  });
+
+  it('pair-up stays put while the couple is still pending', async () => {
+    mockSessionValue = { session: { user: { id: 'u1' } }, loading: false };
+    const { getByText } = await render(<OnboardingScreen />);
+
+    await waitFor(() => {
+      expect(getByText(/YASH-4827/)).toBeTruthy();
+    });
+
+    await act(async () => {
+      coupleChannelHandlers.forEach((cb) => cb({ new: { status: 'pending' } }));
+    });
+
+    expect(getByText(/YASH-4827/)).toBeTruthy();
   });
 
   it('an invitee arriving via join link does NOT auto-create an orphan couple', async () => {
@@ -546,7 +601,7 @@ describe('Onboarding', () => {
       expect(getByDisplayValue('REMY-1234')).toBeTruthy();
     });
     // …and no couple is created on their behalf.
-    expect(createCouple).not.toHaveBeenCalled();
+    expect(ensureInviteCouple).not.toHaveBeenCalled();
   });
 
   it('joining after having created an invite removes the orphan couple first', async () => {
@@ -570,18 +625,18 @@ describe('Onboarding', () => {
     expect(unpairCouple).toHaveBeenCalledWith('couple-1');
   });
 
-  it('a failed couple creation shows a tappable "Tap retry" that re-calls createCouple', async () => {
+  it('a failed couple creation shows a tappable "Tap retry" that re-calls ensureInviteCouple', async () => {
     mockSessionValue = { session: { user: { id: 'u1' } }, loading: false };
-    (createCouple as jest.Mock).mockRejectedValueOnce(new Error('network'));
+    (ensureInviteCouple as jest.Mock).mockRejectedValueOnce(new Error('network'));
 
     const { getByText } = await render(<OnboardingScreen />);
 
     await waitFor(() => expect(getByText('Tap retry')).toBeTruthy());
-    expect(createCouple).toHaveBeenCalledTimes(1);
+    expect(ensureInviteCouple).toHaveBeenCalledTimes(1);
 
     await fireEvent.press(getByText('Tap retry'));
 
     await waitFor(() => expect(getByText(/YASH-4827/)).toBeTruthy());
-    expect(createCouple).toHaveBeenCalledTimes(2);
+    expect(ensureInviteCouple).toHaveBeenCalledTimes(2);
   });
 });
