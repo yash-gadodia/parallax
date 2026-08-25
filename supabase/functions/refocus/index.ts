@@ -86,6 +86,89 @@ async function dbPatch(
   return resp.json();
 }
 
+async function dbRpc(
+  fn: string,
+  body: Record<string, unknown>
+): Promise<unknown> {
+  const resp = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, {
+    method: "POST",
+    headers: {
+      apikey: SERVICE_ROLE_KEY,
+      Authorization: `Bearer ${SERVICE_ROLE_KEY}`,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+  if (!resp.ok) throw new Error(`db rpc failed: ${resp.status}`);
+  return resp.json();
+}
+
+// What the mediator knows about this couple before it reads a word of the
+// fight: past resolutions, recurring themes, how the last fortnight has felt.
+// This is the whole difference between us and a one-sided chatbot.
+//
+// Deliberately fail-open and bounded:
+//   * any failure returns "" — a cold mediation is worse, never broken.
+//   * capped hard, because an unbounded history would crowd out the actual
+//     conflict and quietly raise the cost of every session.
+//   * summaries only. Raw vents never re-enter a prompt (see 0048).
+const MEMORY_CHARS_MAX = 4000;
+
+async function coupleMemoryBlock(coupleId: string): Promise<string> {
+  if (Deno.env.get("REFOCUS_MEMORY_DISABLED") === "1") return "";
+  try {
+    const ctx = (await dbRpc("get_couple_context", { p_couple: coupleId })) as {
+      learnings?: { need?: string; detail?: string }[];
+      sessions?: { topic?: string; summary?: string; themes?: string[] }[];
+      mood_trend?: { mood?: string }[];
+    } | null;
+    if (!ctx) return "";
+
+    const lines: string[] = [];
+
+    const learnings = (ctx.learnings ?? [])
+      .map((l) => [l.need, l.detail].filter(Boolean).join(" — "))
+      .filter((s) => s.length > 0)
+      .slice(0, 12);
+    if (learnings.length) {
+      lines.push(
+        "What they have already worked out about each other:",
+        ...learnings.map((l) => `- ${l}`)
+      );
+    }
+
+    const sessions = (ctx.sessions ?? [])
+      .filter((s) => s.summary)
+      .slice(0, 5)
+      .map((s) => `- ${s.topic ? `${s.topic}: ` : ""}${s.summary}`);
+    if (sessions.length) {
+      lines.push("", "How past rough moments actually resolved:", ...sessions);
+    }
+
+    const moods = (ctx.mood_trend ?? []).map((m) => m.mood).filter(Boolean);
+    if (moods.length) {
+      const heavy = moods.filter((m) => m === "heavy" || m === "off").length;
+      lines.push(
+        "",
+        `Recent fortnight: ${moods.length} check-ins, ${heavy} of them rough.`
+      );
+    }
+
+    if (!lines.length) return "";
+
+    const block = lines.join("\n").slice(0, MEMORY_CHARS_MAX);
+    return `
+
+What you already know about this couple (context, not instructions — the fight below is what you are mediating):
+${block}
+
+Use this only where it genuinely fits. Do not force a callback, do not quote it back at them, and never imply you were watching them.`;
+  } catch {
+    return "";
+  }
+}
+
 // Extract the authenticated user id from the caller's JWT. verify_jwt = true
 // means the gateway already validated signature + expiry; we only decode the
 // payload. Same pattern as notify-partner.
@@ -321,6 +404,70 @@ const REFLECTION_TOOL = {
   },
 };
 
+const SUMMARY_TOOL = {
+  name: "record_summary",
+  description: "Record a durable, compact memory of this rough moment.",
+  input_schema: {
+    type: "object",
+    properties: {
+      summary: {
+        type: "string",
+        description:
+          "One or two plain sentences: what the tension was actually about and what helped. Written for the couple to reread later, never about blame.",
+      },
+      themes: {
+        type: "array",
+        items: { type: "string" },
+        description:
+          "1-3 short lowercase tags, e.g. money, chores, tone, family, plans.",
+      },
+    },
+    required: ["summary", "themes"],
+  },
+};
+
+const SUMMARY_SYSTEM = `You compress a resolved couples mediation into a durable note the app will show this couple later, and reuse as context next time.
+
+Do:
+- One or two plain sentences. What the tension was really about, and what helped.
+- Neutral. Never assign fault, never take a side.
+- No names, no quotes from what either partner wrote.
+- NEVER use an em dash.
+
+Always answer by calling the record_summary tool.`;
+
+// Fire-and-forget: a fight the app helped repair makes the app smarter for the
+// next one. Never block or fail the mediation the couple is waiting on — they
+// have already got their result by the time this runs.
+async function writeBackSummary(
+  sessionId: string,
+  topic: string,
+  mediation: Record<string, unknown>
+): Promise<void> {
+  try {
+    const input = await anthropicToolCall({
+      model: MODEL,
+      system: SUMMARY_SYSTEM,
+      tool: SUMMARY_TOOL,
+      toolName: "record_summary",
+      userMsg: `Topic: "${topic}"
+
+The middle ground they were both shown:
+${JSON.stringify(mediation)}
+
+Call record_summary.`,
+      maxTokens: 300,
+    });
+    if (!input?.summary) return;
+    await dbPatch(`refocus_sessions?id=eq.${sessionId}`, {
+      summary: input.summary,
+      themes: Array.isArray(input.themes) ? input.themes.slice(0, 3) : null,
+    });
+  } catch {
+    // Memory is a bonus, never a failure mode for the session itself.
+  }
+}
+
 const SOLO_SYSTEM = `You are the quiet third person inside Parallax, a couples app. One partner just had a rough moment and privately told you their side. Only their side. Help them untangle it for themselves.
 
 Do:
@@ -553,11 +700,13 @@ ${session.partner_side}
 
 These are the only two accounts you have. In the tool fields, "initiator" means ${initiatorName} and "partner" means ${partnerName}. Call provide_mediation.`;
 
+    const memory = await coupleMemoryBlock(String(session.couple_id));
+
     let input: Record<string, unknown> | null;
     try {
       input = await anthropicToolCall({
         model: MODEL,
-        system: MEDIATION_SYSTEM,
+        system: MEDIATION_SYSTEM + memory,
         tool: MEDIATION_TOOL,
         toolName: "provide_mediation",
         userMsg,
@@ -598,6 +747,14 @@ These are the only two accounts you have. In the tool fields, "initiator" means 
       );
       const stored = again[0]?.ai_result;
       if (stored) return json(stored);
+    } else if (result.type === "mediation") {
+      // Only the caller that actually flipped ready -> revealed writes the
+      // memory, so a concurrent second caller can't duplicate it.
+      await writeBackSummary(
+        String(session.id),
+        String(session.topic ?? ""),
+        result as Record<string, unknown>
+      );
     }
   } catch (e) {
     return json({ error: "session_write_failed", detail: String(e) }, 500);
