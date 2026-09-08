@@ -373,6 +373,34 @@ describe('Onboarding', () => {
     });
   });
 
+  // Pairing used to be a wall: step 3 advanced ONLY on a partner joining, so a
+  // solo user could not reach the app at all (the refocus solo track is fully
+  // usable alone). The skip routes them in; index.tsx keeps them there because
+  // the auto-created invite leaves the couple 'pending'.
+  it('step 3 offers a skip into the app once the invite code exists', async () => {
+    mockSessionValue = { session: { user: { id: 'u1' } }, loading: false };
+    const { getByText } = await render(<OnboardingScreen />);
+
+    await waitFor(() => {
+      expect(getByText(/YASH-4827/)).toBeTruthy();
+    });
+    expect(getByText(/I'll do this later/i)).toBeTruthy();
+  });
+
+  it('pressing the step 3 skip routes to the app instead of advancing the guide', async () => {
+    mockSessionValue = { session: { user: { id: 'u1' } }, loading: false };
+    const { getByText } = await render(<OnboardingScreen />);
+
+    await waitFor(() => {
+      expect(getByText(/I'll do this later/i)).toBeTruthy();
+    });
+    await act(async () => {
+      fireEvent.press(getByText(/I'll do this later/i));
+    });
+
+    expect(mockReplace).toHaveBeenCalledWith('/(tabs)/today');
+  });
+
   it('step 2 intent: stashes selected intents in the store before advancing (no session)', async () => {
     const { getByText } = await render(<OnboardingScreen />);
 

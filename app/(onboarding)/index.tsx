@@ -409,6 +409,7 @@ function Step3PairUp({
   onNext: () => void;
   fireToast: (msg: string) => void;
 }) {
+  const router = useRouter();
   const [inviteCode, setInviteCode] = useState<string | null>(null);
   const [createdCoupleId, setCreatedCoupleId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -675,6 +676,27 @@ function Step3PairUp({
                 Enter a code instead
               </Text>
             </Press>
+            {/* The solo refocus track works alone; without this the guide waits
+                on a partner forever and the app is unreachable. Gated on the
+                invite existing so the couple is 'pending' and index.tsx keeps
+                them in rather than bouncing them back here. */}
+            {!!inviteCode && (
+              <Press onPress={() => router.replace('/(tabs)/today')} scale={false}>
+                <Text
+                  allowFontScaling={false}
+                  style={{
+                    textAlign: 'center',
+                    padding: 8,
+                    fontSize: 14,
+                    fontWeight: '600',
+                    color: colors.inkMute,
+                    fontFamily: fontFamily.ui,
+                  }}
+                >
+                  I'll do this later
+                </Text>
+              </Press>
+            )}
           </>
         ) : (
           <>
