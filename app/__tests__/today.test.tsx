@@ -75,15 +75,23 @@ describe('Home (v2)', () => {
     const { getByText, queryByText } = await render(<HomeScreen />);
 
     expect(getByText("Something's up?")).toBeTruthy();
-    expect(getByText('Untangle something')).toBeTruthy();
+    expect(getByText('Something happened')).toBeTruthy();
     // The v1 drop loop is gone from this screen.
     expect(queryByText(/Play today's three/i)).toBeNull();
+  });
+
+  // v7 names the moment rather than describing the product.
+  it('leads the primary action with the moment, not the mechanism', async () => {
+    const { getByText, queryByText } = await render(<HomeScreen />);
+
+    expect(getByText('Something happened')).toBeTruthy();
+    expect(queryByText('Untangle something')).toBeNull();
   });
 
   it('opens Refocus from the primary action', async () => {
     const { getByText } = await render(<HomeScreen />);
 
-    fireEvent.press(getByText('Untangle something'));
+    fireEvent.press(getByText('Something happened'));
 
     expect(mockPush).toHaveBeenCalledWith('/(tabs)/refocus');
   });
@@ -119,12 +127,26 @@ describe('Home (v2)', () => {
     expect(queryByText('they opened one')).toBeNull();
   });
 
-  it('nudges an unpaired user to bring their partner in', async () => {
+  // v7 is solo-first: the app works with one person, so the home screen must
+  // not open by telling a solo user it needs someone else. Pairing stays
+  // reachable from the invite card further down, and from the profile.
+  it('does not tell a solo user the app needs a partner', async () => {
+    mockUseCouple.mockReturnValue({ couple: { id: 'c1' }, status: 'pending' });
+
+    const { queryByText } = await render(<HomeScreen />);
+
+    expect(queryByText('Bring Dani in')).toBeNull();
+    expect(
+      queryByText('Parallax needs both of you to find a middle ground.'),
+    ).toBeNull();
+  });
+
+  it('still offers a solo user a way to invite, without demanding it', async () => {
     mockUseCouple.mockReturnValue({ couple: { id: 'c1' }, status: 'pending' });
 
     const { getByText } = await render(<HomeScreen />);
 
-    expect(getByText('Bring Dani in')).toBeTruthy();
+    expect(getByText('Bring Dani in when you want')).toBeTruthy();
   });
 
   it('does not nag a paired couple to pair', async () => {

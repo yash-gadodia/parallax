@@ -99,7 +99,7 @@ export default function HomeScreen() {
                       fontFamily: fontFamily.ui,
                     }}
                   >
-                    Bring {partner.name} in
+                    Bring {partner.name} in when you want
                   </Text>
                   <Text
                     style={{
@@ -110,7 +110,8 @@ export default function HomeScreen() {
                       fontFamily: fontFamily.ui,
                     }}
                   >
-                    Parallax needs both of you to find a middle ground.
+                    Parallax works on its own. Their side just makes it a
+                    shared one.
                   </Text>
                 </View>
                 <Icon d={ICONS.chevR} size={18} color={colors.inkMute} />
@@ -185,11 +186,11 @@ export default function HomeScreen() {
                 fontFamily: fontFamily.ui,
               }}
             >
-              Tell it your side, privately. If {partner.name} adds theirs, you
-              both get the middle ground, never each other's raw words.
+              Say it messily, privately. You'll get back what's underneath it
+              for you, and one thing you could actually say next.
             </Text>
             <Btn kind="us" onPress={() => router.push('/(tabs)/refocus')}>
-              Untangle something
+              Something happened
             </Btn>
           </View>
 
