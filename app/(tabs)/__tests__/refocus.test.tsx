@@ -142,7 +142,7 @@ async function passHeatCheck(screen: Screen) {
 }
 
 async function goToShare(screen: Screen) {
-  await user.press(screen.getByText('Just my side'));
+  await user.press(screen.getByText('Start there'));
   await passHeatCheck(screen);
   await user.press(await screen.findByText('Type it out'));
   const input = await screen.findByPlaceholderText(
@@ -180,7 +180,7 @@ describe('RefocusScreen — honest solo reflection', () => {
 
   it('unpaired intro offers only the solo path (no together CTA to nowhere)', async () => {
     const screen = await render(<RefocusScreen />);
-    expect(screen.getByText('Just my side')).toBeTruthy();
+    expect(screen.getByText('Start there')).toBeTruthy();
     expect(screen.queryByText('Untangle it together')).toBeNull();
   });
 
@@ -188,7 +188,7 @@ describe('RefocusScreen — honest solo reflection', () => {
   // diversion is the point of the heat check, so it gets its own coverage.
   it('a boiling answer diverts to the cool-down instead of the compose step', async () => {
     const screen = await render(<RefocusScreen />);
-    await user.press(screen.getByText('Just my side'));
+    await user.press(screen.getByText('Start there'));
     await user.press(await screen.findByText('Boiling'));
 
     expect(await screen.findByText('Let it cool first.')).toBeTruthy();
@@ -197,7 +197,7 @@ describe('RefocusScreen — honest solo reflection', () => {
 
   it('cooling off then continuing lands on the compose step', async () => {
     const screen = await render(<RefocusScreen />);
-    await user.press(screen.getByText('Just my side'));
+    await user.press(screen.getByText('Start there'));
     await user.press(await screen.findByText('Boiling'));
     await user.press(await screen.findByText("I've cooled off"));
 
@@ -206,7 +206,7 @@ describe('RefocusScreen — honest solo reflection', () => {
 
   it('a calm answer goes straight through, no cool-down', async () => {
     const screen = await render(<RefocusScreen />);
-    await user.press(screen.getByText('Just my side'));
+    await user.press(screen.getByText('Start there'));
     await user.press(await screen.findByText('Simmering'));
 
     expect(await screen.findByText('Type it out')).toBeTruthy();
@@ -215,7 +215,7 @@ describe('RefocusScreen — honest solo reflection', () => {
 
   it('mode picker offers exactly Type and Paste — no voice mode', async () => {
     const screen = await render(<RefocusScreen />);
-    await user.press(screen.getByText('Just my side'));
+    await user.press(screen.getByText('Start there'));
     await passHeatCheck(screen);
 
     expect(refocusContent.MODES.map((m) => m.id)).toEqual(['text', 'paste']);
@@ -226,7 +226,7 @@ describe('RefocusScreen — honest solo reflection', () => {
 
   it('paste mode starts with an empty field, not a scripted fight', async () => {
     const screen = await render(<RefocusScreen />);
-    await user.press(screen.getByText('Just my side'));
+    await user.press(screen.getByText('Start there'));
     await passHeatCheck(screen);
     await user.press(await screen.findByText('Paste your texts'));
 
@@ -392,7 +392,7 @@ describe('RefocusScreen — two-sided sessions (4.6)', () => {
     const screen = await render(<RefocusScreen />);
 
     expect(screen.getByText('Untangle it together')).toBeTruthy();
-    expect(screen.getByText('Just my side')).toBeTruthy();
+    expect(screen.getByText('Start there')).toBeTruthy();
   });
 
   it('initiator starts a session: topic + side go through start_refocus, then the waiting state', async () => {

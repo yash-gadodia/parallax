@@ -3,6 +3,9 @@ import { ViewStyle, ColorValue } from 'react-native';
 export const colors = {
   bg0: '#FBF1F2',
   bg1: '#F1ECFB',
+  // v7 "quiet editorial": a warm paper ground instead of the dawn gradient,
+  // with cards drawn by a hairline rather than a shadow.
+  paper: '#FBF7F3',
   surface: '#FFFDFD',
   surfaceSoft: 'rgba(255,255,255,0.62)',
   sunken: '#F4ECF4',
