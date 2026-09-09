@@ -45,6 +45,9 @@ export function ResultStep({
 }: ResultStepProps) {
   const { partner } = useIdentity();
   const [msg, setMsg] = useState(result.bridge);
+  // Touching the draft is what makes the concession theirs rather than ours,
+  // so Copy stays shut until the sentence has actually been changed.
+  const edited = msg.trim() !== result.bridge.trim();
   const [copied, setCopied] = useState(false);
   const [savingLearnings, setSavingLearnings] = useState(false);
   const { session } = useSession();
@@ -96,6 +99,93 @@ export function ResultStep({
             {`Nothing here was sent to ${partner.name}. What you share, and when, is up to you.`}
           </Text>
         </View>
+
+        {/* Bridge message */}
+        <Card
+          style={{
+            borderRadius: 24,
+            paddingHorizontal: 16,
+            paddingVertical: 18,
+            marginTop: 16,
+          }}
+        >
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 8,
+              marginBottom: 12,
+            }}
+          >
+            <Tok who={YOU} you size={22} />
+            <Text
+              style={{
+                flex: 1,
+                fontSize: 14,
+                fontWeight: '700',
+                color: colors.ink,
+                fontFamily: fontFamily.ui,
+              }}
+            >
+              {`Want to say it to ${partner.name}?`}
+            </Text>
+            <Text
+              style={{
+                fontFamily: fontFamily.mono,
+                fontSize: 9.5,
+                letterSpacing: 0.1 * 9.5,
+                color: colors.inkMute,
+              }}
+            >
+              AI DRAFT · YOURS TO EDIT
+            </Text>
+          </View>
+          <TextInput
+            testID="bridge-input"
+            value={msg}
+            onChangeText={setMsg}
+            multiline
+            numberOfLines={3}
+            placeholderTextColor={colors.inkSoft}
+            style={{
+              width: '100%',
+              borderWidth: 1,
+              borderColor: colors.line,
+              borderRadius: 16,
+              backgroundColor: colors.sunken,
+              paddingVertical: 13,
+              paddingHorizontal: 14,
+              fontSize: 14.5,
+              lineHeight: 14.5 * 1.5,
+              fontFamily: fontFamily.ui,
+              color: colors.ink,
+            }}
+          />
+          <View style={{ marginTop: 12 }}>
+            <Btn
+              kind={copied ? 'soft' : 'us'}
+              onPress={async () => {
+                if (!edited) {
+                  onShowToast('Change a word first, so it is yours.');
+                  return;
+                }
+                await Clipboard.setStringAsync(msg);
+                setCopied(true);
+                onShowToast('Copied, share it when you’re ready 🤍');
+                // V2 F2: the bridge is on its way — the repair check-in
+                // becomes due 24h from now (fire-and-forget, idempotent).
+                if (soloSessionId) markBridgeSent(soloSessionId);
+              }}
+              sub={
+                edited
+                  ? 'paste it anywhere you two talk'
+                  : 'it should sound like you, not like us'
+              }
+            >
+              {copied ? 'Copied 🤍' : edited ? 'Copy to share' : 'Edit to copy'}
+            </Btn>
+          </View>
+        </Card>
 
         {/* What happened */}
         <ResultSection icon="🧭" label="what happened">
@@ -182,84 +272,6 @@ export function ResultStep({
           >
             {result.wayback}
           </Text>
-        </Card>
-
-        {/* Bridge message */}
-        <Card
-          style={{
-            borderRadius: 24,
-            paddingHorizontal: 16,
-            paddingVertical: 18,
-            marginTop: 16,
-          }}
-        >
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 8,
-              marginBottom: 12,
-            }}
-          >
-            <Tok who={YOU} you size={22} />
-            <Text
-              style={{
-                flex: 1,
-                fontSize: 14,
-                fontWeight: '700',
-                color: colors.ink,
-                fontFamily: fontFamily.ui,
-              }}
-            >
-              {`Want to say it to ${partner.name}?`}
-            </Text>
-            <Text
-              style={{
-                fontFamily: fontFamily.mono,
-                fontSize: 9.5,
-                letterSpacing: 0.1 * 9.5,
-                color: colors.inkMute,
-              }}
-            >
-              AI DRAFT · YOURS TO EDIT
-            </Text>
-          </View>
-          <TextInput
-            value={msg}
-            onChangeText={setMsg}
-            multiline
-            numberOfLines={3}
-            placeholderTextColor={colors.inkSoft}
-            style={{
-              width: '100%',
-              borderWidth: 1,
-              borderColor: colors.line,
-              borderRadius: 16,
-              backgroundColor: colors.sunken,
-              paddingVertical: 13,
-              paddingHorizontal: 14,
-              fontSize: 14.5,
-              lineHeight: 14.5 * 1.5,
-              fontFamily: fontFamily.ui,
-              color: colors.ink,
-            }}
-          />
-          <View style={{ marginTop: 12 }}>
-            <Btn
-              kind={copied ? 'soft' : 'us'}
-              onPress={async () => {
-                await Clipboard.setStringAsync(msg);
-                setCopied(true);
-                onShowToast('Copied, share it when you’re ready 🤍');
-                // V2 F2: the bridge is on its way — the repair check-in
-                // becomes due 24h from now (fire-and-forget, idempotent).
-                if (soloSessionId) markBridgeSent(soloSessionId);
-              }}
-              sub="paste it anywhere you two talk"
-            >
-              {copied ? 'Copied 🤍' : 'Copy to share'}
-            </Btn>
-          </View>
         </Card>
 
         {/* Love map capture */}

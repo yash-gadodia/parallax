@@ -10,11 +10,13 @@ import { colors } from '../../../design/tokens';
 import { fontFamily } from '../../../design/typography';
 
 export interface ErrorStepProps {
+  /** What the user wrote, shown back so "your words are safe" is visible, not just claimed. */
+  text: string;
   onRetry: () => void;
   onBack: () => void;
 }
 
-export function ErrorStep({ onRetry, onBack }: ErrorStepProps) {
+export function ErrorStep({ text, onRetry, onBack }: ErrorStepProps) {
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <TopBar title="refocus" onBack={onBack} />
@@ -53,15 +55,40 @@ export function ErrorStep({ onRetry, onBack }: ErrorStepProps) {
             marginBottom: 28,
           }}
         >
-          We couldn&apos;t reach the AI just now. Your words are safe right
-          here, give it another go in a moment.
+          That didn&apos;t come through. Nothing was lost, and nothing was
+          sent anywhere. It&apos;s here exactly as you left it.
         </Text>
+        {text ? (
+          <View
+            style={{
+              width: '100%',
+              maxWidth: 300,
+              backgroundColor: colors.surface,
+              borderRadius: 16,
+              paddingVertical: 13,
+              paddingHorizontal: 15,
+              marginBottom: 24,
+            }}
+          >
+            <Text
+              numberOfLines={4}
+              style={{
+                fontSize: 13.5,
+                lineHeight: 13.5 * 1.55,
+                color: colors.inkSoft,
+                fontFamily: fontFamily.ui,
+              }}
+            >
+              {text}
+            </Text>
+          </View>
+        ) : null}
         <View style={{ width: '100%', maxWidth: 300, gap: 10 }}>
           <Btn kind="us" onPress={onRetry} testID="refocus-retry">
             Try again
           </Btn>
           <Btn kind="soft" onPress={onBack}>
-            Back to my words
+            Back to what I wrote
           </Btn>
         </View>
       </View>

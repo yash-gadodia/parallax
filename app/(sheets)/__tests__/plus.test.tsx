@@ -5,6 +5,8 @@ import PlusSheet from '../plus';
 // Mock the purchases module since it calls native RevenueCat
 jest.mock('../../../src/features/purchases/usePurchases', () => ({
   presentPaywall: jest.fn().mockResolvedValue(false),
+  // No live offering in jest, so the sheet falls back to the bundled prices.
+  usePurchases: (sel: (s: { offering: null }) => unknown) => sel({ offering: null }),
 }));
 
 jest.mock('../../../src/features/purchases/client', () => ({

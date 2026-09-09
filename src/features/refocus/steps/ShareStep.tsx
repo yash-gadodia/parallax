@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon, ICONS } from '../../../components/Icon';
@@ -6,7 +6,20 @@ import Btn from '../../../components/Btn';
 import TopBar from '../../../components/TopBar';
 import { colors, shadows, space } from '../../../design/tokens';
 import { fontFamily } from '../../../design/typography';
-import { RefocusMode } from '../../../content/refocus';
+import {
+  RefocusMode,
+  SLOT_LABELS,
+  SLOT_OPTIONS,
+  SLOT_PLACEHOLDERS,
+} from '../../../content/refocus';
+import Press from '../../../components/Press';
+import Sheet from '../../../components/Sheet';
+import {
+  composeScaffold,
+  scaffoldReady,
+  SlotKey,
+  SlotValues,
+} from '../../../domain/scaffold';
 import { useIdentity } from '../../profile/useIdentity';
 
 export interface ShareStepProps {
@@ -14,7 +27,8 @@ export interface ShareStepProps {
   mode: RefocusMode;
   text: string;
   setText: (text: string) => void;
-  onSubmit: () => void;
+  /** Receives the composed account (scaffold sentence plus whatever was typed). */
+  onSubmit: (composed: string) => void;
   onBack: () => void;
 }
 
@@ -27,9 +41,45 @@ export function ShareStep({
   onBack,
 }: ShareStepProps) {
   const { partner } = useIdentity();
+  const [slots, setSlots] = useState<SlotValues>({});
+  const [openSlot, setOpenSlot] = useState<SlotKey | null>(null);
 
   const title = mode === 'paste' ? 'paste the convo' : 'your side';
-  const ready = text.trim().length > 3;
+  const ready = scaffoldReady(slots, text);
+
+  const chooseSlot = (key: SlotKey, value: string) => {
+    setSlots((s) => ({ ...s, [key]: value }));
+    setOpenSlot(null);
+  };
+
+  const Slot = ({ k }: { k: SlotKey }) => (
+    <Press onPress={() => setOpenSlot(k)} scale={false}>
+      <View
+        style={{
+          paddingHorizontal: 10,
+          paddingVertical: 4,
+          borderRadius: 999,
+          borderWidth: 1.5,
+          borderStyle: slots[k] ? 'solid' : 'dashed',
+          borderColor: slots[k] ? 'transparent' : 'rgba(157,149,245,0.45)',
+          backgroundColor: slots[k] ? colors.usSoft : 'transparent',
+        }}
+      >
+        <Text
+          allowFontScaling={false}
+          style={{
+            fontSize: 14.5,
+            lineHeight: 14.5 * 1.35,
+            fontWeight: '600',
+            color: colors.p2Deep,
+            fontFamily: fontFamily.ui,
+          }}
+        >
+          {slots[k] ?? SLOT_PLACEHOLDERS[k]}
+        </Text>
+      </View>
+    </Press>
+  );
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
@@ -72,6 +122,35 @@ export function ShareStep({
           >
             {`Private to the AI. Nothing is sent to ${partner.name}.`}
           </Text>
+        </View>
+
+        {/* Scaffold: four taps are a complete account on their own. */}
+        <View
+          style={{
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            gap: 6,
+            paddingHorizontal: space.gutter,
+            marginBottom: 8,
+          }}
+        >
+          {(['they', 'i', 'then', 'hear'] as SlotKey[]).map((k) => (
+            <React.Fragment key={k}>
+              <Text
+                allowFontScaling={false}
+                style={{
+                  fontSize: 15,
+                  lineHeight: 15 * 1.4,
+                  color: colors.ink,
+                  fontFamily: fontFamily.ui,
+                }}
+              >
+                {SLOT_LABELS[k]}
+              </Text>
+              <Slot k={k} />
+            </React.Fragment>
+          ))}
         </View>
 
         {/* Text input view */}
@@ -123,7 +202,7 @@ export function ShareStep({
       >
         <Btn
           kind="us"
-          onPress={onSubmit}
+          onPress={() => onSubmit(composeScaffold(slots, text))}
           disabled={!ready}
           sub="private, just for you"
         >
@@ -131,6 +210,28 @@ export function ShareStep({
         </Btn>
       </View>
       </KeyboardAvoidingView>
+      {openSlot ? (
+        <Sheet title={`${SLOT_LABELS[openSlot]}…`} onClose={() => setOpenSlot(null)}>
+          {SLOT_OPTIONS[openSlot].map((opt) => (
+            <Press key={opt} onPress={() => chooseSlot(openSlot, opt)} scale={false}>
+              <View style={{ paddingVertical: 12 }}>
+                <Text
+                  allowFontScaling={false}
+                  style={{
+                    fontSize: 15.5,
+                    lineHeight: 15.5 * 1.4,
+                    fontWeight: '500',
+                    color: slots[openSlot] === opt ? colors.p2Deep : colors.ink,
+                    fontFamily: fontFamily.ui,
+                  }}
+                >
+                  {opt}
+                </Text>
+              </View>
+            </Press>
+          ))}
+        </Sheet>
+      ) : null}
     </SafeAreaView>
   );
 }

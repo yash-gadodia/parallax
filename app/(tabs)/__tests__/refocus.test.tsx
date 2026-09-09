@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, userEvent } from '@testing-library/react-native';
+import { render, userEvent, act, fireEvent } from '@testing-library/react-native';
 import * as Clipboard from 'expo-clipboard';
 import RefocusScreen from '../refocus';
 import * as refocusContent from '../../../src/content/refocus';
@@ -258,9 +258,11 @@ describe('RefocusScreen — honest solo reflection', () => {
     ).toBeTruthy();
     expect(
       screen.getByText(
-        'We couldn\'t reach the AI just now. Your words are safe right here, give it another go in a moment.'
+        'That didn\'t come through. Nothing was lost, and nothing was sent anywhere. It\'s here exactly as you left it.'
       )
     ).toBeTruthy();
+    // "Nothing was lost" is only credible if the words are actually on screen.
+    expect(screen.getByText('we argued about dishes')).toBeTruthy();
     expect(screen.getByTestId('refocus-retry')).toBeTruthy();
   });
 
@@ -313,11 +315,22 @@ describe('RefocusScreen — honest solo reflection', () => {
     await goToShare(screen);
     await screen.findByText('Your side, in focus.', undefined, SETTLE);
 
+    // Copy is shut until the draft is touched — editing it is what makes the
+    // concession the user's own rather than the app's.
+    await user.press(screen.getByText('Edit to copy'));
+    expect(Clipboard.setStringAsync).toHaveBeenCalledTimes(0);
+
+    await act(async () => {
+      fireEvent.changeText(
+        screen.getByTestId('bridge-input'),
+        'hey, i went quiet because work buried me — my fault, not yours'
+      );
+    });
     await user.press(screen.getByText('Copy to share'));
 
     expect(Clipboard.setStringAsync).toHaveBeenCalledTimes(1);
     expect(Clipboard.setStringAsync).toHaveBeenCalledWith(
-      'hey, i went quiet because work buried me, not because of you 🤍'
+      'hey, i went quiet because work buried me — my fault, not yours'
     );
     expect(await screen.findByText('Copied 🤍')).toBeTruthy();
   });
@@ -365,6 +378,7 @@ describe('RefocusScreen — honest solo reflection', () => {
     expect(screen.getByText('findahelpline.com')).toBeTruthy();
     expect(screen.queryByText('Your side, in focus.')).toBeNull();
     expect(screen.queryByText('Copy to share')).toBeNull();
+    expect(screen.queryByText('Edit to copy')).toBeNull();
   });
 });
 

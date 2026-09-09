@@ -247,7 +247,10 @@ export default function RefocusScreen() {
           mode={mode}
           text={text}
           setText={setText}
-          onSubmit={() => {
+          onSubmit={(composed) => {
+            // The scaffold chips are part of the account, so what the model
+            // reads is the composed sentence plus whatever was typed.
+            setText(composed);
             track(EVENTS.REFOCUS_STARTED, { mode: 'solo', heat: heat ?? 'unknown' });
             setStep('waiting');
           }}
@@ -288,6 +291,7 @@ export default function RefocusScreen() {
 
       {step === 'error' && (
         <ErrorStep
+          text={text}
           onRetry={() => setStep('waiting')}
           onBack={() => setStep('share')}
         />
@@ -366,6 +370,7 @@ export default function RefocusScreen() {
 
       {step === 'togetherError' && (
         <ErrorStep
+          text=""
           onRetry={() => setStep('togetherMediating')}
           onBack={() => setStep('intro')}
         />

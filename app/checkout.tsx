@@ -20,6 +20,7 @@ import TopBar from '../src/components/TopBar';
 import { Mark } from '../src/components/Mark';
 import LegalLinks from '../src/components/LegalLinks';
 import { PLANS, PERKS } from '../src/content/pay';
+import { planPrice } from '../src/domain/planPrice';
 import { usePurchases } from '../src/features/purchases/usePurchases';
 import Toast from '../src/components/Toast';
 import { track, EVENTS } from '../src/lib/analytics';
@@ -47,6 +48,8 @@ export default function CheckoutScreen() {
   }, []);
 
   const pl = PLANS[plan];
+  // StoreKit charges the localised price; PLANS is only the bundled fallback.
+  const plPrice = planPrice(offering, plan, pl.price);
 
   // Spinner animation
   useEffect(() => {
@@ -348,7 +351,7 @@ export default function CheckoutScreen() {
                   marginBottom: 8,
                 }}
               >
-                Then billed <Text style={{ fontWeight: '700' }}>{pl.price} {pl.per}</Text>
+                Then billed <Text style={{ fontWeight: '700' }}>{plPrice} {pl.per}</Text>
               </Text>
               <Text
                 allowFontScaling={false}
@@ -425,8 +428,8 @@ export default function CheckoutScreen() {
             disabled={confirming}
             sub={
               plan === 'life'
-                ? `${pl.price} once · one price covers you both`
-                : `7 days free, then ${pl.price}${pl.per}`
+                ? `${plPrice} once · one price covers you both`
+                : `7 days free, then ${plPrice}${pl.per}`
             }
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -507,7 +510,9 @@ interface PlanCardProps {
 }
 
 function PlanCard({ id, selected, onSelect }: PlanCardProps) {
+  const offering = usePurchases((s) => s.offering);
   const p = PLANS[id];
+  const price = planPrice(offering, id, p.price);
   const planName = id === 'year' ? 'Annual' : id === 'month' ? 'Monthly' : 'Lifetime';
 
   return (
@@ -587,7 +592,7 @@ function PlanCard({ id, selected, onSelect }: PlanCardProps) {
                 fontFamily: fontFamily.disp,
               }}
             >
-              {p.price}
+              {price}
             </Text>
             <Text
               allowFontScaling={false}

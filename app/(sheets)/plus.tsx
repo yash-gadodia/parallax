@@ -5,7 +5,9 @@ import { useRouter } from 'expo-router';
 import { safeBack } from "../../src/lib/nav";
 import Sheet from '../../src/components/Sheet';
 import Btn from '../../src/components/Btn';
-import { presentPaywall } from '../../src/features/purchases/usePurchases';
+import { presentPaywall, usePurchases } from '../../src/features/purchases/usePurchases';
+import { planPrice } from '../../src/domain/planPrice';
+import { PLANS } from '../../src/content/pay';
 import { purchasesAvailable } from '../../src/features/purchases/client';
 import Press from '../../src/components/Press';
 import LegalLinks from '../../src/components/LegalLinks';
@@ -36,6 +38,10 @@ const perks = [
 export default function PlusSheet() {
   const router = useRouter();
   const { partner } = useIdentity();
+  // StoreKit charges the localised price; PLANS is only the bundled fallback.
+  const offering = usePurchases((s) => s.offering);
+  const monthly = planPrice(offering, 'month', PLANS.month.price);
+  const lifetime = planPrice(offering, 'life', PLANS.life.price);
 
   const handleStart = async () => {
     // Real build: present RevenueCat's hosted paywall; on unlock → success.
@@ -69,7 +75,7 @@ export default function PlusSheet() {
               fontFamily: fontFamily.ui,
             }}
           >
-            {`$4.99/mo or $79.99 lifetime · one price covers you and ${partner.name}`}
+            {`${monthly}/mo or ${lifetime} lifetime · one price covers you and ${partner.name}`}
           </Text>
         </View>
 
@@ -154,7 +160,7 @@ export default function PlusSheet() {
               marginBottom: 6,
             }}
           >
-            Trial ends <Text style={{ fontWeight: '700' }}>{getTrialEndDateString(7)}</Text>. Then billed <Text style={{ fontWeight: '700' }}>$4.99/mo</Text>.
+            Trial ends <Text style={{ fontWeight: '700' }}>{getTrialEndDateString(7)}</Text>. Then billed <Text style={{ fontWeight: '700' }}>{monthly}/mo</Text>.
           </Text>
           <Text
             allowFontScaling={false}
@@ -169,7 +175,7 @@ export default function PlusSheet() {
           </Text>
         </View>
 
-        <Btn kind="us" onPress={handleStart} sub="then $4.99/mo">
+        <Btn kind="us" onPress={handleStart} sub={`then ${monthly}/mo`}>
           Start 7 days free
         </Btn>
 

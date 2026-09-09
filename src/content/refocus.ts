@@ -1,3 +1,4 @@
+import type { SlotKey } from '../domain/scaffold';
 // Parallax Refocus: two honest modes.
 // SOLO — untangle your side of a rough moment. The AI only ever sees the
 // user's own words; it never invents or speaks for the partner.
@@ -166,4 +167,51 @@ export const COOL_DOWN = {
   ask: 'Give it twenty minutes. Walk, water, shower, anything that is not this. We will hold your place.',
   primary: "I've cooled off",
   secondary: 'Come back to this later',
+};
+
+// ── Scaffold slots (v3 write step) ───────────────────────────────
+// Tapping chips is a complete input on its own: a flooded person should be able
+// to reach an output having typed nothing. Every sheet also takes free text.
+export const SLOT_LABELS: Record<SlotKey, string> = {
+  they: 'They',
+  i: 'Then I',
+  then: 'Then',
+  hear: 'I wanted them to say',
+};
+
+export const SLOT_PLACEHOLDERS: Record<SlotKey, string> = {
+  they: 'did what',
+  i: 'did what',
+  then: 'what happened',
+  hear: 'what',
+};
+
+export const SLOT_OPTIONS: Record<SlotKey, string[]> = {
+  they: [
+    'made a plan without checking',
+    'went quiet on me',
+    'brought up my family',
+    'raised their voice',
+    'left',
+  ],
+  i: [
+    'brought their family into it',
+    "said something I don't mean",
+    'went quiet',
+    'raised my voice',
+    'left the room',
+    'kept score out loud',
+  ],
+  then: [
+    'they went quiet and left',
+    'silence all evening',
+    'we both slept on it',
+    'it got louder',
+  ],
+  hear: [
+    'that it mattered to them too',
+    'sorry, plainly',
+    'nothing, just quiet',
+    "that they'd noticed",
+  ],
 };
