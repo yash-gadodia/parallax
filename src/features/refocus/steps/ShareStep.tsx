@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TextInput } from 'react-native';
+import { View, Text, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon, ICONS } from '../../../components/Icon';
 import Btn from '../../../components/Btn';
@@ -35,7 +35,14 @@ export function ShareStep({
     <SafeAreaView style={{ flex: 1 }}>
       <TopBar title={title} onBack={onBack} />
 
-      <View style={{ flex: 1, paddingTop: 100, paddingBottom: 96 }}>
+      {/* The input is multiline, so Return inserts a newline and never submits.
+          Without this the keyboard covered the only way out of the screen. */}
+      <KeyboardAvoidingView
+        testID="share-keyboard-avoider"
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+      <View style={{ flex: 1, paddingTop: 100 }}>
         {/* Privacy notice */}
         <View
           style={{
@@ -105,14 +112,13 @@ export function ShareStep({
         </View>
       </View>
 
-      {/* Sticky button */}
+      {/* Sticky button — in flow so the KeyboardAvoidingView lifts it clear of
+          the keyboard instead of leaving it underneath. */}
       <View
         style={{
-          position: 'absolute',
-          bottom: 22,
-          left: space.gutter,
-          right: space.gutter,
-          zIndex: 40,
+          paddingHorizontal: space.gutter,
+          paddingTop: 12,
+          paddingBottom: 22,
         }}
       >
         <Btn
@@ -124,6 +130,7 @@ export function ShareStep({
           Untangle it
         </Btn>
       </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
