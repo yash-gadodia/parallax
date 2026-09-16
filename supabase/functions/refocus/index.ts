@@ -37,6 +37,9 @@ const MODEL = Deno.env.get("ANTHROPIC_MODEL") ?? "claude-haiku-4-5-20251001";
 // Screening uses the same cheap model family (haiku) — a separate env override
 // keeps it swappable without touching the mediation model.
 const SCREEN_MODEL = Deno.env.get("ANTHROPIC_SCREEN_MODEL") ?? "claude-haiku-4-5-20251001";
+// The One Side read is the product; a cheap model swapped who did what to whom
+// in live testing. Screening stays on haiku (a boolean pass), the read does not.
+const READ_MODEL = Deno.env.get("ANTHROPIC_READ_MODEL") ?? "claude-sonnet-5";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
@@ -572,11 +575,21 @@ const READ_TOOL = {
   input_schema: {
     type: "object",
     properties: {
+      user_did: {
+        type: "string",
+        description:
+          "WORKING NOTE, never shown to anyone. In one clause, what the person writing this account did, in their own telling (e.g. 'said fine in that voice and walked out'). Only acts they attribute to themselves.",
+      },
+      partner_did: {
+        type: "string",
+        description:
+          "WORKING NOTE, never shown to anyone. In one clause, what their PARTNER did, in their telling (e.g. 'made Saturday plans without checking'). Only acts attributed to the partner. Keep these two straight; everything below depends on not swapping them.",
+      },
       bridge_decision: {
         type: "string",
         enum: ["bridge", "no_bridge"],
         description:
-          "Decide FIRST. 'bridge' only if an honest, specific sentence worth sending exists. For flat moods, tiredness, friction with no real rupture, or anything where sending words would manufacture a conflict, choose 'no_bridge'. A deflationary answer is a success, not a failure.",
+          "Decide FIRST, by this test: does the account name BOTH a specific act the other person did AND something specific the user wanted instead (or a specific hurt about that act)? If yes, choose 'bridge' — the sentence already exists in what they told you, and refusing it would be withholding, not honesty. Choose 'no_bridge' ONLY when one of those is genuinely missing: a flat mood with no act behind it, ordinary tiredness, a vague heaviness, or an account where the user cannot point at anything they wanted different. Saying the hurt is valid and then offering nothing to send is a contradiction: if it is valid and specific, write the bridge. A deflationary answer is a success when the moment really is a mood, and a failure when it is avoidance.",
       },
       underneath: {
         type: "string",
@@ -605,6 +618,8 @@ const READ_TOOL = {
       },
     },
     required: [
+      "user_did",
+      "partner_did",
       "bridge_decision",
       "underneath",
       "not_wrong_about",
@@ -620,7 +635,7 @@ const SOLO_SYSTEM_V2 = `You are the quiet reader inside One Side. A person just 
 The three moves (inseparable):
 - UNDERNEATH: name what their reaction is protecting, from their own words. A need or a fear, not a diagnosis.
 - NOT WRONG ABOUT: commit to the one specific thing their partner is probably not wrong about. This is the product. Quote a concrete detail. Never hedge it into a possibility. The same honesty must run on both people: name the act, refuse the trait, and attribute any distortion to a mechanism every human has (tired, told after the fact, counting on something, time blindness, forgetting under load). "He is selfish" becomes "he made the plan without checking, on a night you had been counting on."
-- BRIDGE or NO BRIDGE: decide first whether an honest sentence worth sending exists. Many frictions are flat moods, not ruptures; for those, say there is no bridge and give permission to let it go. Never manufacture a conflict out of a bad Tuesday.
+- BRIDGE or NO BRIDGE: decide first, and decide honestly in both directions. A bridge exists whenever the account names a specific act plus a specific want or hurt about it; then the sentence is already in their own words and you are only shaping it. No bridge is for moments with no act behind them: a flat evening, a long week, a mood the user cannot pin to anything. Never manufacture a conflict out of a bad Tuesday, and never deflate a real, named grievance into "let it sit" just because it sounds calmer.
 
 Bridge rules (hard):
 - 40 words maximum. One paragraph. No greeting, no sign-off.
@@ -639,7 +654,13 @@ Singapore (when it appears in the account):
 - NS is a compulsory separation, not a choice.
 - Never suggest "counselling" (it points at pre-divorce filing programmes here). Never suggest apps or professionals at all; that is the safety screen's job, not yours.
 
-Pronouns: mirror whatever the user calls their partner (he, she, they, a name). Default to "they".
+Who is who (get this right or the whole read is worthless):
+- The account is written by the user, in first person. Every "I" in their account is the user; every "he/she/they" is their partner.
+- In the bridge, "I" is ALWAYS the user and "you" is ALWAYS the partner.
+- Never swap the acts. What the user described themselves doing stays theirs to own; what they described their partner doing stays the partner's. If they wrote that their partner made the plans, the bridge must not offer to move the plans; if they wrote that they went quiet, the bridge must not thank the partner for going quiet.
+- Before writing the bridge, name to yourself which act belongs to which person, then write it.
+
+Pronouns: mirror whatever the user calls their partner (he, she, they, a name) in underneath and not_wrong_about. Default to "they". The bridge itself always says "you".
 
 Voice:
 - A perceptive friend, not a therapist, a coach, or an AI.
@@ -681,9 +702,17 @@ function validateRead(input: Record<string, unknown>): ReadProblem | null {
   if (decision === "bridge") {
     const bridge = typeof input.bridge === "string" ? input.bridge.trim() : "";
     if (!bridge) return hard("missing_bridge");
-    if (bridge.split(/\s+/).length > 45) return hard("bridge_too_long");
+    const words = bridge.split(/\s+/).length;
+    // 40 words is the discipline; only a runaway paragraph is a hard failure.
+    if (words > 60) return hard("bridge_too_long");
     for (const ban of BRIDGE_BANS) {
       if (ban.test(bridge)) return hard("banned_phrase");
+    }
+    if (words > 40) {
+      return {
+        reason: `the bridge ran to ${words} words; cut it to 40 or fewer without losing the concession`,
+        hard: false,
+      };
     }
     if (BRIDGE_PERSON_SLIP.test(bridge)) {
       return {
@@ -742,7 +771,7 @@ async function handleSoloV2(
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
       input = await anthropicToolCall({
-        model: MODEL,
+        model: READ_MODEL,
         system: SOLO_SYSTEM_V2,
         tool: READ_TOOL,
         toolName: "provide_read",
