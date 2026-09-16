@@ -153,6 +153,10 @@ async function goToShare(screen: Screen) {
 }
 
 beforeEach(() => {
+  // This suite covers the LEGACY couples flow — the ONE_SIDE flag routes the
+  // screen to OneSideFlow, so pin it off here. The One Side path has its own
+  // integration suite (oneSideFlow.test.tsx).
+  jest.replaceProperty(refocusContent, 'ONE_SIDE', false);
   jest.useFakeTimers();
   mockInvoke = jest.fn(() => Promise.resolve({ data: REFLECTION, error: null }));
   mockStartRefocus = jest.fn(() => Promise.resolve('session-1'));

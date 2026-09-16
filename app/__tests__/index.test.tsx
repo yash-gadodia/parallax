@@ -72,13 +72,13 @@ describe('root index routing guard', () => {
     expect(mockLimit).not.toHaveBeenCalled();
   });
 
-  it('redirects a logged-in, paired user straight to today', async () => {
+  it('redirects a logged-in, paired user straight to capture (ONE SIDE)', async () => {
     mockUseSession.mockReturnValue({ session: { user: { id: 'u1' } }, loading: false });
     mockUseCouple.mockReturnValue({ couple: { id: 'c1' }, status: 'active', loading: false });
 
     await render(<HomeScreen />);
 
-    expect(mockRedirect).toHaveBeenCalledWith('/(tabs)/today');
+    expect(mockRedirect).toHaveBeenCalledWith('/(tabs)/refocus');
   });
 
   it('lets a pairing-pending user into the app to answer ahead', async () => {
@@ -87,7 +87,7 @@ describe('root index routing guard', () => {
 
     await render(<HomeScreen />);
 
-    expect(mockRedirect).toHaveBeenCalledWith('/(tabs)/today');
+    expect(mockRedirect).toHaveBeenCalledWith('/(tabs)/refocus');
   });
 
   it('sends a logged-in user with no couple (probe reachable) to onboarding', async () => {

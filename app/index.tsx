@@ -12,6 +12,7 @@ import Btn from '../src/components/Btn';
 import { Serif } from '../src/components/Text';
 import { colors, gradients, space } from '../src/design/tokens';
 import { fontFamily } from '../src/design/typography';
+import { ONE_SIDE } from '../src/content/refocus';
 
 export default function HomeScreen() {
   // "Try again" remounts the gate: useCouple fetches once per mount and exposes
@@ -62,7 +63,8 @@ function Gate({ onRetry }: { onRetry: () => void }) {
   // partner joins (migration 0011). Only a user with no couple yet ('none') goes
   // to onboarding to create/join an invite.
   if (session && (status === 'active' || status === 'pending')) {
-    return <Redirect href="/(tabs)/today" />;
+    // ONE SIDE test build: capture IS the launch screen (PRD §4.1).
+    return <Redirect href={ONE_SIDE ? '/(tabs)/refocus' : '/(tabs)/today'} />;
   }
 
   if (needsProbe && probe === 'pending') return <BrandedLoading />;

@@ -48,6 +48,74 @@ export interface RefocusSafety {
 
 export type RefocusAiResult = RefocusMediation | RefocusSafety;
 
+// ── ONE SIDE (v2 solo) ────────────────────────────────────────────
+// The pivot: one person, one account, three inseparable outputs, or a
+// first-class "there is no bridge here". Shape mirrors the edge fn's
+// handleSoloV2 exactly; the server normalizes (a no_bridge read never
+// carries a bridge string).
+
+export interface RefocusReadV2 {
+  schema: 'v2';
+  bridge_decision: 'bridge' | 'no_bridge';
+  underneath: string;
+  not_wrong_about: string;
+  bridge: string;
+  no_bridge: { noticed: string; let_go: string } | null;
+  screening_unavailable?: boolean;
+}
+
+// Test-build flag: the app opens straight into capture, the couples flow
+// stays reachable in code but off the path. Flip to false to restore v2.0.x.
+export const ONE_SIDE: boolean = true;
+
+export const CAPTURE_COPY = {
+  question: 'What happened?',
+  firstLine: 'Say it or type it. It stays yours.',
+  placeholder: 'Say it, or type it. Fragments are fine.',
+  justSave: 'Just save',
+  readIt: 'Read it',
+  pasteChat: 'Paste the chat',
+  chatConsent:
+    'Their words go with yours when you tap Read it. Only what you pasted, nothing else.',
+  savedAnnounce: 'Saved on this phone. Nothing sent.',
+};
+
+// Sentence stems on the keyboard accessory row: a speed affordance for
+// starting, not an information channel (PRD §0 — prose is primary).
+export const STEMS = [
+  'She said ',
+  'I let it go when ',
+  'The second time I ',
+  'I felt like the one who ',
+];
+
+export const WORKING_STAGES = [
+  'Hearing you',
+  "Finding what's underneath",
+  'Looking for a bridge',
+];
+export const WORKING_CONSIDERED = 'A considered answer, not a fast one.';
+
+export const READ_COPY = {
+  eyebrow: 'One sentence you could send',
+  underneathHead: 'Underneath it for you',
+  notWrongHead: "What they're probably not wrong about",
+  editHint: 'Tap the sentence to make it yours.',
+  editedHint: 'Yours now.',
+  useAsIs: 'Use it as is',
+  copy: 'Copy',
+  copied: 'Copied',
+  regenerate: "This isn't right, read it once more",
+  done: 'Done',
+};
+
+export const NO_BRIDGE_COPY = {
+  eyebrow: 'Tonight · read once',
+  headline: 'There is no bridge here.',
+  letGoLead: 'The honest thing is to let this one go.',
+  nothingToSend: 'Nothing to send.',
+};
+
 export type RefocusSessionState =
   | 'waiting_partner'
   | 'ready'

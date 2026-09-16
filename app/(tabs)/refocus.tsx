@@ -12,7 +12,9 @@ import {
   RefocusSafety,
   RefocusAiResult,
   HeatLevel,
+  ONE_SIDE,
 } from '../../src/content/refocus';
+import { OneSideFlow } from '../../src/features/refocus/OneSideFlow';
 import { track, EVENTS } from '../../src/lib/analytics';
 import { useSession } from '../../src/features/auth/useSession';
 import { useCouple } from '../../src/features/pairing/useCouple';
@@ -173,6 +175,13 @@ export default function RefocusScreen() {
     if (level === 'boiling') setStep('coolDown');
     else continueAfterHeat();
   };
+
+  // ONE SIDE test build: the solo pivot replaces the whole staged flow.
+  // Hooks above have all run, so this early return is hook-safe; flip the
+  // flag in src/content/refocus.ts to restore the v2.0.x couples flow.
+  if (ONE_SIDE) {
+    return <OneSideFlow />;
+  }
 
   const handleMediationDone = (res: RefocusAiResult) => {
     track(EVENTS.REFOCUS_COMPLETED);

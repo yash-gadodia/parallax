@@ -6,6 +6,7 @@ import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import TabBar from '../../src/components/TabBar';
 import { gradients } from '../../src/design/tokens';
+import { ONE_SIDE } from '../../src/content/refocus';
 
 type TabName = 'home' | 'refocus' | 'us';
 
@@ -38,6 +39,7 @@ export default function TabsLayout(): ReactNode {
   return (
     <View style={{ flex: 1 }}>
       <Tabs
+        initialRouteName={ONE_SIDE ? 'refocus' : 'today'}
         screenOptions={{ headerShown: false, tabBarStyle: { display: 'none' } }}
       >
         <Tabs.Screen name="today" />

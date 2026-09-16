@@ -11,6 +11,7 @@ export default function SheetsLayout() {
       <Stack.Screen name="share" />
       <Stack.Screen name="plus" />
       <Stack.Screen name="spice" />
+      <Stack.Screen name="receipts" />
     </Stack>
   );
 }

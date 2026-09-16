@@ -3,8 +3,69 @@ import { notifyRefocus } from '../notifications';
 import type {
   RefocusAiResult,
   RefocusMediation,
+  RefocusReadV2,
   RefocusSafety,
 } from '../../content/refocus';
+
+// ── ONE SIDE (v2) ──────────────────────────────────────────────────────────
+
+export type SoloV2Outcome =
+  | { read: RefocusReadV2 }
+  | { safety: RefocusSafety };
+
+function isReadV2(v: unknown): v is RefocusReadV2 {
+  const r = v as RefocusReadV2 | null;
+  if (!r || r.schema !== 'v2') return false;
+  if (typeof r.underneath !== 'string' || typeof r.not_wrong_about !== 'string') {
+    return false;
+  }
+  if (r.bridge_decision === 'bridge') {
+    return typeof r.bridge === 'string' && r.bridge.trim().length > 0;
+  }
+  return (
+    r.bridge_decision === 'no_bridge' &&
+    !!r.no_bridge &&
+    typeof r.no_bridge.noticed === 'string' &&
+    typeof r.no_bridge.let_go === 'string'
+  );
+}
+
+/**
+ * The One Side read: one account (plus an optional pasted chat excerpt) in,
+ * the v2 triad or a first-class no-bridge out. Null = failure; the screen
+ * shows the honest retry state and the words are already safe in the draft
+ * store. NOTE: nothing in this path ever calls mark_bridge_sent — "sent" is a
+ * manual act recorded in Receipts (PRD §7).
+ */
+export async function analyzeV2(
+  userText: string,
+  pastedChat?: string
+): Promise<SoloV2Outcome | null> {
+  try {
+    const { data, error } = await supabase.functions.invoke<
+      RefocusReadV2 & { safety?: RefocusSafety }
+    >('refocus', {
+      body: {
+        schema: 'v2',
+        userText,
+        ...(pastedChat?.trim() ? { pastedChat } : {}),
+      },
+    });
+    if (error || !data) return null;
+    if (
+      data.safety &&
+      (data.safety.type === 'crisis' || data.safety.type === 'abuse') &&
+      typeof data.safety.title === 'string' &&
+      Array.isArray(data.safety.helplines)
+    ) {
+      return { safety: data.safety };
+    }
+    if (isReadV2(data)) return { read: data };
+    return null;
+  } catch {
+    return null;
+  }
+}
 
 // Raised by start_refocus (0020) when the couple already has an open
 // (waiting_partner / ready) session.
@@ -92,9 +153,11 @@ export async function persistSoloRefocus(
 }
 
 /**
- * The solo author tapped "copy to share" on the bridge — mark the session so
- * the repair check-in becomes due 24h later (V2 F2, 0044). Idempotent and
- * fire-and-forget: a failure just means no check-in, never a broken share.
+ * LEGACY (couples flow only) — arms the 24h repair check-in that BOTH
+ * partners see. The One Side path must never call this: Copy records only
+ * 'copied' in the local Receipts store, and "sent" is the user's own manual
+ * mark there. (Stamping sent-on-copy both falsified the §7 test metric and
+ * pinged the partner from a one-person app.)
  */
 export async function markBridgeSent(sessionId: string): Promise<void> {
   try {

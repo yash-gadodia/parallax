@@ -544,6 +544,260 @@ This is the ONLY side you have. Reflect it back for them. Refer to their partner
   return json(input);
 }
 
+// ── ONE SIDE (v2 solo) ─────────────────────────────────────────────────────
+// The pivot product: one person, one account of a friction moment, three
+// inseparable outputs — (a) what's underneath for you, (b) the specific thing
+// the partner is probably not wrong about, (c) a sendable bridge under 40
+// words — OR a first-class "there is no bridge here". The client opts in with
+// body.schema === 'v2'; the legacy solo/mediation paths are untouched so the
+// shipped builds keep working.
+
+// One-person safety copy (the legacy abuseResult says "a couples app", wrong
+// register for One Side). Same helplines, same static-never-generated rule.
+function safetyStopResult() {
+  return {
+    type: "abuse" as const,
+    title: "This is bigger than one fight.",
+    message:
+      "What you described sounds heavier than something one sentence can bridge. This app isn't the right help for that, but help exists, it is confidential, and none of it needs your name.",
+    helplines: HELPLINES,
+  };
+}
+
+// Every field required; empty-string convention keeps forced tool use reliable
+// on small models (optional fields get silently dropped).
+const READ_TOOL = {
+  name: "provide_read",
+  description: "Return the structured one-sided read for the user.",
+  input_schema: {
+    type: "object",
+    properties: {
+      bridge_decision: {
+        type: "string",
+        enum: ["bridge", "no_bridge"],
+        description:
+          "Decide FIRST. 'bridge' only if an honest, specific sentence worth sending exists. For flat moods, tiredness, friction with no real rupture, or anything where sending words would manufacture a conflict, choose 'no_bridge'. A deflationary answer is a success, not a failure.",
+      },
+      underneath: {
+        type: "string",
+        description:
+          "What is underneath this for the user: the need or fear their reaction is protecting, named plainly from their own words. Name the act, never a trait. 1-3 short sentences.",
+      },
+      not_wrong_about: {
+        type: "string",
+        description:
+          "The PARTNER'S side, steelmanned: complete the thought 'they're probably not wrong about...'. It names what the partner sees correctly or carries legitimately (a duty, a load, an expectation the user knew about), quoting a concrete detail from the account. It is NEVER what the partner did wrong, and NEVER about whether the USER is right or wrong. Committed plainly, no 'maybe' or 'it could be'. Attribute any distortion to a mechanism every human has (tired, told after, time blindness), never a character flaw. 1-3 short sentences.",
+      },
+      bridge: {
+        type: "string",
+        description:
+          "When bridge_decision is 'bridge': one sendable message, 40 words maximum, one paragraph, no greeting or sign-off. It is written TO the partner, so address them as 'you' throughout and never refer to them in the third person (never 'she'/'he'/'they' for the partner, and never their name in the third person). The payload is a concession, an act of investment, or standing down, never a bare apology. Order: their side first, then yours in I-language, then the thing you own, then one concrete offer. Never end on 'are we ok?'. Never 'I'm sorry you felt', 'I'm sorry if', or 'I'm sorry but'. When bridge_decision is 'no_bridge': the empty string.",
+      },
+      no_bridge_noticed: {
+        type: "string",
+        description:
+          "When bridge_decision is 'no_bridge': one plain sentence naming what this actually was (a flat moment, a tired evening, a mood that is not a rupture). When 'bridge': the empty string.",
+      },
+      let_go: {
+        type: "string",
+        description:
+          "When bridge_decision is 'no_bridge': one quiet sentence giving permission to let this one go, no task attached. When 'bridge': the empty string.",
+      },
+    },
+    required: [
+      "bridge_decision",
+      "underneath",
+      "not_wrong_about",
+      "bridge",
+      "no_bridge_noticed",
+      "let_go",
+    ],
+  },
+};
+
+const SOLO_SYSTEM_V2 = `You are the quiet reader inside One Side. A person just had friction with their partner and told you their side. Only their side, and you both know it. Give them an honest read, not comfort.
+
+The three moves (inseparable):
+- UNDERNEATH: name what their reaction is protecting, from their own words. A need or a fear, not a diagnosis.
+- NOT WRONG ABOUT: commit to the one specific thing their partner is probably not wrong about. This is the product. Quote a concrete detail. Never hedge it into a possibility. The same honesty must run on both people: name the act, refuse the trait, and attribute any distortion to a mechanism every human has (tired, told after the fact, counting on something, time blindness, forgetting under load). "He is selfish" becomes "he made the plan without checking, on a night you had been counting on."
+- BRIDGE or NO BRIDGE: decide first whether an honest sentence worth sending exists. Many frictions are flat moods, not ruptures; for those, say there is no bridge and give permission to let it go. Never manufacture a conflict out of a bad Tuesday.
+
+Bridge rules (hard):
+- 40 words maximum. One paragraph. No greeting, no sign-off.
+- Payload: a concession, an act of investment, or standing down. Not an apology performance.
+- Order: their side, then yours in I-language, then the thing you own, then one concrete offer.
+- Banned: "are we ok", "I'm sorry you felt", "I'm sorry if", "I'm sorry but", any conditional apology.
+
+Never:
+- A prognosis, score, ratio, percentage, or clinical label on either person.
+- The sentence "your reaction probably looked disproportionate", or anything shaped like it.
+- Inventing the partner's feelings or words. Quoted chat excerpts the user pasted are the partner's real words; everything else about the partner is inference and must read as such.
+
+Singapore (when it appears in the account):
+- Money to parents is a legal duty and a norm, never a boundary failure.
+- A BTO flat is a dated deadline with real money attached, not a metaphor.
+- NS is a compulsory separation, not a choice.
+- Never suggest "counselling" (it points at pre-divorce filing programmes here). Never suggest apps or professionals at all; that is the safety screen's job, not yours.
+
+Pronouns: mirror whatever the user calls their partner (he, she, they, a name). Default to "they".
+
+Voice:
+- A perceptive friend, not a therapist, a coach, or an AI.
+- Specific to what they ACTUALLY said. Their real details. Nothing that would fit anyone.
+- Short, plain sentences. Warm, not mushy. Direct, not preachy.
+- NEVER use an em dash. Use a comma, a period, "and", or "but".
+- Do not use these tells: "it makes sense", "it stings", "pulls away", "can feel like", "a signal that", "at the end of the day", "hold space", "showing up".
+
+Always answer by calling the provide_read tool.`;
+
+// HARD: a bridge carrying these is not sendable, retry then fail honestly.
+const BRIDGE_BANS = [/are we ok/i, /i'?m sorry (you|if|but)\b/i];
+// SOFT: the bridge is written TO the partner, so third-person pronouns usually
+// mean the model slipped into narrating about them (seen live). It buys one
+// retry, but never a 502 — a legitimate "they" about in-laws or friends must
+// not cost the user their read.
+const BRIDGE_PERSON_SLIP = /\b(she|he|her|his|him)\b/i;
+
+interface ReadProblem {
+  reason: string;
+  hard: boolean;
+}
+
+function validateRead(input: Record<string, unknown>): ReadProblem | null {
+  const hard = (reason: string): ReadProblem => ({ reason, hard: true });
+  const decision = input.bridge_decision;
+  if (decision !== "bridge" && decision !== "no_bridge") {
+    return hard("bad_decision");
+  }
+  if (typeof input.underneath !== "string" || !input.underneath.trim()) {
+    return hard("missing_underneath");
+  }
+  if (
+    typeof input.not_wrong_about !== "string" ||
+    !input.not_wrong_about.trim()
+  ) {
+    return hard("missing_not_wrong_about");
+  }
+  if (decision === "bridge") {
+    const bridge = typeof input.bridge === "string" ? input.bridge.trim() : "";
+    if (!bridge) return hard("missing_bridge");
+    if (bridge.split(/\s+/).length > 45) return hard("bridge_too_long");
+    for (const ban of BRIDGE_BANS) {
+      if (ban.test(bridge)) return hard("banned_phrase");
+    }
+    if (BRIDGE_PERSON_SLIP.test(bridge)) {
+      return {
+        reason:
+          "the bridge referred to your partner in the third person; write it to them as \"you\"",
+        hard: false,
+      };
+    }
+  } else {
+    const noticed =
+      typeof input.no_bridge_noticed === "string"
+        ? input.no_bridge_noticed.trim()
+        : "";
+    const letGo = typeof input.let_go === "string" ? input.let_go.trim() : "";
+    if (!noticed || !letGo) return hard("missing_no_bridge");
+  }
+  return null;
+}
+
+async function handleSoloV2(
+  req: Request,
+  body: { userText?: string; pastedChat?: string; partnerName?: string }
+): Promise<Response> {
+  const userText = (body.userText ?? "").trim();
+  const pastedChat = (body.pastedChat ?? "").trim().slice(0, 6000);
+  if (!userText && !pastedChat) return json({ error: "missing_userText" }, 400);
+
+  if (await overRateLimit(req)) return json({ error: "rate_limited" }, 429);
+
+  // Screening covers the pasted transcript too — a selected excerpt sharpens
+  // the DARVO risk, it never softens it.
+  const verdict = await screenForSafety(
+    [userText, pastedChat].filter(Boolean),
+    "solo"
+  );
+  if (verdict === "crisis") {
+    console.log(JSON.stringify({ event: "refocus_escalation", mode: "solo_v2", type: "crisis" }));
+    return json({ safety: crisisResult() });
+  }
+  if (verdict === "abuse") {
+    console.log(JSON.stringify({ event: "refocus_escalation", mode: "solo_v2", type: "abuse" }));
+    return json({ safety: safetyStopResult() });
+  }
+
+  const chatBlock = pastedChat
+    ? `\n\nAn excerpt of the actual chat, selected and pasted by the user (the partner's quoted lines are real words, everything else about the partner stays inference):\n"""\n${pastedChat}\n"""`
+    : "";
+  const userMsg = `Their account of what happened:\n"""\n${userText || "(nothing typed, only the pasted chat below)"}\n"""${chatBlock}\n\nThis is the only side you have, and you both know it. Call provide_read.`;
+
+  let input: Record<string, unknown> | null = null;
+  let problem: ReadProblem | null = { reason: "not_run", hard: true };
+  // One corrective retry: forced tool use on a small model occasionally breaks
+  // a rule; a second pass naming the violation almost always lands. A SOFT
+  // problem keeps the second answer either way, so a stylistic slip never
+  // costs the user their read.
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      input = await anthropicToolCall({
+        model: MODEL,
+        system: SOLO_SYSTEM_V2,
+        tool: READ_TOOL,
+        toolName: "provide_read",
+        userMsg:
+          attempt === 0
+            ? userMsg
+            : `${userMsg}\n\nYour previous answer was rejected: ${problem?.reason}. Follow the field rules exactly this time.`,
+        maxTokens: 1024,
+      });
+    } catch (e) {
+      if (e instanceof AnthropicError) {
+        return json({ error: "anthropic_error", status: e.status, detail: e.detail }, 502);
+      }
+      return json({ error: "fetch_failed", detail: String(e) }, 502);
+    }
+    problem = input ? validateRead(input) : { reason: "no_tool_use", hard: true };
+    if (!problem) break;
+  }
+  if (!input || problem?.hard) {
+    console.log(
+      JSON.stringify({ event: "refocus_v2_invalid", reason: problem?.reason })
+    );
+    return json({ error: "no_read", reason: problem?.reason }, 502);
+  }
+  if (problem) {
+    console.log(
+      JSON.stringify({ event: "refocus_v2_soft", reason: problem.reason })
+    );
+  }
+
+  // Server-side normalization: a no-bridge read never carries a half-written
+  // bridge out of the building, and vice versa.
+  const noBridge = input.bridge_decision === "no_bridge";
+  // Voice rule enforced server-side: never an em dash out of the building.
+  const plain = (v: unknown) => String(v).replace(/\s*[\u2014\u2013]\s*/g, ", ").trim();
+  const result = {
+    schema: "v2" as const,
+    bridge_decision: input.bridge_decision,
+    underneath: plain(input.underneath),
+    not_wrong_about: plain(input.not_wrong_about),
+    bridge: noBridge ? "" : plain(input.bridge),
+    no_bridge: noBridge
+      ? {
+          noticed: plain(input.no_bridge_noticed),
+          let_go: plain(input.let_go),
+        }
+      : null,
+  };
+
+  if (verdict === "unavailable") {
+    return json({ ...result, screening_unavailable: true });
+  }
+  return json(result);
+}
+
 // ── TWO-SIDED mediation ────────────────────────────────────────────────────
 
 const MEDIATION_TOOL = {
@@ -781,6 +1035,8 @@ Deno.serve(async (req: Request) => {
     youName?: string;
     partnerName?: string;
     sessionId?: string;
+    schema?: string;
+    pastedChat?: string;
   };
   try {
     body = await req.json();
@@ -791,6 +1047,9 @@ Deno.serve(async (req: Request) => {
   try {
     if (typeof body.sessionId === "string" && body.sessionId.length > 0) {
       return await handleSession(req, body.sessionId);
+    }
+    if (body.schema === "v2") {
+      return await handleSoloV2(req, body);
     }
     return await handleSolo(req, body);
   } catch (e) {

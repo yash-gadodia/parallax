@@ -1,10 +1,13 @@
 import { render } from '@testing-library/react-native';
 import RefocusScreen from '../(tabs)/refocus';
 
-describe('Refocus Screen', () => {
-  it('renders the intro step with its pitch and the start CTA', async () => {
+// ONE SIDE: the refocus tab renders the capture surface directly — the
+// question, the named Just save, and Read it. No intro, no pitch.
+describe('Refocus Screen (One Side)', () => {
+  it('opens on capture: the question and both named actions', async () => {
     const { getByText, getByTestId } = await render(<RefocusScreen />);
-    expect(getByText(/last argument you had/)).toBeTruthy();
-    expect(getByTestId('refocus-start')).toBeTruthy();
+    expect(getByText('What happened?')).toBeTruthy();
+    expect(getByTestId('capture-read')).toBeTruthy();
+    expect(getByTestId('capture-save')).toBeTruthy();
   });
 });
