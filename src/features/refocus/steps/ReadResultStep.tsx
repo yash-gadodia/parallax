@@ -177,7 +177,6 @@ export function ReadResultStep({
                   fontSize: 22,
                   lineHeight: 22 * 1.25,
                   fontFamily: fontFamily.disp,
-                  fontStyle: 'italic',
                   color: colors.ink,
                 }}
               />
@@ -193,14 +192,19 @@ export function ReadResultStep({
               {unlocked ? READ_COPY.editedHint : READ_COPY.editHint}
             </Text>
 
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 10,
-                marginTop: 12,
-              }}
-            >
+            <View style={{ marginTop: 12 }}>
+              <Btn
+                kind={unlocked ? 'ink' : 'soft'}
+                testID="copy-bridge"
+                disabled={!unlocked}
+                onPress={async () => {
+                  await Clipboard.setStringAsync(msg.trim());
+                  setCopied(true);
+                  onCopied();
+                }}
+              >
+                {copied ? READ_COPY.copied : READ_COPY.copy}
+              </Btn>
               {!unlocked && (
                 <Press onPress={() => setOwned(true)} scale={false}>
                   <Text
@@ -210,28 +214,14 @@ export function ReadResultStep({
                       fontWeight: '500',
                       color: colors.inkSoft,
                       fontFamily: fontFamily.ui,
-                      paddingVertical: 12,
-                      paddingHorizontal: 6,
+                      textAlign: 'center',
+                      paddingVertical: 14,
                     }}
                   >
                     {READ_COPY.useAsIs}
                   </Text>
                 </Press>
               )}
-              <View style={{ flex: 1 }}>
-                <Btn
-                  kind={unlocked ? 'ink' : 'soft'}
-                  testID="copy-bridge"
-                  disabled={!unlocked}
-                  onPress={async () => {
-                    await Clipboard.setStringAsync(msg.trim());
-                    setCopied(true);
-                    onCopied();
-                  }}
-                >
-                  {copied ? READ_COPY.copied : READ_COPY.copy}
-                </Btn>
-              </View>
             </View>
 
             <ReadCard

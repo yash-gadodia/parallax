@@ -47,12 +47,15 @@ describe('CaptureStep', () => {
     expect(getByText('Say it or type it. It stays yours.')).toBeTruthy();
   });
 
-  it('Read it stays inert until words exist, then submits the account', async () => {
+  // Nothing greys out: at launch Speak is the only action, and the two named
+  // buttons arrive with the first words rather than sitting there dead.
+  it('shows no actions until words exist, then submits the account', async () => {
     const { props, onRead } = setup();
-    const { getByTestId } = await render(<CaptureStep {...props} />);
+    const { getByTestId, queryByTestId } = await render(<CaptureStep {...props} />);
 
-    fireEvent.press(getByTestId('capture-read'));
-    expect(onRead).not.toHaveBeenCalled();
+    expect(queryByTestId('capture-read')).toBeNull();
+    expect(queryByTestId('capture-save')).toBeNull();
+    expect(getByTestId('capture-speak')).toBeTruthy();
 
     await act(async () => {
       fireEvent.changeText(

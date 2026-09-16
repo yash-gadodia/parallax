@@ -71,7 +71,7 @@ export const ONE_SIDE: boolean = true;
 export const CAPTURE_COPY = {
   question: 'What happened?',
   firstLine: 'Say it or type it. It stays yours.',
-  placeholder: 'Say it, or type it. Fragments are fine.',
+  placeholder: 'Fragments are fine.',
   justSave: 'Just save',
   readIt: 'Read it',
   pasteChat: 'Paste the chat',

@@ -155,6 +155,7 @@ export function CaptureStep({
             multiline
             placeholder={CAPTURE_COPY.placeholder}
             placeholderTextColor={colors.inkMute}
+            selectionColor={colors.p1Deep}
             style={{
               flex: 1,
               marginTop: 10,
@@ -287,33 +288,33 @@ export function CaptureStep({
 
           {/* Speak — the hero until words exist, then it steps aside. */}
           {!has && (
-            <Btn kind="us" onPress={speak} testID="capture-speak">
+            <Btn kind="coral" onPress={speak} testID="capture-speak">
               Speak
             </Btn>
           )}
 
-          <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
-            <View style={{ flex: 1 }}>
-              <Btn
-                kind="soft"
-                testID="capture-save"
-                disabled={!has}
-                onPress={() => onJustSave(text, chat ? chatToText(chat) : null)}
-              >
-                {CAPTURE_COPY.justSave}
-              </Btn>
+          {has && (
+            <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
+              <View style={{ flex: 1 }}>
+                <Btn
+                  kind="soft"
+                  testID="capture-save"
+                  onPress={() => onJustSave(text, chat ? chatToText(chat) : null)}
+                >
+                  {CAPTURE_COPY.justSave}
+                </Btn>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Btn
+                  kind="ink"
+                  testID="capture-read"
+                  onPress={() => onRead(text, chat ? chatToText(chat) : null)}
+                >
+                  {CAPTURE_COPY.readIt}
+                </Btn>
+              </View>
             </View>
-            <View style={{ flex: 1 }}>
-              <Btn
-                kind="ink"
-                testID="capture-read"
-                disabled={!has}
-                onPress={() => onRead(text, chat ? chatToText(chat) : null)}
-              >
-                {CAPTURE_COPY.readIt}
-              </Btn>
-            </View>
-          </View>
+          )}
 
           {/* Sentence stems: appenders, not a taxonomy. Always one row. */}
           <ScrollView
