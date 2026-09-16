@@ -1,11 +1,9 @@
 import React from 'react';
 import { View, ScrollView, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Peek } from '../../../components/Peek';
 import Card from '../../../components/Card';
 import { Serif } from '../../../components/Text';
 import TopBar from '../../../components/TopBar';
-import { Float } from '../../../components/Float';
 import { colors, space } from '../../../design/tokens';
 import { fontFamily } from '../../../design/typography';
 import {
@@ -23,7 +21,7 @@ export function SafetyStep({
 }) {
   return (
     <SafeAreaView style={{ flex: 1 }}>
-      <TopBar title="refocus" onBack={onBack} />
+      <TopBar title="" onBack={onBack} />
       <ScrollView
         scrollEnabled
         showsVerticalScrollIndicator={false}
@@ -33,17 +31,11 @@ export function SafetyStep({
           paddingBottom: 60,
         }}
       >
-        <View style={{ alignItems: 'center', marginBottom: 20 }}>
-          <Float distance={7} duration={4000}>
-            <Peek size={96} mood="focus" />
-          </Float>
-        </View>
         <Serif
           s={30}
           style={{
-            textAlign: 'center',
             marginBottom: 14,
-            lineHeight: 30 * 1.09,
+            lineHeight: 30 * 1.13,
           }}
         >
           {safety.title}
@@ -53,7 +45,6 @@ export function SafetyStep({
             fontSize: 15,
             lineHeight: 15 * 1.55,
             color: colors.ink,
-            textAlign: 'center',
             fontFamily: fontFamily.ui,
             marginBottom: 24,
           }}
