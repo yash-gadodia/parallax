@@ -1,250 +1,154 @@
-# Parallax — PRD, solo rebuild
+# Parallax — PRD, solo rebuild ("One Side")
 
-Status: DRAFT for Yash
+Status: DRAFT v2 for Yash
 Date: 2026-09-16
-Supersedes: the v2 two-sided mediator as the product's centre of gravity
+Supersedes: PRD-solo v1 (2026-09-16), which this corrects in three places
 
 ---
 
-## 1. The decision that starts this
+## 0. What changed from v1, and why
 
-Parallax stops being a two-person app. No invite, no pairing, no partner account,
-no shared view. One person, their own phone, their own record.
+Three things in the first draft were wrong. Research after it was written contradicted them:
 
-This is not a retreat. Across five clusters of competitor research, **partner
-dependency was the most consistent failure in the category** — and it fails
-hardest at the exact moment the product is needed. Two representative findings:
+| v1 said | Corrected to | Because |
+|---|---|---|
+| Scaffold chips **above** the text box | Prose is **primary**; chips become sentence stems on the **keyboard accessory bar** | Chips feed a model that reads prose far better than any taxonomy, and the concession cannot be specific without prose. Chips are a speed affordance for starting, not an information channel. |
+| 30-day deletion as a **principle** and a positioning claim | Purge locally because it is cheap; **do not build positioning on it** | Not one person in the demand corpus asks for expiry. It is aimed at an objection it does not answer — the provider saw the text on day zero — and the one place users do speak about their own archive, they want it kept. |
+| "Submittable from one chip" as a headline feature | **Resolved via voice**, not chips | Three words cannot produce a specific steelman. "Submit from one chip" and "the concession must quote a concrete detail" cannot both be true. |
 
-- Paired (207K ratings) has **no flow at all** for during or after a specific
-  fight. Conflict is a magazine topic.
-- A Lasting reviewer, on that app's own Conflict and Repair curriculum: *"we felt
-  that we were left on our own for those questions where we did not agree. You
-  are just left hanging."*
-- And the recurring churn reason, in users' words: *"it requires both partners to
-  actually use the app, and that did not happen for any of them."*
+## 1. The honest framing
 
-Removing the second person removes the category's main way of dying.
+> There is no defensible **product** opportunity here. There is a real **personal tool** opportunity. These are different things and the plan must not conflate them.
 
-## 2. Who it is for, in order
+The interpretation is commodity — same model, same words, and people have already hand-written prompts that do (a) and (b). A saved prompt plus Apple Notes reproduces most of it in four minutes.
 
-The audience is a ladder, and each rung is a gate on the next:
+**The part it cannot reproduce is not what earlier research claimed.** It is not prompt discipline and it is not the edit gate. It is two things:
 
-1. **Yash, using it himself** — repeatedly, unprompted, over weeks
+**1. Being the right place to be at 11pm.** Opening a general chatbot means arriving at a blank cursor in the same app you used for a work bug, and composing a paragraph at the moment of lowest composure. Time-to-output under duress is a real axis, and it is **entirely UI**.
+
+**2. Lowering the shame of asking.** There is a felt difference between *"I am a person who types my partner's behaviour into ChatGPT"* and *"I opened the thing that is for this."* A purpose-built surface grants permission. This was named in none of the five research rounds and is more likely than anything else to be what makes the app get opened.
+
+Everything in this document should be judged against those two, not against feature parity with anything.
+
+## 2. Audience ladder
+
+1. **Yash**, repeatedly and unprompted, over weeks
 2. **Dani**
-3. **A few friends**
-4. **Real users / growth** — only once 1–3 hold
+3. **Three to five friends**, screened for having had a fight in the last month
+4. **Real users** — only if 1–3 hold, and the answer may still be no
 
-Nothing in this document optimises for rung 4. No funnel, no virality, no
-retention mechanics. The goal at rungs 1–3 is that the thing is *good*; if it is
-good, rung 4 becomes a question worth asking later.
+Nothing here optimises for rung 4.
 
-## 3. The tension this PRD has to resolve
+## 3. Product: "One Side"
 
-**Stated goal: "myself, using it daily." Reality: nobody fights daily.**
+One person logs a friction moment. The app returns, inseparably:
 
-An app whose trigger is conflict is episodic — perhaps two to six times a month,
-often less. There are only three honest responses:
+- **(a)** what is underneath it for you
+- **(b)** the specific thing your partner is probably not wrong about
+- **(c)** a **bridge** — one sentence under 40 words you could send
 
-**(a) Accept that it is episodic, and change the success measure.**
-The bar becomes *"used every time it was relevant"*, not *"opened every day"*.
-A tool used 100% of the times it mattered is working perfectly at 3 sessions a
-month. Measuring it by DAU would call that failure.
+The partner never has an account, never gets a link, never sees a screen. The bridge is the only thing that leaves, and it leaves because you copied it.
 
-**(b) Add a daily surface so the app has a reason to exist between fights.**
-This is what v1 did with the daily drop and pulse. It was cut in v2 for being
-homework, and the competitor research is unambiguous about where that leads —
-the single loudest complaint about Paired is that it *"feels like homework"* and
-partners stop opening it.
+### Non-obvious requirement: "there is no bridge here"
 
-**(c) Widen the trigger from "fights" to "friction".**
-Not only the shouting matches — the flat tone, the thing you let go, the second
-time this week you felt like the flexible one. That is genuinely more frequent
-without being a manufactured habit, and it feeds the pattern engine with real
-material.
+The trigger is widened from fights to **friction** — flat tones, the thing you let go. For a large share of those the correct output is **deflationary**, and forcing a bridge would manufacture a conflict out of a bad mood.
 
-**Recommendation: (a) plus (c). Explicitly not (b).**
-Widen the trigger to friction, and measure relevance-coverage rather than daily
-opens. Do not build a streak, a daily prompt, a reminder habit, or any mechanic
-whose purpose is to make the app open on a day when nothing happened. If Yash
-finds himself opening it most days, that is because friction is more frequent
-than fights — not because the app nagged.
+**"There is no bridge here" must be a first-class, designed output**, not a failure case. It says what it noticed, says the honest thing is to let it go, and offers nothing to send. The success test must not punish it.
 
-## 4. What the app gives back — the core decision
+## 4. Screens — the whole app
 
-Three candidates, with a recommendation.
+Six, and fewer would be better.
 
-### Option A — Understanding now, plus patterns over time
-Each entry returns what was underneath it for you. Across entries, the app names
-what keeps recurring. No advice, no words to use.
+**1 · Capture** — the launch screen. No onboarding, no account, no tour. Keyboard raised on open.
+- A large free-text box, **primary**. Prose is what the model needs.
+- **Mic button** dumping an on-device transcript into the same box. Speech is roughly 3× faster than thumb-typing, survives being upset, and is the only thing that produces enough material for a specific (b). No emotion-capture app opens on the mic.
+- **Sentence stems on the keyboard accessory bar**, not chips above the box: *"She said…"*, *"I let it go when…"*, *"The second time I…"*, *"I felt like the one who…"*. Tapping appends the stem and hands you the first four words.
+- An inline **`+`** for a friction type not in the list — it becomes a text field in the same row.
+- Submit live from the first keystroke or stem. A named second button, **"Just save"**, which writes locally and makes no model call. Naming it is what gives permission.
+- One quiet line about where the words go.
 
-- ✅ Squarely matches "get to know yourself and your partner better"
-- ❌ This is the **most crowded space in the research**. Rosebud, Stoic, Finch,
-  How We Feel, Day One all do reflective self-knowledge, several of them free.
-  Nothing here is something a person cannot get more easily elsewhere.
+**2 · Working / Retry** — **built first.** The raw entry is written to local storage *before* the call. On failure the text is still on screen with one Retry. Streaming, not a spinner.
 
-### Option B — Keep the bridge, add the patterns ← RECOMMENDED
-Each entry returns three things, inseparable: what is underneath it for you, the
-specific thing your partner is probably not wrong about, and **one sentence you
-could actually send**. Over time, the recurring shape is named.
+**3 · Result** — the bridge first, at the top, editable, `Copy` only. (a) and (b) below it, short. One "this isn't right" → single regenerate. Or the no-bridge variant.
 
-- ✅ Preserves the **only defensible gap the research found**: every substitute a
-  person can reach at 11pm — a friend, a subreddit, ChatGPT, Notes — is selected
-  for agreement. Nothing defaults to naming the part your partner is not wrong
-  about, and nothing ends in a sendable sentence that concedes it.
-- ✅ Consistent with the answer to "does the partner disappear": they are gone
-  from the app, but **you still send things**. The bridge is the artefact that
-  leaves.
-- ✅ The concession is what makes the self-knowledge land. "You were the flexible
-  one again" is a horoscope. "You brought his mother into it, and that is what
-  moved the fight off the booking" is not.
-- ❌ Highest quality bar. A tone-deaf sentence an hour after a fight is worse
-  than nothing.
+**4 · Receipts** — a minimal list of what was logged and, of the bridges, which were actually sent. This exists to run the test in §6, not as a feature.
 
-### Option C — Patterns only, no advice, no words
-It reflects and notices; it never suggests what to say.
+**5 · Safety stop** — Tier 1 full stop: a plain sentence, verified local routes, a device-safety line, delete-what-I-wrote.
 
-- ✅ Lowest risk
-- ❌ Least actionable, and lands in the same crowded space as A
+**6 · Settings** — notifications off by default, delete everything, subscription.
 
-**Recommendation: B.** The bridge is the reason this is not a journal. Dropping
-it makes Parallax a worse Rosebud. Keeping it is the whole claim.
+## 5. Quality bar
 
-## 5. The archive problem, answered deliberately
+**Construction:** name the act, refuse the trait, attribute the distortion to a mechanism every human has, and run the identical operation on both people. *"He is selfish"* becomes *"he made the plan without checking, on a night you had been counting on"* — and the same move applied to the user is honest rather than cruel.
 
-"Log fights" walks straight into the finding that a **browsable archive of your
-arguments is a liability object inside a relationship** — it converts *"I
-apologised for that"* into *"you did this in March"*, and it is the first thing
-someone reaches for when angry.
+**The bridge:** 40 words max, one paragraph, no greeting or sign-off. The payload is a concession, an act of investment, or standing down — not an apology. Order: their side, then yours in I-language, then the thing you own, then one concrete offer. Never ends on *"are we ok?"*. Bans every conditional apology.
 
-The product needs self-knowledge over time without becoming evidence. The
-resolution:
+**Never:** a prognosis, score, ratio, percentage, or a clinical label on either person.
 
-- **Raw writing is deleted after 30 days.** Automatic, stated plainly at the
-  point of writing, not buried in settings.
-- **What persists is shape, never transcript**: topic, what it touched, how it
-  ended. Enough to notice "this is the third version of the same fight",
-  not enough to re-litigate one.
-- **No browsable list of named fights.** No titles like "Dinner at your mum's,
-  again" in a scrollable feed.
-- **Patterns decay.** A recurring theme that stops recurring fades out rather
-  than standing as a permanent charge.
-- **One-tap delete everything**, and it really deletes.
+**Singapore:** money to parents is a legal duty, not a boundary failure; a BTO flat is a dated deadline, not a metaphor; NS is a compulsory separation; "counselling" points at pre-divorce-filing programmes and must never be suggested.
 
-This is a real constraint, not a privacy footnote: it is what separates
-self-knowledge from score-keeping.
+## 6. Safety
 
-## 6. Scope
+From one written account this **cannot** reliably distinguish coercive control from ordinary conflict. DARVO is optimised against exactly this reader: an offender's account reads reasonable, a victim's reads disproportionate. So the feature that names your contribution would, pointed at someone being controlled, tell them they were wrong.
 
-### In
-- One-person capture of a friction moment: a scaffold of tappable slots above a
-  free-text box, submittable from a single chip
-- The three-part return: underneath / what they are not wrong about / the bridge
-- The bridge is editable and must be touched before it can be copied. Copy only,
-  never a Send button
-- Decaying pattern line across entries
-- 30-day raw deletion, shape retention, one-tap delete-all
-- Two-tier safety: a hard stop for violence, coercion, self-harm and child
-  safety; and a silent downgrade that suppresses the accountability paragraph
-  and the partner-side read when the account is ambiguous
-- Account, notifications, subscription management, delete
+- **Tier 1, hard stop** — violence, threats, coercion, stalking, financial control, fear of the partner, self-harm, child safety, a minor with an adult.
+- **Tier 2, silent downgrade** — over-inclusive, never announced, never scored. Suppresses the accountability paragraph, the partner-side read, and any demand bridge. Uncertainty resolves toward downgrade.
 
-### Out
-- Any partner account, invite, link, pairing or shared view
-- Streaks, scores, ratings, percentages, prognoses
-- A daily prompt, pulse, reminder habit or content library
-- A widget or Live Activity (a partner can see a lock screen)
-- A browsable archive of past fights
-- A chat interface
-- Credibility theatre: cited studies, clinician logos, "clinically backed"
+**Governing rule: if it is not safe to tell someone to reach out, it is not safe to tell them what they did wrong.**
 
-## 7. Quality bar for the output
+Highest-harm sentence to suppress: *"your reaction probably looked disproportionate to him."*
 
-These are product requirements, not copy suggestions. Grounded in the conflict
-research.
+## 7. The test, and the stop condition
 
-**Construction:** name the act, refuse the trait, attribute the distortion to a
-mechanism every human has, and apply the identical operation to both people.
-"He is selfish" becomes "he made the plan without checking, on a night you had
-been counting on" — and the same move run on the user is honest rather than cruel.
+### The paired-run test
 
-**The bridge:**
-- 40 words maximum, one paragraph, no greeting or sign-off
-- The payload is a concession, an act of investment, or standing down — not an
-  apology. An apology may ride along in one clause; it is never the whole message
-- Order: acknowledge their side, then yours in I-language, then the specific
-  thing you own, then one concrete offer
-- Never ends on a request for forgiveness or a status check. No "are we ok?"
-- Bans every conditional apology: "I'm sorry you felt", "I'm sorry but",
-  "I'm sorry if", "I apologise for my part"
+Over the next **five real frictions**, at each one do both:
+1. Open the app and complete the loop.
+2. Within the same hour, paste the same account into a fresh chat with the best prompt Yash can write himself.
 
-**Never:** a prognosis, a score, a ratio, a percentage, or a clinical label on
-either person.
+One week later, blind: strip the formatting off all ten outputs, shuffle, read cold. For each (b), mark whether it names something he would not have said in advance. From Receipts, note which bridges were actually **sent**.
 
-**Singapore specifics** (the app's first and only market for now): money sent to
-parents is a legal duty under the Maintenance of Parents Act, not a boundary
-failure; a BTO flat is a dated deadline, not a metaphor; National Service is a
-compulsory separation neither person chose; and "counselling" points at
-pre-divorce-filing programmes, so it must never be offered as a suggestion.
+**Pre-register in a sealed note before the first commit**, so they cannot move:
+- the three recurring fights he believes they have
+- the pass condition, in his own handwriting
 
-## 8. Safety — the constraint that shapes everything
+### Pass
+At least 3 frictions worth logging occurred · at least 2 bridges **sent** · the app's output beat his cold prompt on more than half the blind reads.
 
-From one written account, **this app cannot reliably distinguish coercive control
-from ordinary conflict.** DARVO is optimised against exactly this reader: an
-offender's account reads as reasonable and self-contained, a victim's reads as
-disproportionate and history-laden. So the feature that names your contribution
-would, pointed at someone being controlled, tell them they were wrong.
+### Stop building if any of these
+- **Fewer than 3 loggable frictions in three weeks.** The trigger is a fantasy. The rescue for this is never a reminder — one comparable app's reminder-driven retention went 206 → 133 → 72 → 7.
+- **Zero bridges sent.** Copied-but-not-sent is a fail.
+- **He cannot pick the app's output above his own cold prompt.** Then it is a wrapper and the honest move is a saved prompt.
+- **The most honest sentence at week three is "writing it out helped; I skimmed the output."** Then the value was the writing, and the app is not the thing that did it.
 
-Two tiers, and the second is the non-obvious one:
+## 8. Untested assumptions
 
-- **Tier 1, hard stop.** Physical acts, threats, strangulation, weapons, coerced
-  sex, stalking, financial control, being prevented from leaving, fear of the
-  partner, self-harm, child safety, a minor with an adult. No analysis, no
-  bridge, no accountability. A plain sentence, verified local routes, a device-
-  safety line.
-- **Tier 2, silent downgrade.** A deliberately over-inclusive screen that never
-  announces itself and never shows a score. It suppresses the accountability
-  paragraph, the partner-side read, and any demand-style bridge. Uncertainty
-  resolves toward downgrade.
+In descending order of how much collapses if wrong:
 
-**The governing rule: if it is not safe to tell someone to reach out, it is not
-safe to tell them what they did wrong.**
+1. **That Yash will reach for an app at the moment of friction at all.** He has never done this. No evidence anywhere in the research is about him. Everything else sits on this.
+2. That frictions worth logging occur at least weekly. Nothing establishes the rate.
+3. That a specific, non-generic (b) is reliably producible from one short, one-sided account. **Never demonstrated once, anywhere.**
+4. That (b) is welcome when it is right. The only direct evidence points the other way.
+5. That anyone sends the bridge.
+6. That the edit gate reads as care rather than obstruction. No user has ever asked for it.
 
-The single highest-harm sentence to suppress: *"your reaction probably looked
-disproportionate to him."*
+## 9. Explicitly not building
 
-## 9. Success criteria, by rung
+Partner accounts, invites, links, shared views · streaks, scores, ratings, prognoses · a daily prompt, pulse or reminder · a widget or Live Activity (a partner can see a lock screen) · a browsable archive of named fights · a recurrence engine (12–16 evenings on the least-evidenced gap, and empty for its first 6–10 weeks) · a content library · credibility theatre.
 
-**Rung 1 — Yash.** Used every time a friction moment was worth logging, over at
-least four weeks, unprompted. At least one bridge sent to Dani that changed how
-a conversation went. Not measured: daily opens.
+## 10. Build order
 
-**Rung 2 — Dani.** Uses it on her own, for her own moments, without being asked
-twice. Says something the app gave her that she would not have got from talking
-to a friend.
+1. **Working / Retry** first — everything else depends on not losing what was written
+2. Capture: prose-primary, mic, keyboard-bar stems, "Just save"
+3. Result, including the no-bridge variant
+4. Receipts (for the test)
+5. Safety Tier 1 + Tier 2 downgrade
+6. Settings
 
-**Rung 3 — a few friends.** Three to five people, screened for having had a fight
-in the last month. Each used it through a real one. At least one can quote a line
-it gave them.
+Target: one afternoon plus roughly four evenings. Existing code already has a working capture-to-reflection loop to build on.
 
-**Rung 4 — only then.** Growth is a question for after rungs 1–3 hold, and the
-answer might still be "no".
+## 11. Open
 
-## 10. Open questions
-
-- Pricing. A subscription exists and Yash wants to keep it. The ladder is
-  currently broken: S$59.98/yr against S$6.98/mo is an 8.6-month break-even when
-  comparables run 2–5, which makes the annual irrational to buy. The core loop
-  stays free either way.
-- What exactly the pattern line can claim on 10–20 noisy self-reported events a
-  year without overstating.
-- Whether "friction" as the trigger holds up in practice or quietly becomes a
-  daily journal.
-- The IMH helpline number (6389 2222) in the shipped edge function has never been
-  verified against an official source.
-
-## 11. Next
-
-1. Approve or amend this PRD, especially §3 (daily vs episodic) and §4 (the output)
-2. Targeted research on the gaps in §10
-3. UI/UX in Claude Design against this document
-4. Build as 2.1
+- Pricing: keep the subscription; the ladder is broken (S$59.98/yr vs S$6.98/mo is an 8.6-month break-even against comparables at 2–5). Core loop free either way.
+- The IMH helpline number in the shipped edge function has never been verified against an official source.
+- `borderCurve: 'continuous'` is set on zero of 114 rounded corners.
