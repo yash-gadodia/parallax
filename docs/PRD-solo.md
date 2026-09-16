@@ -65,6 +65,7 @@ Six, and fewer would be better.
 - **Sentence stems on the keyboard accessory bar**, not chips above the box: *"She said…"*, *"I let it go when…"*, *"The second time I…"*, *"I felt like the one who…"*. Tapping appends the stem and hands you the first four words.
 - An inline **`+`** for a friction type not in the list — it becomes a text field in the same row.
 - Submit live from the first keystroke or stem. A named second button, **"Just save"**, which writes locally and makes no model call. Naming it is what gives permission.
+- **Chat import — paste or screenshot (decided 2026-09-16).** Fights happen on WhatsApp/Telegram; the transcript is the strongest fix for the least-evidenced assumption (§8.3 — a specific (b) from one short account). Two routes only: pasted text (WhatsApp multi-copy `[time, date] Name:` lines auto-parsed into a who-said-what quote block, partner lines violet-marked, removable) and an attached screenshot (sent to the model as an image — vision reads it; no OCR module, no new build). Explicitly NOT: direct WhatsApp pull (no API exists) or Telegram TDLib login (whole-account access, out of proportion). The quote is evidence inside the user's account, always user-selected, never a whole history. A one-line consent note appears only when a chat is attached ("Their words go with yours when you tap Read it"). Safety screening runs on the transcript too — a selected excerpt sharpens the DARVO risk, it does not soften it.
 - One quiet line about where the words go.
 
 **2 · Working / Retry** — **built first.** The raw entry is written to local storage *before* the call. On failure the text is still on screen with one Retry. Streaming, not a spinner.
@@ -134,9 +135,21 @@ In descending order of how much collapses if wrong:
 
 ## 9. Explicitly not building
 
+**A separate ADHD app (logged 2026-09-16, after Yash's diagnosis).** The market is crowded (Inflow, Tiimo, Numo, Goblin Tools, Flown…) and ADHD users are the highest-churn audience in consumer apps. Two things survive the log: (1) when the prompt is built, add ADHD-aware fight-script framing — time blindness ≠ not caring, forgetting ≠ not loving; RSD moments are already One Side's domain and the "mechanism every human has" construction fits them natively; (2) if the §7 test FAILS, the ADHD space is the sanctioned next place to point this same playbook — one specific moment, self-use first, pre-registered stop conditions, never "an ADHD app" in general. Deep market research on request then, not before.
+
+
 Partner accounts, invites, links, shared views · streaks, scores, ratings, prognoses · a daily prompt, pulse or reminder · a widget or Live Activity (a partner can see a lock screen) · a browsable archive of named fights · a recurrence engine (12–16 evenings on the least-evidenced gap, and empty for its first 6–10 weeks) · a content library · credibility theatre.
 
 ## 10. Build order
+
+> **BUILT 2026-09-16** (v2.1.0, build 19 → TestFlight). All six shipped behind the
+> `ONE_SIDE` flag in `src/content/refocus.ts`; the couples flow stays intact behind it.
+> Edge fn deployed and verified live on bridge / no-bridge / pasted-chat / Tier-1 paths.
+> Calibration bugs found by live testing, not review: role-swapping in the bridge
+> (fixed with an in-schema scratchpad + sonnet for the read) and over-deflation
+> (decision rule is now a two-part test). Deferred as planned: native mic recogniser
+> (keyboard dictation ships first), Tier-2 silent downgrade, memory-informed reads.
+
 
 1. **Working / Retry** first — everything else depends on not losing what was written
 2. Capture: prose-primary, mic, keyboard-bar stems, "Just save"
@@ -149,6 +162,12 @@ Target: one afternoon plus roughly four evenings. Existing code already has a wo
 
 ## 11. Open
 
-- Pricing: keep the subscription; the ladder is broken (S$59.98/yr vs S$6.98/mo is an 8.6-month break-even against comparables at 2–5). Core loop free either way.
+- Pricing (RESOLVED 2026-09-16, see docs/PRICING-NAMING.md): the earlier "comparables at 2–5 months" claim was wrong — the 12-app median break-even is 5.7 months and the AI cohort runs 7–8.5; the anomaly is the cheapest-in-category monthly. Keep the approved ladder (S$6.98 / S$59.98 / S$99.98 lifetime) untouched through the self-test; at first stranger flip in ASC (config only, no binary): monthly → US$6.99/S$9.98, annual unchanged and pre-selected, lifetime pulled (re-list at US$99.99 = 2.5x annual only on super-fan demand). Free tier gates memory/history, never a read count — the 1-read/day meter is dropped (no precedent in 12 comparables; most punitive at 11pm). Plus thesis = "it remembers" (90-day memory-informed reads), pending Yash's confirmation.
+- Naming (DECIDED by Yash 2026-09-16): App Store name **"Parallax: After the Fight"** (26/30 chars) — brand kept, the moment in the name itself. Subtitle must now NOT duplicate "fight": use it for the promise instead, e.g. "One sentence worth sending" or "Say it, or let it go" (pick at submission; subtitle keywords shift to argument/say/text since "fight" is already in the name). "One Side" remains the internal codename for the solo product. Known cost: the "Parallax: For Couples" doppelganger stays adjacent in search — icon + subtitle disambiguate. Name/subtitle/description/keywords/screenshots are ALL version-locked — one bundled submission with the pivot binary; only promotional text (170 chars) is editable today.
+- Copy gate (decided 2026-09-16): keep gated-on-edit WITH the visible "Use it as is" escape — an unedited send stays one deliberate tap, so the gate can't manufacture a false test fail. Goes in the sealed note.
+- Safety screen copy + resource list: approved by Yash 2026-09-16 as designed ("This is bigger than one fight." + SOS/IMH/AWARE/PAVE). IMH 6389 2222 verified by Yash 2026-09-16 — clear to ship on new surfaces; drop the "pending verification" tag from the design file at build time.
+- Promotional text set LIVE on the App Store 2026-09-16 (en-GB, verified via ASC API): "Coming next: use it alone. Talk or paste the fight, get back what's underneath it for you, and one sentence worth sending. Nothing leaves unless you send it." (157/170 chars, "coming next" framing because the live 2.0.0 binary lacks talk/paste.)
 - The IMH helpline number in the shipped edge function has never been verified against an official source.
+- Chat import: whether paste ships in the MVP build or the first follow-up; screenshot needs expo-image-picker (PHPicker, no permission prompt for picking) and a bigger edge-function payload path.
+- iOS 27 (2026-09-16 research): no design change needed — refinement release, iOS 26 hardening stands. Dated obligation: from April 2027 all App Store uploads must use the iOS 27 SDK → Expo SDK 56→58 migration (scenes, resizable iPhone) belongs in Q4 2026/Q1 2027. Future differentiator: expo-app-intents (SDK 58) voice capture entry via Siri/Shortcuts. One device test: does Write-with-Siri inject into the capture field, and is writingToolsBehavior reachable from Expo.
 - `borderCurve: 'continuous'` is set on zero of 114 rounded corners.

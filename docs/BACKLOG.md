@@ -124,3 +124,13 @@ _From the 2026-07-02 E2E pass — details in `docs/E2E_FINDINGS_2026-07-02.md`._
 - [x] **(Claude)** Invite deep-links: `parallax://join?code=` parsed + prefilled into join-by-code, survives sign-up (`82a5920`)
 - [x] **(Claude)** Analytics + crash scaffold: provider-agnostic, no-ops without a key, 9 funnel events + error-boundary capture (`66ba16d`)
 - [x] **(Claude)** Accessibility pass: roles/labels/state/hitSlop on atoms + core daily-loop screens (`d218f04`)
+
+## One Side (v2.1.0) — after the TestFlight test
+
+- [ ] (Yash) Run the paired-run test: 5 real frictions, app vs your own cold prompt, sealed note first. Stop conditions in PRD §7.
+- [ ] (Yash) IPOS trademark sanity check before the "Parallax: After the Fight" rename submission.
+- [ ] (Yash) ASC pricing flip at first-stranger: monthly → S$9.98, annual unchanged, pull lifetime (docs/PRICING-NAMING.md).
+- [ ] (Claude) Tier-2 silent downgrade in the edge fn — deferred to pre-rung-3, per PRD §6.
+- [ ] (Claude) Memory-informed read (the Plus thesis): 90-day local entries fed to the read, no patterns page. Only after the test passes.
+- [ ] (Claude) Native mic recogniser (expo-speech-recognition) — needs a new EAS build; keyboard dictation ships in 2.1.0.
+- [ ] (Claude) Expo SDK 56 → 58 migration before April 2027 (iOS 27 SDK mandate, scene lifecycle).
