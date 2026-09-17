@@ -29,8 +29,9 @@ function setup() {
   const onRead = jest.fn();
   const onJustSave = jest.fn();
   const onOpenReceipts = jest.fn();
+  const onOpenSettings = jest.fn();
   return {
-    props: { insets, onRead, onJustSave, onOpenReceipts },
+    props: { insets, onRead, onJustSave, onOpenReceipts, onOpenSettings },
     onRead,
     onJustSave,
     onOpenReceipts,

@@ -110,6 +110,7 @@ export function OneSideFlow() {
           onRead={handleRead}
           onJustSave={handleJustSave}
           onOpenReceipts={() => router.push('/(sheets)/receipts')}
+          onOpenSettings={() => router.push('/(sheets)/settings')}
         />
       )}
 

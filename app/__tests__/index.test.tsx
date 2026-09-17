@@ -31,6 +31,7 @@ jest.mock('expo-router', () => ({
 
 import { useSession } from '../../src/features/auth/useSession';
 import { useCouple } from '../../src/features/pairing/useCouple';
+import * as refocusContent from '../../src/content/refocus';
 
 const mockUseSession = useSession as jest.Mock;
 const mockUseCouple = useCouple as jest.Mock;
@@ -62,14 +63,14 @@ describe('root index routing guard', () => {
     expect(mockRedirect).not.toHaveBeenCalled();
   });
 
-  it('redirects an unauthenticated user to onboarding without probing', async () => {
+  it('sends a signed-out user to the One Side welcome, never the couples tour', async () => {
     mockUseSession.mockReturnValue({ session: null, loading: false });
     mockUseCouple.mockReturnValue({ couple: null, status: 'none', loading: false });
 
     await render(<HomeScreen />);
 
-    expect(mockRedirect).toHaveBeenCalledWith('/(onboarding)');
-    expect(mockLimit).not.toHaveBeenCalled();
+    await waitFor(() => expect(mockRedirect).toHaveBeenCalledWith('/welcome'));
+    expect(mockRedirect).not.toHaveBeenCalledWith('/(onboarding)');
   });
 
   it('redirects a logged-in, paired user straight to capture (ONE SIDE)', async () => {
@@ -90,17 +91,22 @@ describe('root index routing guard', () => {
     expect(mockRedirect).toHaveBeenCalledWith('/(tabs)/refocus');
   });
 
-  it('sends a logged-in user with no couple (probe reachable) to onboarding', async () => {
+  // A one-person app must never gate on having a partner: no couple is the
+  // normal state, not an incomplete setup.
+  it('lets a signed-in user with no couple straight into capture', async () => {
     mockUseSession.mockReturnValue({ session: { user: { id: 'u1' } }, loading: false });
     mockUseCouple.mockReturnValue({ couple: null, status: 'none', loading: false });
 
     await render(<HomeScreen />);
 
-    await waitFor(() => expect(mockRedirect).toHaveBeenCalledWith('/(onboarding)'));
-    expect(mockLimit).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(mockRedirect).toHaveBeenCalledWith('/(tabs)/refocus'));
+    expect(mockRedirect).not.toHaveBeenCalledWith('/(onboarding)');
   });
 
-  it('shows the retry state instead of onboarding when the couple lookup errored', async () => {
+  // The couple probe belongs to the legacy pairing gate: One Side has no
+  // pairing flow to protect, so these two run with the flag off.
+  it('shows the retry state instead of onboarding when the couple lookup errored (legacy)', async () => {
+    jest.replaceProperty(refocusContent, 'ONE_SIDE', false);
     mockProbeResult = { data: null, error: { message: 'network request failed' } };
     mockUseSession.mockReturnValue({ session: { user: { id: 'u1' } }, loading: false });
     mockUseCouple.mockReturnValue({ couple: null, status: 'none', loading: false });
@@ -113,7 +119,8 @@ describe('root index routing guard', () => {
     expect(mockRedirect).not.toHaveBeenCalled();
   });
 
-  it('pressing Try again refetches, and routes once the connection recovers', async () => {
+  it('pressing Try again refetches, and routes once the connection recovers (legacy)', async () => {
+    jest.replaceProperty(refocusContent, 'ONE_SIDE', false);
     mockProbeResult = { data: null, error: { message: 'network request failed' } };
     mockUseSession.mockReturnValue({ session: { user: { id: 'u1' } }, loading: false });
     mockUseCouple.mockReturnValue({ couple: null, status: 'none', loading: false });

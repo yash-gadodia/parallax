@@ -24,6 +24,7 @@ export interface CaptureStepProps {
   onRead: (text: string, pastedChat: string | null) => void;
   onJustSave: (text: string, pastedChat: string | null) => void;
   onOpenReceipts: () => void;
+  onOpenSettings: () => void;
 }
 
 /**
@@ -38,6 +39,7 @@ export function CaptureStep({
   onRead,
   onJustSave,
   onOpenReceipts,
+  onOpenSettings,
 }: CaptureStepProps) {
   const [text, setText] = useState('');
   const [chat, setChat] = useState<ChatLine[] | null>(null);
@@ -104,22 +106,30 @@ export function CaptureStep({
             <Serif s={20} c={colors.inkSoft}>
               Parallax
             </Serif>
-            <Press onPress={onOpenReceipts} scale={false}>
-              <Text
-                allowFontScaling={false}
-                style={{
-                  fontFamily: fontFamily.mono,
-                  fontSize: 10,
-                  letterSpacing: 1.4,
-                  textTransform: 'uppercase',
-                  color: colors.inkMute,
-                  paddingVertical: 12,
-                  paddingLeft: 16,
-                }}
-              >
-                receipts
-              </Text>
-            </Press>
+            <View style={{ flexDirection: 'row' }}>
+              {[
+                { label: 'receipts', onPress: onOpenReceipts, id: 'open-receipts' },
+                { label: 'settings', onPress: onOpenSettings, id: 'open-settings' },
+              ].map((item) => (
+                <Press key={item.id} onPress={item.onPress} scale={false}>
+                  <Text
+                    testID={item.id}
+                    allowFontScaling={false}
+                    style={{
+                      fontFamily: fontFamily.mono,
+                      fontSize: 10,
+                      letterSpacing: 1.4,
+                      textTransform: 'uppercase',
+                      color: colors.inkMute,
+                      paddingVertical: 12,
+                      paddingLeft: 16,
+                    }}
+                  >
+                    {item.label}
+                  </Text>
+                </Press>
+              ))}
+            </View>
           </View>
 
           <Serif
@@ -294,29 +304,39 @@ export function CaptureStep({
           )}
 
           {has && (
-            <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
-              <View style={{ flex: 1 }}>
-                <Btn
-                  kind="soft"
+            <View style={{ marginTop: 10 }}>
+              <Btn
+                kind="ink"
+                testID="capture-read"
+                onPress={() => onRead(text, chat ? chatToText(chat) : null)}
+              >
+                {CAPTURE_COPY.readIt}
+              </Btn>
+              <Press
+                onPress={() => onJustSave(text, chat ? chatToText(chat) : null)}
+                scale={false}
+              >
+                <Text
                   testID="capture-save"
-                  onPress={() => onJustSave(text, chat ? chatToText(chat) : null)}
+                  allowFontScaling={false}
+                  style={{
+                    fontSize: 14,
+                    fontWeight: '500',
+                    color: colors.inkSoft,
+                    fontFamily: fontFamily.ui,
+                    textAlign: 'center',
+                    paddingVertical: 12,
+                  }}
                 >
                   {CAPTURE_COPY.justSave}
-                </Btn>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Btn
-                  kind="ink"
-                  testID="capture-read"
-                  onPress={() => onRead(text, chat ? chatToText(chat) : null)}
-                >
-                  {CAPTURE_COPY.readIt}
-                </Btn>
-              </View>
+                </Text>
+              </Press>
             </View>
           )}
 
-          {/* Sentence stems: appenders, not a taxonomy. Always one row. */}
+          {/* Sentence stems: a starter for the blank page only. Once words
+              exist they have done their job, so they leave. */}
+          {!has && (
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -374,6 +394,7 @@ export function CaptureStep({
               </View>
             </Press>
           </ScrollView>
+          )}
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>

@@ -19,19 +19,19 @@ import { getTrialEndDateString } from '../../src/domain/billing';
 
 const perks = [
   {
-    emoji: '🧠',
-    title: 'A mediator that knows you',
-    desc: 'It reads what you two have already worked out',
-  },
-  {
-    emoji: '🪢',
-    title: 'Your patterns, surfaced',
-    desc: 'What keeps coming up, and what settles it',
-  },
-  {
     emoji: '📖',
-    title: 'Your whole record',
-    desc: 'Every repair you came through, kept',
+    title: 'It remembers',
+    desc: 'Free reads stand alone; Plus notices what repeats',
+  },
+  {
+    emoji: '💬',
+    title: 'Paste the actual fight',
+    desc: 'Drop the chat in and it reads their words too',
+  },
+  {
+    emoji: '🗂️',
+    title: 'Every receipt kept',
+    desc: 'What you logged, what you sent, what you let go',
   },
 ];
 
@@ -63,7 +63,7 @@ export default function PlusSheet() {
       <ScrollView scrollEnabled={false}>
         <View style={{ alignItems: 'center', marginBottom: 18 }}>
           <Serif s={34} italic c={colors.ink}>
-            One sub, both of you.
+            Keep every receipt.
           </Serif>
           <Text
             allowFontScaling={false}
@@ -75,7 +75,7 @@ export default function PlusSheet() {
               fontFamily: fontFamily.ui,
             }}
           >
-            {`${monthly}/mo or ${lifetime} lifetime · one price covers you and ${partner.name}`}
+            {`${monthly}/mo or ${lifetime} lifetime · the read after a fight is always free`}
           </Text>
         </View>
 

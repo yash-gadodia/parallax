@@ -23,11 +23,11 @@ describe('PlusSheet', () => {
     const { getByText } = await render(<PlusSheet />);
 
     // Assert the main heading
-    expect(getByText('One sub, both of you.')).toBeTruthy();
+    expect(getByText('Keep every receipt.')).toBeTruthy();
 
     // Pricing line: lifetime SKU + the per-couple trust copy stay prominent.
     expect(
-      getByText('$4.99/mo or $79.99 lifetime · one price covers you and Dani')
+      getByText('$4.99/mo or $79.99 lifetime · the read after a fight is always free')
     ).toBeTruthy();
 
     // Assert the primary CTA
@@ -37,7 +37,7 @@ describe('PlusSheet', () => {
     expect(getByText('Maybe later')).toBeTruthy();
 
     // Assert a perk title to verify the perks list rendered
-    expect(getByText('A mediator that knows you')).toBeTruthy();
+    expect(getByText('It remembers')).toBeTruthy();
   });
 
   it('shows honest trial disclosure before the CTA', async () => {

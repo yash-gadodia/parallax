@@ -36,7 +36,7 @@ function Gate({ onRetry }: { onRetry: () => void }) {
   }, [session?.user?.id]);
 
   const needsProbe =
-    !sessionLoading && !coupleLoading && !!session && status === 'none';
+    !ONE_SIDE && !sessionLoading && !coupleLoading && !!session && status === 'none';
 
   useEffect(() => {
     if (!needsProbe) return;
@@ -62,9 +62,20 @@ function Gate({ onRetry }: { onRetry: () => void }) {
   // answer their own half ahead of time; the reveal stays server-held until the
   // partner joins (migration 0011). Only a user with no couple yet ('none') goes
   // to onboarding to create/join an invite.
+  // ONE SIDE is a one-person app: being signed in is the only requirement.
+  // Routing a solo user through the couples pairing gate (invite codes, "call
+  // their answer") was two products out of date and made the first run
+  // unusable for the product we actually ship.
+  // No couple probe here: it exists only to avoid dumping a possibly-paired
+  // user into the pairing flow, and One Side has no pairing flow. Signed in
+  // goes to capture, signed out gets the welcome, and the sign-in screen is
+  // where a connection problem honestly surfaces.
+  if (ONE_SIDE) {
+    return <Redirect href={session ? '/(tabs)/refocus' : '/welcome'} />;
+  }
+
   if (session && (status === 'active' || status === 'pending')) {
-    // ONE SIDE test build: capture IS the launch screen (PRD §4.1).
-    return <Redirect href={ONE_SIDE ? '/(tabs)/refocus' : '/(tabs)/today'} />;
+    return <Redirect href="/(tabs)/today" />;
   }
 
   if (needsProbe && probe === 'pending') return <BrandedLoading />;
